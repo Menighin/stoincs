@@ -26,9 +26,9 @@
       content-class="bg-grey-2"
     >
       <q-list>
-        <q-item clickable tag="a" target="_blank" href="https://quasar.dev">
+        <q-item clickable to="/configurations">
           <q-item-section avatar>
-            <q-icon name="eva-bell-outline" />
+            <q-icon name="settings_applications" />
           </q-item-section>
           <q-item-section>
             <q-item-label>Configurações</q-item-label>
