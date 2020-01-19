@@ -1,4 +1,5 @@
 import { app, BrowserWindow } from 'electron'
+import controllers from '../controllers/main';
 
 /**
  * Set `__statics` path to static files in production;
