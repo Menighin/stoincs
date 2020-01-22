@@ -1,5 +1,10 @@
-import { app, BrowserWindow } from 'electron'
-import controllers from '../controllers/main';
+import { app, BrowserWindow, nativeTheme } from 'electron'
+
+try {
+  if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
+    require('fs').unlinkSync(require('path').join(app.getPath('userData'), 'DevTools Extensions'))
+  }
+} catch (_) { }
 
 /**
  * Set `__statics` path to static files in production;
@@ -20,10 +25,12 @@ function createWindow () {
     height: 600,
     useContentSize: true,
     webPreferences: {
-      // keep in sync with /quasar.conf.js > electron > nodeIntegration
-      // (where its default value is "true")
+      // Change from /quasar.conf.js > electron > nodeIntegration;
       // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
-      nodeIntegration: true
+      nodeIntegration: QUASAR_NODE_INTEGRATION,
+
+      // More info: /quasar-cli/developing-electron-apps/electron-preload-script
+      // preload: path.resolve(__dirname, 'electron-preload.js')
     }
   })
 

@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
+  <q-layout view="hHh Lpr lFf">
     <q-header elevated>
       <q-toolbar>
         <q-btn
@@ -7,7 +7,7 @@
           dense
           round
           @click="leftDrawerOpen = !leftDrawerOpen"
-          icon="menu"
+          icon="eva-menu-outline"
           aria-label="Menu"
         />
 
@@ -15,7 +15,13 @@
           Quasar App
         </q-toolbar-title>
 
-        <div>Quasar v{{ $q.version }}</div>
+        <q-btn
+          flat
+          round
+          @click="rightDrawerOpen = !rightDrawerOpen"
+          icon="eva-bell-outline"
+          aria-label="Notification"
+        />
       </q-toolbar>
     </q-header>
 
@@ -23,6 +29,12 @@
       v-model="leftDrawerOpen"
       show-if-above
       bordered
+      :mini="miniState"
+      @mouseover="miniState = false"
+      @mouseout="miniState = true"
+      mini-to-overlay
+      :width="200"
+      :breakpoint="500"
       content-class="bg-grey-2"
     >
       <q-list>
@@ -72,7 +84,8 @@ export default {
   data () {
     return {
       leftDrawerOpen: false,
-      drawerOpen: true
+      miniState: true,
+      rightDrawerOpen: true
     }
   }
 }
