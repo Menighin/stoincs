@@ -1,20 +1,20 @@
 <template>
-  <q-page class="flex flex-center">
-    <h5>Work in progress</h5>
-  </q-page>
+    <q-page class="flex flex-center">
+        <h5>Work in progress</h5>
+    </q-page>
 </template>
 
 <script>
 
 export default {
-  name: 'PageStocks',
-  data () {
-    return {
+    name: 'PageStocks',
+    data () {
+        return {
+        }
+    },
+    methods: {
+    },
+    mounted () {
     }
-  },
-  methods: {
-  },
-  mounted () {
-  }
 }
 </script>
