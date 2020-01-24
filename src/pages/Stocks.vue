@@ -8,13 +8,13 @@
 
 export default {
     name: 'PageStocks',
-    data () {
+    data() {
         return {
-        }
+        };
     },
     methods: {
     },
-    mounted () {
+    mounted() {
     }
-}
+};
 </script>

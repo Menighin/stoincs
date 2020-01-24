@@ -67,19 +67,19 @@
 </template>
 
 <script>
-import NotificationPopup from '../components/NotificationPopup'
+import NotificationPopup from '../components/NotificationPopup';
 
 export default {
     name: 'MainLayout',
     components: {
         NotificationPopup
     },
-    data () {
+    data() {
         return {
             leftDrawerOpen: false,
             miniState: true,
             notificationOpen: false
-        }
+        };
     }
-}
+};
 </script>

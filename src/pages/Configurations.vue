@@ -31,32 +31,32 @@
 const STORAGE_KEY = {
     USERNAME: 'configuration/username',
     PASSWORD: 'configuration/password'
-}
+};
 
 export default {
     name: 'PageConfigurations',
-    data () {
+    data() {
         return {
             username: '',
             password: '',
             isPwd: true
-        }
+        };
     },
     methods: {
-        save () {
-            localStorage.setItem(STORAGE_KEY.USERNAME, this.username)
-            localStorage.setItem(STORAGE_KEY.PASSWORD, this.password)
-            this.$q.notify('Configurações salvas com sucesso!')
+        save() {
+            localStorage.setItem(STORAGE_KEY.USERNAME, this.username);
+            localStorage.setItem(STORAGE_KEY.PASSWORD, this.password);
+            this.$q.notify('Configurações salvas com sucesso!');
         }
     },
-    mounted () {
+    mounted() {
         if (localStorage.getItem(STORAGE_KEY.USERNAME)) {
-            this.username = localStorage.getItem(STORAGE_KEY.USERNAME)
+            this.username = localStorage.getItem(STORAGE_KEY.USERNAME);
         }
 
         if (localStorage.getItem(STORAGE_KEY.PASSWORD)) {
-            this.password = localStorage.getItem(STORAGE_KEY.PASSWORD)
+            this.password = localStorage.getItem(STORAGE_KEY.PASSWORD);
         }
     }
-}
+};
 </script>

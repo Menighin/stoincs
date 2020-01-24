@@ -50,6 +50,10 @@ module.exports = {
     'prefer-promise-reject-errors': 'off',
     'indent': ['error', 4],
     'vue/html-indent': ['error', 4],
+    'semi': ['error', 'always', { omitLastInOneLineBlock: true }],
+    'space-before-function-paren': ['error', { anonymous: 'never', named: 'never', asyncArrow: 'always' }],
+    'padded-blocks': ['error', { blocks: 'never', classes: 'always', switches: 'never' }],
+    'no-unused-vars': ['off', { vars: 'local', args: 'after-used', ignoreRestSiblings: false }],
 
     // allow debugger during development only
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'

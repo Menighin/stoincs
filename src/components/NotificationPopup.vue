@@ -35,7 +35,7 @@
 <script>
 export default {
     name: 'NotificationPopup'
-}
+};
 </script>
 
 <style lang="scss" scoped>
