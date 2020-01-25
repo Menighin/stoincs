@@ -1,20 +1,55 @@
 import fs from 'fs';
 import { app } from 'electron';
 
+const FILES = {
+    JOB_METADATA: 'stock_history_job',
+    STOCK_HISTORY: 'stock_history'
+};
+
 class StockHistoryService {
 
     async getPath() {
         const path = `${app.getAppPath()}/data`;
-        console.log(`checking for ${path}`);
-        fs.promises.stat(path).catch(async () => {
-            console.log(`${path} not found... Creating...`);
+        await fs.promises.stat(path).catch(async () => {
             await fs.promises.mkdir(path);
         });
         return path;
     }
 
     async getStockHistoryJobMetadata() {
-        const path = app.getAppPath();
+        const rootPath = await this.getPath();
+        const path = `${rootPath}/${FILES.JOB_METADATA}`;
+
+        const fileStr = (await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString();
+        let result = null;
+        if (fileStr.length > 0) {
+            result = JSON.parse(fileStr);
+            result.lastRun = new Date(result.lastRun);
+        }
+        return result;
+    }
+
+    async updateStockHistoryJobMetadata() {
+        const rootPath = await this.getPath();
+        const path = `${rootPath}/${FILES.JOB_METADATA}`;
+
+        const metadata = await this.getStockHistoryJobMetadata() || {};
+        metadata.lastRun = new Date();
+        await fs.promises.writeFile(path, JSON.stringify(metadata));
+    }
+
+    async saveStockHistory(stocks) {
+        const rootPath = await this.getPath();
+        const path = `${rootPath}/${FILES.STOCK_HISTORY}`;
+
+        // Save history
+        await this.updateStockHistoryJobMetadata();
+
+        // Reading data
+        const stockHistory = (await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || {};
+
+        // Writing data
+        await fs.promises.writeFile(path, JSON.stringify(stocks));
     }
 
 }
