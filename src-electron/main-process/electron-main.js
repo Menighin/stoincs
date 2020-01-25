@@ -1,5 +1,6 @@
 import { app, BrowserWindow, nativeTheme } from 'electron';
 import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
+import StockHistoryService from '../services/StockHistoryService';
 
 try {
     if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
@@ -16,6 +17,7 @@ if (process.env.PROD) {
 }
 
 let mainWindow;
+let updateStockHistoryJob;
 
 function createWindow() {
     /**
@@ -44,7 +46,8 @@ function createWindow() {
 
 app.on('ready', () => {
     createWindow();
-    UpdateStockHistoryJob.setup(mainWindow);
+    updateStockHistoryJob = new UpdateStockHistoryJob();
+    updateStockHistoryJob.setup(new StockHistoryService(), mainWindow);
 });
 
 app.on('window-all-closed', () => {
