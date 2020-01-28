@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.4.0",
-    "cei-crawler": "^0.1.4",
+    "cei-crawler": "^0.1.5",
     "quasar": "^1.7.4"
   },
   "devDependencies": {

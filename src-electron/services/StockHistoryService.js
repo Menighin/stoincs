@@ -46,7 +46,7 @@ class StockHistoryService {
         await this.updateStockHistoryJobMetadata();
 
         // Reading data
-        const stockHistory = (await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || {};
+        const stockHistory = (await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || [];
 
         // Writing data
         await fs.promises.writeFile(path, JSON.stringify(stocks));
