@@ -48,6 +48,16 @@ class StockHistoryService {
         // Reading data
         const stockHistory = (await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || [];
 
+        // Merging / appending data
+        for (const newStock of stocks) {
+            let alreadySaved = false;
+            for (const savedStock of stockHistory) {
+                if (newStock.institution === savedStock.institution && newStock.account === savedStock.account) {
+                    // Do the thing
+                }
+            }
+        }
+
         // Writing data
         await fs.promises.writeFile(path, JSON.stringify(stocks));
     }
