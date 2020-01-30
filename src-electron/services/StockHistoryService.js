@@ -46,20 +46,33 @@ class StockHistoryService {
         await this.updateStockHistoryJobMetadata();
 
         // Reading data
-        const stockHistory = (await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || [];
+        const stockHistory = JSON.parse((await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || '[]');
 
         // Merging / appending data
         for (const newStock of stocks) {
             let alreadySaved = false;
             for (const savedStock of stockHistory) {
                 if (newStock.institution === savedStock.institution && newStock.account === savedStock.account) {
-                    // Do the thing
+                    savedStock.stockHistory = [...savedStock.stockHistory, ...newStock.stockHistory];
+                    alreadySaved = true;
                 }
+            }
+            // If this is a new item, simply push it
+            if (!alreadySaved) {
+                stockHistory.push(newStock);
             }
         }
 
         // Writing data
         await fs.promises.writeFile(path, JSON.stringify(stocks));
+    }
+
+    async getStockHistory() {
+        const rootPath = await this.getPath();
+        const path = `${rootPath}/${FILES.STOCK_HISTORY}`;
+
+        const stockHistory = JSON.parse((await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || '[]');
+        return stockHistory;
     }
 
 }
