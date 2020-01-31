@@ -1,7 +1,7 @@
 <template>
     <q-page class="flex flex-center">
         <h5>Work in progress</h5>
-        {{ data }}
+        {{ dataTable }}
     </q-page>
 </template>
 
@@ -13,7 +13,8 @@ export default {
     name: 'PageStocks',
     data() {
         return {
-            data: []
+            data: [],
+            dataTable: []
         };
     },
     methods: {
@@ -21,8 +22,15 @@ export default {
     mounted() {
         const self = this;
         ipcRenderer.on('stockHistory/get', (event, arg) => {
-            console.log(arg);
             self.data = arg;
+            self.dataTable = arg.reduce((p, c, i) => {
+                p = [...p, ...c.stockHistory.map(s => ({
+                    ...s,
+                    institution: c.institution,
+                    account: c.account
+                }))];
+                return p;
+            }, []);
         });
         ipcRenderer.send('stockHistory/get', 'ping');
     }
