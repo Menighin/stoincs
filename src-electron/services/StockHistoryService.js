@@ -64,7 +64,7 @@ class StockHistoryService {
         }
 
         // Writing data
-        await fs.promises.writeFile(path, JSON.stringify(stocks));
+        await fs.promises.writeFile(path, JSON.stringify(stockHistory));
     }
 
     async getStockHistory() {

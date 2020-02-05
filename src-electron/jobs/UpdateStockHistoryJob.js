@@ -28,22 +28,22 @@ class UpdateStockHistoryJob {
         const password = await this._browserWindow.webContents.executeJavaScript('localStorage.getItem("configuration/password");', true);
 
         const jobMetadata = await this._stockHistoryService.getStockHistoryJobMetadata();
-        const today = new Date();
-        const ceiCrawler = new CeiCrawler(user, password, {puppeteerLaunch: {headless: true}});
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const ceiCrawler = new CeiCrawler(user, password, { puppeteerLaunch: { headless: true } });
 
         let stocks = null;
         if (jobMetadata === null) {
             stocks = await ceiCrawler.getStockHistory();
         } else {
             const lastRun = jobMetadata.lastRun;
-            if (!DateUtils.isSameDate(today, lastRun)) {
-                stocks = await ceiCrawler.getStockHistory(lastRun, today);
+            if (!DateUtils.isSameDate(yesterday, lastRun)) {
+                stocks = await ceiCrawler.getStockHistory(lastRun, yesterday);
             } else {
                 return;
             }
         }
         await this._stockHistoryService.saveStockHistory(stocks);
-        console.log('Job ran!');
     }
 
 }
