@@ -1,40 +1,71 @@
 <template>
-    <q-page class="flex flex-center">
-        <q-table
-            table-class="stock-table"
-            title="Histórico"
-            :data="dataTable"
-            :columns="columns"
-            row-key="row => `${row.code}-${row.id}`"
-            flat
-            bordered
-            :rows-per-page-options="[25, 50, 100]"
-            rows-per-page-label="Items por página"
-            :pagination.sync="pagination"
-            :visible-columns="visibleColumns"
-        >
-            <template v-slot:top>
-                <h5 style="margin: 0">Histórico</h5>
+    <q-page class="container">
 
-                <q-space />
+        <div>
+            <q-btn color="primary" label="Basic Menu" class="q-ma-lg">
+                <q-menu>
+                    <q-list style="min-width: 100px">
+                        <q-item clickable v-close-popup>
+                            <q-item-section>New tab</q-item-section>
+                        </q-item>
+                    </q-list>
+                </q-menu>
+            </q-btn>
+        </div>
 
-                <q-select
-                    v-model="visibleColumns"
-                    multiple
-                    outlined
-                    dense
-                    options-dense
-                    :display-value="$q.lang.table.columns"
-                    emit-value
-                    map-options
-                    :options="columns"
-                    option-value="name"
-                    options-cover
-                    style="min-width: 150px"
-                />
-            </template>
+        <div class="flex q-pa-lg">
+            <q-card class="my-card" flat bordered>
+                <q-card-section horizontal>
+                    <q-card-section>
+                        Loren ipsum
+                    </q-card-section>
 
-        </q-table>
+                    <q-separator vertical />
+
+                    <q-card-section>
+                        Loren ipsum
+                    </q-card-section>
+                </q-card-section>
+            </q-card>
+        </div>
+
+        <div class="flex">
+            <q-table
+                class="table-container"
+                table-class="stock-table"
+                title="Histórico"
+                :data="dataTable"
+                :columns="columns"
+                row-key="row => `${row.code}-${row.id}`"
+                flat
+                bordered
+                :rows-per-page-options="[25, 50, 100]"
+                rows-per-page-label="Items por página"
+                :pagination.sync="pagination"
+                :visible-columns="visibleColumns"
+            >
+                <template v-slot:top>
+                    <h5 style="margin: 0">Histórico</h5>
+
+                    <q-space />
+
+                    <q-select
+                        v-model="visibleColumns"
+                        multiple
+                        outlined
+                        dense
+                        options-dense
+                        :display-value="$q.lang.table.columns"
+                        emit-value
+                        map-options
+                        :options="columns"
+                        option-value="name"
+                        options-cover
+                        style="min-width: 150px"
+                    />
+                </template>
+            </q-table>
+        </div>
     </q-page>
 </template>
 
@@ -142,17 +173,32 @@ export default {
 </script>
 
 <style lang="scss">
-    .stock-table {
-        height: 600px;
 
-        table {
-            width: 1400px;
-            tbody {
-                tr:nth-child(odd) {
-                    background: #f7f7f7;
+    .container {
+        text-align: right;
+
+        > div {
+            .my-card {
+                margin: 0 auto;
+            }
+
+            .table-container {
+                margin: 0 auto;
+                .stock-table {
+                    height: 600px;
+
+                    table {
+                        width: 1400px;
+                        tbody {
+                            tr:nth-child(odd) {
+                                background: #f7f7f7;
+                            }
+                        }
+                    }
+
                 }
             }
         }
-
     }
+
 </style>
