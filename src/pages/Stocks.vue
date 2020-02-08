@@ -1,70 +1,71 @@
 <template>
-    <q-page class="container">
+    <q-page class="flex flex-center">
+        <div class="column q-px-md q-py-sm" style="width: 80%">
+            <div class="filter">
+                <q-btn outline color="primary" :label="selectedMonth" class="q-ma-lg" icon="eva-calendar-outline">
+                    <q-menu fit>
+                        <q-list style="min-width: 100px">
+                            <q-item @click="selectedMonth = month" clickable v-close-popup v-for="(month, i) in months" :key="`month-${i}`">
+                                <q-item-section>{{ month }}</q-item-section>
+                            </q-item>
+                        </q-list>
+                    </q-menu>
+                </q-btn>
+            </div>
 
-        <div>
-            <q-btn color="primary" label="Basic Menu" class="q-ma-lg">
-                <q-menu>
-                    <q-list style="min-width: 100px">
-                        <q-item clickable v-close-popup>
-                            <q-item-section>New tab</q-item-section>
-                        </q-item>
-                    </q-list>
-                </q-menu>
-            </q-btn>
-        </div>
+            <div class="row q-ma-sm justify-between items-center">
+                <q-card class="kpis-card" flat bordered>
+                    <q-card-section horizontal>
+                        <q-card-section>
+                            Loren ipsum
+                        </q-card-section>
 
-        <div class="flex q-pa-lg">
-            <q-card class="my-card" flat bordered>
-                <q-card-section horizontal>
-                    <q-card-section>
-                        Loren ipsum
+                        <q-separator vertical />
+
+                        <q-card-section>
+                            Loren ipsum
+                        </q-card-section>
                     </q-card-section>
+                </q-card>
+            </div>
 
-                    <q-separator vertical />
+            <div class="row q-ma-sm justify-between items-center">
+                <q-table
+                    class="table-container"
+                    table-class="stock-table"
+                    title="Histórico"
+                    :data="dataTable"
+                    :columns="columns"
+                    row-key="row => `${row.code}-${row.id}`"
+                    flat
+                    bordered
+                    :rows-per-page-options="[25, 50, 100]"
+                    rows-per-page-label="Items por página"
+                    :pagination.sync="pagination"
+                    :visible-columns="visibleColumns"
+                >
+                    <template v-slot:top>
+                        <h5 style="margin: 0">Histórico</h5>
 
-                    <q-card-section>
-                        Loren ipsum
-                    </q-card-section>
-                </q-card-section>
-            </q-card>
-        </div>
+                        <q-space />
 
-        <div class="flex">
-            <q-table
-                class="table-container"
-                table-class="stock-table"
-                title="Histórico"
-                :data="dataTable"
-                :columns="columns"
-                row-key="row => `${row.code}-${row.id}`"
-                flat
-                bordered
-                :rows-per-page-options="[25, 50, 100]"
-                rows-per-page-label="Items por página"
-                :pagination.sync="pagination"
-                :visible-columns="visibleColumns"
-            >
-                <template v-slot:top>
-                    <h5 style="margin: 0">Histórico</h5>
-
-                    <q-space />
-
-                    <q-select
-                        v-model="visibleColumns"
-                        multiple
-                        outlined
-                        dense
-                        options-dense
-                        :display-value="$q.lang.table.columns"
-                        emit-value
-                        map-options
-                        :options="columns"
-                        option-value="name"
-                        options-cover
-                        style="min-width: 150px"
-                    />
-                </template>
-            </q-table>
+                        <q-select
+                            v-model="visibleColumns"
+                            multiple
+                            outlined
+                            dense
+                            options-dense
+                            :display-value="$q.lang.table.columns"
+                            emit-value
+                            map-options
+                            :options="columns"
+                            option-value="name"
+                            options-cover
+                            style="min-width: 150px"
+                        />
+                    </template>
+                </q-table>
+            </div>
         </div>
     </q-page>
 </template>
@@ -79,6 +80,8 @@ export default {
         return {
             data: [],
             dataTable: [],
+            months: ['Todos', '08/2018', '09/2018'],
+            selectedMonth: 'Todos',
             pagination: {
                 rowsPerPage: 25
             },
@@ -154,10 +157,9 @@ export default {
     methods: {
     },
     mounted() {
-        const self = this;
         ipcRenderer.on('stockHistory/get', (event, arg) => {
-            self.data = arg;
-            self.dataTable = arg.reduce((p, c, i) => {
+            this.data = arg;
+            this.dataTable = arg.reduce((p, c, i) => {
                 p = [...p, ...c.stockHistory.map(s => ({
                     ...s,
                     institution: c.institution,
@@ -166,6 +168,17 @@ export default {
                 }))];
                 return p;
             }, []);
+            const monthSet = new Set(this.dataTable.map(d => {
+                const date = new Date(d.date);
+                return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear().toString()}`;
+            }));
+            const monthArray = [...monthSet].sort((a, b) => {
+                const sa = a.split('/').map(o => parseInt(o));
+                const sb = b.split('/').map(o => parseInt(o));
+                if (sa[1] === sb[1]) return sa[0] - sb[0];
+                return sa[1] - sb[1];
+            });
+            this.months = ['Todos', ...monthArray];
         });
         ipcRenderer.send('stockHistory/get');
     }
@@ -174,30 +187,28 @@ export default {
 
 <style lang="scss">
 
-    .container {
-        text-align: right;
+    .filter {
+        margin: 0 0 0 auto;
+    }
 
-        > div {
-            .my-card {
-                margin: 0 auto;
-            }
+    .kpis-card {
+        margin: 0 auto;
+    }
 
-            .table-container {
-                margin: 0 auto;
-                .stock-table {
-                    height: 600px;
+    .table-container {
+        margin: 0 auto;
+        .stock-table {
+            height: 600px;
 
-                    table {
-                        width: 1400px;
-                        tbody {
-                            tr:nth-child(odd) {
-                                background: #f7f7f7;
-                            }
-                        }
+            table {
+                width: 1400px;
+                tbody {
+                    tr:nth-child(odd) {
+                        background: #f7f7f7;
                     }
-
                 }
             }
+
         }
     }
 
