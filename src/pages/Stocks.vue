@@ -34,7 +34,7 @@
                     class="table-container"
                     table-class="stock-table"
                     title="Histórico"
-                    :data="dataTable"
+                    :data="filteredDataTable"
                     :columns="columns"
                     row-key="row => `${row.code}-${row.id}`"
                     flat
@@ -123,8 +123,7 @@ export default {
                     field: 'date',
                     sortable: true,
                     format: val => {
-                        const d = new Date(val);
-                        return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+                        return `${val.getDate().toString().padStart(2, '0')}/${(val.getMonth() + 1).toString().padStart(2, '0')}/${val.getFullYear()}`;
                     }
                 },
                 {
@@ -140,7 +139,7 @@ export default {
                     label: 'Preço',
                     field: 'price',
                     sortable: true,
-                    format: val => `R$ ${val.toFixed(2).toLocaleString('pt-BR')}`
+                    format: val => `R$ ${val.toFixed(2).toLocaleString('pt-br')}`
                 },
                 {
                     name: 'totalValue',
@@ -156,12 +155,25 @@ export default {
     },
     methods: {
     },
+    computed: {
+        filteredDataTable() {
+            if (this.selectedMonth === 'Todos') {
+                return this.dataTable;
+            } else {
+                const [month, year] = this.selectedMonth.split('/').map(s => parseInt(s));
+                return this.dataTable.filter(d => {
+                    return d.date.getMonth() + 1 === month && d.date.getFullYear() === year;
+                });
+            }
+        }
+    },
     mounted() {
         ipcRenderer.on('stockHistory/get', (event, arg) => {
             this.data = arg;
             this.dataTable = arg.reduce((p, c, i) => {
                 p = [...p, ...c.stockHistory.map(s => ({
                     ...s,
+                    date: new Date(s.date),
                     institution: c.institution,
                     account: c.account,
                     id: i
@@ -169,7 +181,7 @@ export default {
                 return p;
             }, []);
             const monthSet = new Set(this.dataTable.map(d => {
-                const date = new Date(d.date);
+                const date = d.date;
                 return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear().toString()}`;
             }));
             const monthArray = [...monthSet].sort((a, b) => {
