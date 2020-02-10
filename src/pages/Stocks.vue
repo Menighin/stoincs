@@ -14,17 +14,18 @@
             </div>
 
             <div class="row q-ma-sm justify-between items-center">
-                <q-card class="kpis-card" flat bordered>
+                <q-card class="kpis-card q-px-lg q-py-md" flat bordered>
                     <q-card-section horizontal>
-                        <q-card-section>
-                            Loren ipsum
-                        </q-card-section>
+                        <template v-for="(kpi, i) in kpis">
 
-                        <q-separator vertical />
+                            <q-card-section :key="`kpi-${i}`">
+                                <div class="label">{{kpi.label}}</div>
+                                <div class="value" :style="{color: kpi.color}">R$ {{kpi.value.toFixed(2)}}</div>
+                            </q-card-section>
 
-                        <q-card-section>
-                            Loren ipsum
-                        </q-card-section>
+                            <q-separator vertical :key="`separator-${i}`" v-if="i !== kpis.length - 1" />
+
+                        </template>
                     </q-card-section>
                 </q-card>
             </div>
@@ -165,6 +166,25 @@ export default {
                     return d.date.getMonth() + 1 === month && d.date.getFullYear() === year;
                 });
             }
+        },
+        kpis() {
+            return [
+                {
+                    label: 'Compra',
+                    value: 1000,
+                    color: '#21BA45'
+                },
+                {
+                    label: 'Venda',
+                    value: 3000,
+                    color: '#C10015'
+                },
+                {
+                    label: 'Total',
+                    value: 2000,
+                    color: '#C10015'
+                }
+            ];
         }
     },
     mounted() {
@@ -205,6 +225,15 @@ export default {
 
     .kpis-card {
         margin: 0 auto;
+        .label {
+            color: $label;
+            font-size: 10px;
+        }
+
+        .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
     }
 
     .table-container {
