@@ -12,7 +12,7 @@
                 />
 
                 <q-toolbar-title>
-                    Quasar App
+                    Porquinho Digital
                 </q-toolbar-title>
 
                 <NotificationPopup />

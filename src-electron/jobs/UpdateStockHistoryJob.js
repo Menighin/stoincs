@@ -43,6 +43,14 @@ class UpdateStockHistoryJob {
                 return;
             }
         }
+
+        // Setting CEI as source
+        stocks.forEach(i => {
+            i.stockHistory.forEach(s => {
+                s.source = 'CEI';
+            });
+        });
+
         await this._stockHistoryService.saveStockHistory(stocks);
     }
 

@@ -1,79 +1,82 @@
 <template>
-    <q-page class="flex flex-center">
-        <div class="column q-px-md q-py-sm" style="width: 80%">
-            <div class="filter">
-                <q-btn outline color="primary" :label="selectedMonth" class="q-ma-lg" icon="eva-calendar-outline">
-                    <q-menu fit>
-                        <q-list style="min-width: 100px">
-                            <q-item @click="selectedMonth = month" clickable v-close-popup v-for="(month, i) in months" :key="`month-${i}`">
-                                <q-item-section>{{ month }}</q-item-section>
-                            </q-item>
-                        </q-list>
-                    </q-menu>
-                </q-btn>
-            </div>
-
-            <div class="row q-ma-sm justify-between items-center">
-                <q-card class="kpis-card q-px-lg q-py-md" flat bordered>
-                    <q-card-section horizontal>
-                        <template v-for="(kpi, i) in kpis">
-
-                            <q-card-section :key="`kpi-${i}`">
-                                <div class="label">{{kpi.label}}</div>
-                                <div class="value" :style="{color: kpi.color}">R$ {{kpi.value.toFixed(2)}}</div>
-                            </q-card-section>
-
-                            <q-separator vertical :key="`separator-${i}`" v-if="i !== kpis.length - 1" />
-
-                        </template>
-                    </q-card-section>
-                </q-card>
-            </div>
-
-            <div class="row q-ma-sm justify-between items-center">
-                <q-table
-                    class="table-container"
-                    table-class="stock-table"
-                    title="Histórico"
-                    :data="filteredDataTable"
-                    :columns="columns"
-                    row-key="row => `${row.code}-${row.id}`"
-                    flat
-                    bordered
-                    :rows-per-page-options="[25, 50, 100]"
-                    rows-per-page-label="Items por página"
-                    :pagination.sync="pagination"
-                    :visible-columns="visibleColumns"
-                >
-                    <template v-slot:top>
-                        <h5 style="margin: 0">Histórico</h5>
-
-                        <q-space />
-
-                        <q-select
-                            v-model="visibleColumns"
-                            multiple
-                            outlined
-                            dense
-                            options-dense
-                            :display-value="$q.lang.table.columns"
-                            emit-value
-                            map-options
-                            :options="columns"
-                            option-value="name"
-                            options-cover
-                            style="min-width: 150px"
-                        />
-                    </template>
-                </q-table>
-            </div>
+    <q-page class="">
+        <div class="filter">
+            <q-btn outline color="primary" :label="selectedMonth" class="q-ma-lg" icon="eva-calendar-outline">
+                <q-menu fit>
+                    <q-list style="min-width: 100px">
+                        <q-item @click="selectedMonth = month" clickable v-close-popup v-for="(month, i) in months" :key="`month-${i}`">
+                            <q-item-section>{{ month }}</q-item-section>
+                        </q-item>
+                    </q-list>
+                </q-menu>
+            </q-btn>
         </div>
+
+        <div class="row q-ma-sm justify-between items-center">
+            <q-card class="kpis-card q-px-lg q-py-md" flat bordered>
+                <q-card-section horizontal>
+                    <template v-for="(kpi, i) in kpis">
+
+                        <q-card-section :key="`kpi-${i}`">
+                            <div class="label">{{kpi.label}}</div>
+                            <div class="value" :style="{color: kpi.color}">{{kpi.value}}</div>
+                        </q-card-section>
+
+                        <q-separator vertical :key="`separator-${i}`" v-if="i !== kpis.length - 1" />
+
+                    </template>
+                </q-card-section>
+            </q-card>
+        </div>
+
+        <q-table
+            class="table-container q-mx-lg"
+            table-class="stock-table"
+            title="Histórico"
+            :data="filteredDataTable"
+            :columns="columns"
+            row-key="row => `${row.code}-${row.id}`"
+            flat
+            bordered
+            :rows-per-page-options="[25, 50, 100]"
+            rows-per-page-label="Items por página"
+            :pagination.sync="pagination"
+            :visible-columns="visibleColumns"
+        >
+            <template v-slot:top>
+                <h5 style="margin: 0">Histórico</h5>
+
+                <q-space />
+
+                <q-select
+                    v-model="visibleColumns"
+                    multiple
+                    outlined
+                    dense
+                    options-dense
+                    :display-value="`Colunas (${visibleColumns.length}/${columns.length})`"
+                    emit-value
+                    map-options
+                    :options="columns"
+                    option-value="name"
+                    options-cover
+                    style="min-width: 150px"
+                />
+
+                <q-btn flat icon="eva-plus-circle-outline" @click="goToViewLog(cell.row)" color="primary" />
+            </template>
+
+            <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
+                <q-btn flat icon="eva-trash-2-outline" @click="goToViewLog(cell.row)" color="primary" />
+            </q-td>
+        </q-table>
     </q-page>
 </template>
 
 <script>
 
 import { ipcRenderer } from 'electron';
+import NumberUtils from '../../src-electron/utils/NumberUtils';
 
 export default {
     name: 'PageStocks',
@@ -86,7 +89,7 @@ export default {
             pagination: {
                 rowsPerPage: 25
             },
-            visibleColumns: [ 'code', 'operation', 'date', 'quantity', 'price', 'totalValue' ],
+            visibleColumns: [ 'code', 'operation', 'date', 'quantity', 'price', 'totalValue', 'source' ],
             columns: [
                 {
                     name: 'institution',
@@ -129,27 +132,39 @@ export default {
                 },
                 {
                     name: 'quantity',
-                    allign: 'right',
+                    align: 'right',
                     label: 'Quantidade',
                     field: 'quantity',
                     sortable: true
                 },
                 {
                     name: 'price',
-                    allign: 'right',
+                    align: 'right',
                     label: 'Preço',
                     field: 'price',
                     sortable: true,
-                    format: val => `R$ ${val.toFixed(2).toLocaleString('pt-br')}`
+                    format: val => NumberUtils.formatCurrency(val)
                 },
                 {
                     name: 'totalValue',
-                    allign: 'right',
+                    align: 'right',
                     label: 'Total',
                     field: 'totalValue',
                     sortable: true,
-                    format: val => `R$ ${val.toFixed(2).toLocaleString('pt-BR')}`
-
+                    format: val => NumberUtils.formatCurrency(val)
+                },
+                {
+                    name: 'source',
+                    align: 'center',
+                    label: 'Origem',
+                    field: 'source'
+                },
+                {
+                    name: 'action',
+                    align: 'center',
+                    label: 'Ações',
+                    field: 'action',
+                    required: true
                 }
             ]
         };
@@ -168,21 +183,31 @@ export default {
             }
         },
         kpis() {
+            const bought = this.filteredDataTable
+                .filter(o => o.operation === 'C')
+                .reduce((p, c) => p + c.totalValue, 0);
+
+            const sold = this.filteredDataTable
+                .filter(o => o.operation === 'V')
+                .reduce((p, c) => p + c.totalValue, 0);
+
+            const total = sold - bought;
+
             return [
                 {
                     label: 'Compra',
-                    value: 1000,
-                    color: '#21BA45'
+                    value: NumberUtils.formatCurrency(bought),
+                    color: '#C10015'
                 },
                 {
                     label: 'Venda',
-                    value: 3000,
-                    color: '#C10015'
+                    value: NumberUtils.formatCurrency(sold),
+                    color: '#21BA45'
                 },
                 {
                     label: 'Total',
-                    value: 2000,
-                    color: '#C10015'
+                    value: NumberUtils.formatCurrency(total),
+                    color: total > 0 ? '#21BA45' : '#C10015'
                 }
             ];
         }
@@ -190,7 +215,7 @@ export default {
     mounted() {
         ipcRenderer.on('stockHistory/get', (event, arg) => {
             this.data = arg;
-            this.dataTable = arg.reduce((p, c, i) => {
+            this.dataTable = this.data.reduce((p, c, i) => {
                 p = [...p, ...c.stockHistory.map(s => ({
                     ...s,
                     date: new Date(s.date),
@@ -199,7 +224,8 @@ export default {
                     id: i
                 }))];
                 return p;
-            }, []);
+            }, []).sort((s1, s2) => s1.date - s2.date);
+
             const monthSet = new Set(this.dataTable.map(d => {
                 const date = d.date;
                 return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear().toString()}`;
@@ -220,7 +246,7 @@ export default {
 <style lang="scss">
 
     .filter {
-        margin: 0 0 0 auto;
+        text-align: right;
     }
 
     .kpis-card {
@@ -237,12 +263,23 @@ export default {
     }
 
     .table-container {
-        margin: 0 auto;
-        .stock-table {
-            height: 600px;
 
+        .q-table__middle {
+            max-height: 500px;
+        }
+
+        thead tr th {
+            position: sticky;
+            z-index: 1;
+        }
+
+        thead tr:first-child th {
+            top: 0;
+            background: #FFF;
+        }
+
+        .stock-table {
             table {
-                width: 1400px;
                 tbody {
                     tr:nth-child(odd) {
                         background: #f7f7f7;
