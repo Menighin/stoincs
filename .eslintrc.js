@@ -54,6 +54,7 @@ module.exports = {
     'space-before-function-paren': ['error', { anonymous: 'never', named: 'never', asyncArrow: 'always' }],
     'padded-blocks': ['error', { blocks: 'never', classes: 'always', switches: 'never' }],
     'no-unused-vars': ['off', { vars: 'local', args: 'after-used', ignoreRestSiblings: false }],
+    'no-labels': 'off',
 
     // allow debugger during development only
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'

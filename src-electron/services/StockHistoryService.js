@@ -38,33 +38,34 @@ class StockHistoryService {
         await fs.promises.writeFile(path, JSON.stringify(metadata));
     }
 
-    async saveStockHistory(stocks) {
+    async saveStockHistory(stocks, overwrite = false) {
         const rootPath = await this.getPath();
         const path = `${rootPath}/${FILES.STOCK_HISTORY}`;
 
-        // Save history
-        await this.updateStockHistoryJobMetadata();
+        if (!overwrite) {
+            // Reading data
+            const stockHistory = JSON.parse((await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || '[]');
 
-        // Reading data
-        const stockHistory = JSON.parse((await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || '[]');
-
-        // Merging / appending data
-        for (const newStock of stocks) {
-            let alreadySaved = false;
-            for (const savedStock of stockHistory) {
-                if (newStock.institution === savedStock.institution && newStock.account === savedStock.account) {
-                    savedStock.stockHistory = [...savedStock.stockHistory, ...newStock.stockHistory];
-                    alreadySaved = true;
+            // Merging / appending data
+            for (const newStock of stocks) {
+                let alreadySaved = false;
+                for (const savedStock of stockHistory) {
+                    if (newStock.institution === savedStock.institution && newStock.account === savedStock.account) {
+                        savedStock.stockHistory = [...savedStock.stockHistory, ...newStock.stockHistory];
+                        alreadySaved = true;
+                    }
+                }
+                // If this is a new item, simply push it
+                if (!alreadySaved) {
+                    stockHistory.push(newStock);
                 }
             }
-            // If this is a new item, simply push it
-            if (!alreadySaved) {
-                stockHistory.push(newStock);
-            }
-        }
 
-        // Writing data
-        await fs.promises.writeFile(path, JSON.stringify(stockHistory));
+            // Writing data
+            await fs.promises.writeFile(path, JSON.stringify(stockHistory));
+        } else {
+            await fs.promises.writeFile(path, JSON.stringify(stocks));
+        }
     }
 
     async getStockHistory() {
@@ -73,6 +74,23 @@ class StockHistoryService {
 
         const stockHistory = JSON.parse((await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || '[]');
         return stockHistory;
+    }
+
+    async deleteStockOperation(id) {
+        const stockHistory = await this.getStockHistory();
+
+        accountLoop:
+        for (const account of stockHistory) {
+            for (let i = 0; i < account.stockHistory.length; i++) {
+                const stockOperation = account.stockHistory[i];
+                if (stockOperation.id === id) {
+                    account.stockHistory.splice(i, 1);
+                    break accountLoop;
+                }
+            }
+        }
+
+        this.saveStockHistory(stockHistory, true);
     }
 
 }

@@ -67,7 +67,7 @@
             </template>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
-                <q-btn flat icon="eva-trash-2-outline" @click="goToViewLog(cell.row)" color="primary" />
+                <q-btn flat icon="eva-trash-2-outline" @click="deleteRow(props.row)" color="primary" />
             </q-td>
         </q-table>
     </q-page>
@@ -170,6 +170,20 @@ export default {
         };
     },
     methods: {
+        deleteRow(row) {
+            this.$q.dialog({
+                title: 'Confirm',
+                message: 'Would you like to turn on the wifi?',
+                cancel: true,
+                persistent: true
+            }).onOk(() => {
+                ipcRenderer.send('stockHistory/delete', row.id);
+            }).onCancel(() => {
+                // console.log('>>>> Cancel')
+            }).onDismiss(() => {
+                // console.log('I am triggered on both OK and Cancel')
+            });
+        }
     },
     computed: {
         filteredDataTable() {
@@ -220,8 +234,7 @@ export default {
                     ...s,
                     date: new Date(s.date),
                     institution: c.institution,
-                    account: c.account,
-                    id: i
+                    account: c.account
                 }))];
                 return p;
             }, []).sort((s1, s2) => s1.date - s2.date);

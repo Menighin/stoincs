@@ -2,6 +2,7 @@ import CeiCrawler from 'cei-crawler';
 import { BrowserWindow } from 'electron';
 import StockHistoryService from '../services/StockHistoryService';
 import DateUtils from '../utils/DateUtils';
+import StockUtils from '../utils/StockUtils';
 
 class UpdateStockHistoryJob {
 
@@ -32,26 +33,42 @@ class UpdateStockHistoryJob {
         yesterday.setDate(yesterday.getDate() - 1);
         const ceiCrawler = new CeiCrawler(user, password, { puppeteerLaunch: { headless: true } });
 
-        let stocks = null;
+        let stocksByAccount = null;
         if (jobMetadata === null) {
-            stocks = await ceiCrawler.getStockHistory();
+            stocksByAccount = await ceiCrawler.getStockHistory();
         } else {
             const lastRun = jobMetadata.lastRun;
             if (!DateUtils.isSameDate(yesterday, lastRun)) {
-                stocks = await ceiCrawler.getStockHistory(lastRun, yesterday);
+                stocksByAccount = await ceiCrawler.getStockHistory(lastRun, yesterday);
             } else {
                 return;
             }
         }
 
-        // Setting CEI as source
-        stocks.forEach(i => {
+        // Setting CEI as source and ID for stock Histories
+        stocksByAccount.forEach(i => {
             i.stockHistory.forEach(s => {
                 s.source = 'CEI';
+                s.id = StockUtils.generateId(s, i.account);
             });
         });
 
-        await this._stockHistoryService.saveStockHistory(stocks);
+        // Merging duplicates
+        stocksByAccount.forEach(acc => {
+            const stockOperationById = {};
+            acc.stockHistory.forEach(s => {
+                if (s.id in stockOperationById) {
+                    stockOperationById[s.id].totalValue += s.totalValue;
+                    stockOperationById[s.id].quantity += s.quantity;
+                } else {
+                    stockOperationById[s.id] = s;
+                }
+            });
+            acc.stockHistory = Object.values(stockOperationById);
+        });
+
+        await this._stockHistoryService.saveStockHistory(stocksByAccount);
+        await this._stockHistoryService.updateStockHistoryJobMetadata();
     }
 
 }
