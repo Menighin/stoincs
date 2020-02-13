@@ -10,7 +10,12 @@ ipcMain.on('stockHistory/get', async (event, arg) => {
 });
 
 ipcMain.on('stockHistory/delete', async (event, id) => {
-    stockHistoryService.deleteStockOperation(id);
+    try {
+        stockHistoryService.deleteStockOperation(id);
+        event.reply('stockHistory/delete', { status: 'success', id: id });
+    } catch (e) {
+        event.reply('stockHistory/delete', { status: 'error', error: e });
+    }
 });
 
 export default {};

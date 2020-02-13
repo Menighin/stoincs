@@ -42,6 +42,7 @@
             rows-per-page-label="Items por página"
             :pagination.sync="pagination"
             :visible-columns="visibleColumns"
+            :loading="tableLoading"
         >
             <template v-slot:top>
                 <h5 style="margin: 0">Histórico</h5>
@@ -82,10 +83,10 @@ export default {
     name: 'PageStocks',
     data() {
         return {
-            data: [],
             dataTable: [],
             months: ['Todos', '08/2018', '09/2018'],
             selectedMonth: 'Todos',
+            tableLoading: false,
             pagination: {
                 rowsPerPage: 25
             },
@@ -178,10 +179,6 @@ export default {
                 persistent: true
             }).onOk(() => {
                 ipcRenderer.send('stockHistory/delete', row.id);
-            }).onCancel(() => {
-                // console.log('>>>> Cancel')
-            }).onDismiss(() => {
-                // console.log('I am triggered on both OK and Cancel')
             });
         }
     },
@@ -228,8 +225,7 @@ export default {
     },
     mounted() {
         ipcRenderer.on('stockHistory/get', (event, arg) => {
-            this.data = arg;
-            this.dataTable = this.data.reduce((p, c, i) => {
+            this.dataTable = arg.reduce((p, c, i) => {
                 p = [...p, ...c.stockHistory.map(s => ({
                     ...s,
                     date: new Date(s.date),
@@ -252,6 +248,17 @@ export default {
             this.months = ['Todos', ...monthArray];
         });
         ipcRenderer.send('stockHistory/get');
+
+        ipcRenderer.on('stockHistory/delete', (event, args) => {
+            this.tableLoading = false;
+            if (args.status === 'success') {
+                this.$q.notify({ type: 'positive', message: 'Operação removida com sucesso' });
+                this.dataTable = this.dataTable.filter(d => d.id !== args.id);
+            } else {
+                this.$q.notify({ type: 'negative', message: 'Um erro ocorreu ao remover operação' });
+                console.error(args.error);
+            }
+        });
     }
 };
 </script>
