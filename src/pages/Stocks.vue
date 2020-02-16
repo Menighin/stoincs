@@ -62,15 +62,46 @@
                     option-value="name"
                     options-cover
                     style="min-width: 150px"
+                    class="q-ma-sm"
                 />
 
-                <q-btn flat icon="eva-plus-circle-outline" @click="goToViewLog(cell.row)" color="primary" />
+                <q-btn flat class="q-ma-sm" icon="eva-plus-circle-outline" @click="showCreateForm = true" color="primary" />
             </template>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
                 <q-btn flat icon="eva-trash-2-outline" @click="deleteRow(props.row)" color="primary" />
             </q-td>
         </q-table>
+
+        <q-dialog v-model="showCreateForm" persistent>
+            <q-card>
+                <q-card-section class="row items-center">
+                    <div class="q-gutter-md q-ma-md" style="width: 400px; max-width: 500px">
+                        <q-input class="q-ma-sm" filled v-model="newOperation.institution" label="Instituição" />
+                        <q-input class="q-ma-sm" filled v-model="newOperation.account" label="Conta" />
+                        <q-input class="q-ma-sm" filled v-model="newOperation.code" label="Ativo" />
+                        <q-select :options="['C', 'V']" class="q-ma-sm" filled v-model="newOperation.operation" label="Operação" />
+                        <q-input filled v-model="newOperation.date" mask="date" :rules="['date']" label="Data">
+                            <template v-slot:append>
+                                <q-icon name="event" class="cursor-pointer">
+                                    <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
+                                        <q-date v-model="newOperation.date" @input="() => $refs.qDateProxy.hide()" />
+                                    </q-popup-proxy>
+                                </q-icon>
+                            </template>
+                        </q-input>
+                        <q-input class="q-ma-sm" filled v-model="newOperation.quantity" label="Quantidade" />
+                        <q-input class="q-ma-sm" filled v-model="newOperation.price" label="Preço" />
+                        <q-input class="q-ma-sm" filled v-model="newOperation.total" label="Total" disable />
+                    </div>
+                </q-card-section>
+
+                <q-card-actions align="right">
+                    <q-btn flat label="Cancelar" color="primary" v-close-popup />
+                    <q-btn flat label="Salvar" color="primary" v-close-popup />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
     </q-page>
 </template>
 
@@ -87,6 +118,7 @@ export default {
             months: ['Todos', '08/2018', '09/2018'],
             selectedMonth: 'Todos',
             tableLoading: false,
+            showCreateForm: false,
             pagination: {
                 rowsPerPage: 25
             },
@@ -167,7 +199,9 @@ export default {
                     field: 'action',
                     required: true
                 }
-            ]
+            ],
+            newOperation: {
+            }
         };
     },
     methods: {
@@ -221,6 +255,9 @@ export default {
                     color: total > 0 ? '#21BA45' : '#C10015'
                 }
             ];
+        },
+        totalNewOperation() {
+            return this.newOperation.price * this.newOperation.quantity || 0;
         }
     },
     mounted() {
