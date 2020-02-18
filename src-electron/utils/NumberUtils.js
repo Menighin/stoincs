@@ -11,6 +11,15 @@ class NumberUtils {
         return `${currency} ${n.toLocaleString(locale, { minimumFractionDigits: 2 })}`;
     }
 
+    /**
+     * Format a currency number back to Number
+     * @param {String} n - The number with currency
+     * @returns {Number} - The number from currency
+     */
+    static getNumberFromCurrency(n) {
+        return parseFloat(n.replace(/[^0-9,]+/g, '').replace(',', '.'));
+    }
+
 }
 
 export default NumberUtils;

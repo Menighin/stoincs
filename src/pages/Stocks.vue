@@ -81,18 +81,18 @@
                         <q-input class="q-ma-sm" filled v-model="newOperation.account" label="Conta" />
                         <q-input class="q-ma-sm" filled v-model="newOperation.code" label="Ativo" />
                         <q-select :options="['C', 'V']" class="q-ma-sm" filled v-model="newOperation.operation" label="Operação" />
-                        <q-input filled v-model="newOperation.date" mask="date" :rules="['date']" label="Data">
+                        <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.date" mask="##/##/####" :rules="['date']" label="Data">
                             <template v-slot:append>
                                 <q-icon name="event" class="cursor-pointer">
                                     <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
-                                        <q-date v-model="newOperation.date" @input="() => $refs.qDateProxy.hide()" />
+                                        <q-date mask="DD/MM/YYYY" v-model="newOperation.date" @input="() => $refs.qDateProxy.hide()" />
                                     </q-popup-proxy>
                                 </q-icon>
                             </template>
                         </q-input>
                         <q-input class="q-ma-sm" filled v-model="newOperation.quantity" label="Quantidade" />
-                        <q-input class="q-ma-sm" filled v-model="newOperation.price" label="Preço" />
-                        <q-input class="q-ma-sm" filled v-model="newOperation.total" label="Total" disable />
+                        <q-input class="q-ma-sm" filled v-model="newOperation.price" label="Preço" mask="R$ #,##" reverse-fill-mask />
+                        <q-input class="q-ma-sm" filled :value="totalNewOperation" label="Total" disable />
                     </div>
                 </q-card-section>
 
@@ -257,7 +257,9 @@ export default {
             ];
         },
         totalNewOperation() {
-            return this.newOperation.price * this.newOperation.quantity || 0;
+            const price = this.newOperation.price ? NumberUtils.getNumberFromCurrency(this.newOperation.price) : 0;
+            const result = price * this.newOperation.quantity || 0;
+            return NumberUtils.formatCurrency(result);
         }
     },
     mounted() {
