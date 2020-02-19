@@ -18,4 +18,14 @@ ipcMain.on('stockHistory/delete', async (event, id) => {
     }
 });
 
+ipcMain.on('stockHistory/create', async (event, stockOperation) => {
+    try {
+        stockOperation.date = new Date(stockOperation.date);
+        const savedOperation = await stockHistoryService.createStockOperation(stockOperation);
+        event.reply('stockHistory/create', { status: 'success', operation: savedOperation });
+    } catch (e) {
+        event.reply('stockHistory/create', { status: 'error', error: e });
+    }
+});
+
 export default {};

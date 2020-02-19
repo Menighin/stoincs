@@ -12,6 +12,16 @@ class DateUtils {
             d1.getDate() === d2.getDate();
     }
 
+    /**
+     * Returns a date object from string
+     * @param {String} dateStr - Date string in format dd/MM/yyyy
+     * @returns {Date} - The date object from string
+     */
+    static fromDateStr(dateStr) {
+        const [day, month, year] = dateStr.split('/').map(c => parseInt(c));
+        return new Date(year, month - 1, day);
+    }
+
 }
 
 export default DateUtils;

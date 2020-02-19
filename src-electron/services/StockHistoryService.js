@@ -1,5 +1,6 @@
 import fs from 'fs';
 import { app } from 'electron';
+import StockUtils from '../utils/StockUtils';
 
 const FILES = {
     JOB_METADATA: 'stock_history_job',
@@ -91,6 +92,37 @@ class StockHistoryService {
         }
 
         this.saveStockHistory(stockHistory, true);
+    }
+
+    async createStockOperation(stockOperation) {
+        const stockHistory = await this.getStockHistory();
+        let found = false;
+        stockOperation.id = StockUtils.generateId(stockOperation, stockOperation.account);
+        stockOperation.source = 'Manual';
+        for (const account of stockHistory) {
+            if (account.account === stockOperation.account && account.institution === stockOperation.institution) {
+                delete stockOperation.account;
+                delete stockOperation.institution;
+                account.stockHistory.push(stockOperation);
+                found = true;
+            }
+        }
+
+        if (!found) {
+            const newAccount = {
+                account: stockOperation.account,
+                institution: stockOperation.institution
+            };
+
+            delete stockOperation.account;
+            delete stockOperation.institution;
+            newAccount.stockHistory = [stockOperation];
+            stockHistory.push(newAccount);
+        }
+
+        this.saveStockHistory(stockHistory, true);
+
+        return stockOperation;
     }
 
 }

@@ -75,31 +75,37 @@
 
         <q-dialog v-model="showCreateForm" persistent>
             <q-card>
-                <q-card-section class="row items-center">
-                    <div class="q-gutter-md q-ma-md" style="width: 400px; max-width: 500px">
-                        <q-input class="q-ma-sm" filled v-model="newOperation.institution" label="Instituição" />
-                        <q-input class="q-ma-sm" filled v-model="newOperation.account" label="Conta" />
-                        <q-input class="q-ma-sm" filled v-model="newOperation.code" label="Ativo" />
-                        <q-select :options="['C', 'V']" class="q-ma-sm" filled v-model="newOperation.operation" label="Operação" />
-                        <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.date" mask="##/##/####" :rules="['date']" label="Data">
-                            <template v-slot:append>
-                                <q-icon name="event" class="cursor-pointer">
-                                    <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
-                                        <q-date mask="DD/MM/YYYY" v-model="newOperation.date" @input="() => $refs.qDateProxy.hide()" />
-                                    </q-popup-proxy>
-                                </q-icon>
-                            </template>
-                        </q-input>
-                        <q-input class="q-ma-sm" filled v-model="newOperation.quantity" label="Quantidade" />
-                        <q-input class="q-ma-sm" filled v-model="newOperation.price" label="Preço" mask="R$ #,##" reverse-fill-mask />
-                        <q-input class="q-ma-sm" filled :value="totalNewOperation" label="Total" disable />
-                    </div>
-                </q-card-section>
+                <q-form
+                    @submit="saveOperation"
+                    class="q-gutter-md"
+                >
+                    <q-card-section class="row items-center">
+                        <div class="q-gutter-md q-ma-md" style="width: 400px; max-width: 500px">
+                            <div class="text-h5">Nova operação</div>
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.institution" label="Instituição" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.account" label="Conta" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.code" label="Ativo" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-select :options="['C', 'V']" style="padding-bottom: 0" class="q-ma-sm" filled v-model="newOperation.operation" label="Operação" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.date" mask="##/##/####" label="Data"  lazy-rules :rules="[ val => val && val.length > 0 || '']">
+                                <template v-slot:append>
+                                    <q-icon name="event" class="cursor-pointer">
+                                        <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
+                                            <q-date mask="DD/MM/YYYY" v-model="newOperation.date" @input="() => $refs.qDateProxy.hide()" />
+                                        </q-popup-proxy>
+                                    </q-icon>
+                                </template>
+                            </q-input>
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.quantity" label="Quantidade" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.price" label="Preço" mask="R$ #,##" reverse-fill-mask lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled :value="totalNewOperation" label="Total" disable />
+                        </div>
+                    </q-card-section>
 
-                <q-card-actions align="right">
-                    <q-btn flat label="Cancelar" color="primary" v-close-popup />
-                    <q-btn flat label="Salvar" color="primary" v-close-popup />
-                </q-card-actions>
+                    <q-card-actions align="right">
+                        <q-btn flat label="Cancelar" color="primary" v-close-popup />
+                        <q-btn flat label="Salvar" type="submit" color="primary" />
+                    </q-card-actions>
+                </q-form>
             </q-card>
         </q-dialog>
     </q-page>
@@ -109,6 +115,7 @@
 
 import { ipcRenderer } from 'electron';
 import NumberUtils from '../../src-electron/utils/NumberUtils';
+import DateUtils from '../../src-electron/utils/DateUtils';
 
 export default {
     name: 'PageStocks',
@@ -214,6 +221,19 @@ export default {
             }).onOk(() => {
                 ipcRenderer.send('stockHistory/delete', row.id);
             });
+        },
+        saveOperation() {
+            const a = this.newOperation;
+            const payload = {
+                ...this.newOperation,
+                totalValue: NumberUtils.getNumberFromCurrency(this.totalNewOperation),
+                date: DateUtils.fromDateStr(this.newOperation.date),
+                price: NumberUtils.getNumberFromCurrency(this.newOperation.price),
+                quantity: parseInt(this.newOperation.quantity)
+            };
+
+            ipcRenderer.send('stockHistory/create', payload);
+            this.showCreateForm = false;
         }
     },
     computed: {
@@ -295,6 +315,18 @@ export default {
                 this.dataTable = this.dataTable.filter(d => d.id !== args.id);
             } else {
                 this.$q.notify({ type: 'negative', message: 'Um erro ocorreu ao remover operação' });
+                console.error(args.error);
+            }
+        });
+
+        ipcRenderer.on('stockHistory/create', (event, args) => {
+            if (args.status === 'success') {
+                this.$q.notify({ type: 'positive', message: 'Operação adicionada com sucesso' });
+                args.operation.date = new Date(args.operation.date);
+                this.dataTable.push(args.operation);
+                debugger;
+            } else {
+                this.$q.notify({ type: 'negative', message: 'Um erro ocorreu ao adicionar operação' });
                 console.error(args.error);
             }
         });
