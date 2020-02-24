@@ -1,6 +1,6 @@
 import fs from 'fs';
-import { app } from 'electron';
 import StockUtils from '../utils/StockUtils';
+import FileSystemUtils from '../utils/FileSystemUtils';
 
 const FILES = {
     JOB_METADATA: 'stock_history_job',
@@ -9,16 +9,8 @@ const FILES = {
 
 class StockHistoryService {
 
-    async getPath() {
-        const path = `${app.getAppPath()}/data`;
-        await fs.promises.stat(path).catch(async () => {
-            await fs.promises.mkdir(path);
-        });
-        return path;
-    }
-
     async getStockHistoryJobMetadata() {
-        const rootPath = await this.getPath();
+        const rootPath = await FileSystemUtils.getDataPath();
         const path = `${rootPath}/${FILES.JOB_METADATA}`;
 
         const fileStr = (await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString();
@@ -31,7 +23,7 @@ class StockHistoryService {
     }
 
     async updateStockHistoryJobMetadata() {
-        const rootPath = await this.getPath();
+        const rootPath = await FileSystemUtils.getDataPath();
         const path = `${rootPath}/${FILES.JOB_METADATA}`;
 
         const metadata = await this.getStockHistoryJobMetadata() || {};
@@ -40,7 +32,7 @@ class StockHistoryService {
     }
 
     async saveStockHistory(stocks, overwrite = false) {
-        const rootPath = await this.getPath();
+        const rootPath = await FileSystemUtils.getDataPath();
         const path = `${rootPath}/${FILES.STOCK_HISTORY}`;
 
         if (!overwrite) {
@@ -70,7 +62,7 @@ class StockHistoryService {
     }
 
     async getStockHistory() {
-        const rootPath = await this.getPath();
+        const rootPath = await FileSystemUtils.getDataPath();
         const path = `${rootPath}/${FILES.STOCK_HISTORY}`;
 
         const stockHistory = JSON.parse((await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || '[]');

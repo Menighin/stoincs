@@ -43,10 +43,18 @@
                 </q-item>
                 <q-item clickable to="/stocks">
                     <q-item-section avatar>
-                        <q-icon name="eva-bar-chart-2-outline" />
+                        <q-icon name="eva-bar-chart" />
                     </q-item-section>
                     <q-item-section>
                         <q-item-label>Ações</q-item-label>
+                    </q-item-section>
+                </q-item>
+                <q-item clickable to="/stock-history">
+                    <q-item-section avatar>
+                        <q-icon name="eva-book-open-outline" />
+                    </q-item-section>
+                    <q-item-section>
+                        <q-item-label>Negociações</q-item-label>
                     </q-item-section>
                 </q-item>
                 <q-item clickable to="/configurations">

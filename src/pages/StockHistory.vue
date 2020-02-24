@@ -12,6 +12,23 @@
             </q-btn>
         </div>
 
+        <div class="row q-ma-sm justify-between items-center">
+            <q-card class="kpis-card q-px-lg q-py-md" flat bordered>
+                <q-card-section horizontal>
+                    <template v-for="(kpi, i) in kpis">
+
+                        <q-card-section :key="`kpi-${i}`">
+                            <div class="label">{{kpi.label}}</div>
+                            <div class="value" :style="{color: kpi.color}">{{kpi.value}}</div>
+                        </q-card-section>
+
+                        <q-separator vertical :key="`separator-${i}`" v-if="i !== kpis.length - 1" />
+
+                    </template>
+                </q-card-section>
+            </q-card>
+        </div>
+
         <q-table
             class="table-container q-mx-lg"
             table-class="stock-table"
@@ -55,6 +72,42 @@
                 <q-btn flat icon="eva-trash-2-outline" @click="deleteRow(props.row)" color="primary" />
             </q-td>
         </q-table>
+
+        <q-dialog v-model="showCreateForm" persistent>
+            <q-card>
+                <q-form
+                    @submit="saveOperation"
+                    class="q-gutter-md"
+                >
+                    <q-card-section class="row items-center">
+                        <div class="q-gutter-md q-ma-md" style="width: 400px; max-width: 500px">
+                            <div class="text-h5">Nova operação</div>
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.institution" label="Instituição" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.account" label="Conta" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.code" label="Ativo" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-select :options="['C', 'V']" style="padding-bottom: 0" class="q-ma-sm" filled v-model="newOperation.operation" label="Operação" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.date" mask="##/##/####" label="Data"  lazy-rules :rules="[ val => val && val.length > 0 || '']">
+                                <template v-slot:append>
+                                    <q-icon name="event" class="cursor-pointer">
+                                        <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
+                                            <q-date mask="DD/MM/YYYY" v-model="newOperation.date" @input="() => $refs.qDateProxy.hide()" />
+                                        </q-popup-proxy>
+                                    </q-icon>
+                                </template>
+                            </q-input>
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.quantity" label="Quantidade" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.price" label="Preço" mask="R$ #,##" reverse-fill-mask lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled :value="totalNewOperation" label="Total" disable />
+                        </div>
+                    </q-card-section>
+
+                    <q-card-actions align="right">
+                        <q-btn flat label="Cancelar" color="primary" v-close-popup />
+                        <q-btn flat label="Salvar" type="submit" color="primary" />
+                    </q-card-actions>
+                </q-form>
+            </q-card>
+        </q-dialog>
     </q-page>
 </template>
 
@@ -65,7 +118,7 @@ import NumberUtils from '../../src-electron/utils/NumberUtils';
 import DateUtils from '../../src-electron/utils/DateUtils';
 
 export default {
-    name: 'PageStocks',
+    name: 'PageStockHistory',
     data() {
         return {
             dataTable: [],
