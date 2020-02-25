@@ -28,4 +28,13 @@ ipcMain.on('stockHistory/create', async (event, stockOperation) => {
     }
 });
 
+ipcMain.on('stockHistory/refresh', async (event, arg) => {
+    try {
+        await stockHistoryService.refreshHistory();
+        event.reply('stockHistory/refresh', { status: 'success' });
+    } catch (e) {
+        event.reply('stockHistory/refresh', { status: 'error', error: e });
+    }
+});
+
 export default {};

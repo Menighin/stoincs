@@ -31,7 +31,7 @@ class UpdateStockHistoryJob {
         const jobMetadata = await this._stockHistoryService.getStockHistoryJobMetadata();
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
-        const ceiCrawler = new CeiCrawler(user, password, { puppeteerLaunch: { headless: true } });
+        const ceiCrawler = new CeiCrawler(user, password, { puppeteerLaunch: { headless: true }, capStartDate: true, capEndDate: true });
 
         let stocksByAccount = null;
         if (jobMetadata === null) {

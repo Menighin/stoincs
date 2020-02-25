@@ -10,7 +10,7 @@ class StockUtils {
      */
     static generateId(stockOperation, accountNumber) {
         return `${accountNumber}_${stockOperation.date.getDate()}${stockOperation.date.getMonth()}${stockOperation.date.getFullYear()}_` +
-        `${stockOperation.operation}_${stockOperation.code}_${stockOperation.totalValue}`;
+        `${stockOperation.operation}_${stockOperation.code}_${stockOperation.totalValue}_${stockOperation.source}`;
     }
 
 }

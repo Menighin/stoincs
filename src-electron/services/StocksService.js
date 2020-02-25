@@ -8,6 +8,8 @@ const FILES = {
 
 class StocksService {
 
+
+    
 }
 
 export default StocksService;

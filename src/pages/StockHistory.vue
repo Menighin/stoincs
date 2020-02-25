@@ -1,7 +1,7 @@
 <template>
     <q-page class="">
         <div class="filter">
-            <q-btn outline color="primary" :label="selectedMonth" class="q-ma-lg" icon="eva-calendar-outline">
+            <q-btn outline color="primary" :label="selectedMonth" class="q-my-lg" icon="eva-calendar-outline">
                 <q-menu fit>
                     <q-list style="min-width: 100px">
                         <q-item @click="selectedMonth = month" clickable v-close-popup v-for="(month, i) in months" :key="`month-${i}`">
@@ -10,6 +10,7 @@
                     </q-list>
                 </q-menu>
             </q-btn>
+            <q-btn outline color="primary" label="Refresh" class="q-mx-sm" icon="eva-refresh" @click="refreshHistory"/>
         </div>
 
         <div class="row q-ma-sm justify-between items-center">
@@ -214,8 +215,8 @@ export default {
     methods: {
         deleteRow(row) {
             this.$q.dialog({
-                title: 'Confirm',
-                message: 'Would you like to turn on the wifi?',
+                title: 'Confirmação',
+                message: 'Tem certeza que deseja remover esta operação?',
                 cancel: true,
                 persistent: true
             }).onOk(() => {
@@ -234,6 +235,16 @@ export default {
 
             ipcRenderer.send('stockHistory/create', payload);
             this.showCreateForm = false;
+        },
+        refreshHistory() {
+            this.$q.dialog({
+                title: 'Confirmação',
+                message: 'Essa ação irá remover todo o histórico do CEI e importá-lo novamente do site. Tem certeza que deseja continuar?',
+                cancel: true,
+                persistent: true
+            }).onOk(() => {
+                ipcRenderer.send('stockHistory/refresh');
+            });
         }
     },
     computed: {
@@ -324,9 +335,18 @@ export default {
                 this.$q.notify({ type: 'positive', message: 'Operação adicionada com sucesso' });
                 args.operation.date = new Date(args.operation.date);
                 this.dataTable.push(args.operation);
-                debugger;
             } else {
-                this.$q.notify({ type: 'negative', message: 'Um erro ocorreu ao adicionar operação' });
+                this.$q.notify({ type: 'negative', message: args.error.message });
+                console.error(args.error);
+            }
+        });
+
+        ipcRenderer.on('stockHistory/refresh', (event, args) => {
+            if (args.status === 'success') {
+                this.$q.notify({ type: 'positive', message: 'Histórico limpo. Buscando dados novamente...' });
+                ipcRenderer.send('stockHistory/get');
+            } else {
+                this.$q.notify({ type: 'negative', message: args.error.message });
                 console.error(args.error);
             }
         });

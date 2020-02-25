@@ -1,6 +1,7 @@
 import fs from 'fs';
 import StockUtils from '../utils/StockUtils';
 import FileSystemUtils from '../utils/FileSystemUtils';
+import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
 
 const FILES = {
     JOB_METADATA: 'stock_history_job',
@@ -22,12 +23,12 @@ class StockHistoryService {
         return result;
     }
 
-    async updateStockHistoryJobMetadata() {
+    async updateStockHistoryJobMetadata(lastRun = undefined) {
         const rootPath = await FileSystemUtils.getDataPath();
         const path = `${rootPath}/${FILES.JOB_METADATA}`;
 
         const metadata = await this.getStockHistoryJobMetadata() || {};
-        metadata.lastRun = new Date();
+        metadata.lastRun = typeof lastRun === 'undefined' ? new Date() : lastRun;
         await fs.promises.writeFile(path, JSON.stringify(metadata));
     }
 
@@ -93,6 +94,12 @@ class StockHistoryService {
         stockOperation.source = 'Manual';
         for (const account of stockHistory) {
             if (account.account === stockOperation.account && account.institution === stockOperation.institution) {
+
+                for (const s of account.stockHistory) {
+                    if (s.id === stockOperation.id)
+                        throw new Exception('Operação já existente');
+                }
+
                 delete stockOperation.account;
                 delete stockOperation.institution;
                 account.stockHistory.push(stockOperation);
@@ -115,6 +122,19 @@ class StockHistoryService {
         this.saveStockHistory(stockHistory, true);
 
         return stockOperation;
+    }
+
+    async refreshHistory() {
+        await this.updateStockHistoryJobMetadata(null);
+
+        // Clearing history
+        const stockHistory = await this.getStockHistory();
+        stockHistory.forEach(acc => {
+            acc.stockHistory = acc.stockHistory.filter(o => o.source && o.source != 'CEI');
+        });
+        await this.saveStockHistory(stockHistory, true);
+
+        new UpdateStockHistoryJob().run();
     }
 
 }
