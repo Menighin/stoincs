@@ -41,12 +41,12 @@
                         <q-item-label>Inicio</q-item-label>
                     </q-item-section>
                 </q-item>
-                <q-item clickable to="/stocks">
+                <q-item clickable to="/wallet">
                     <q-item-section avatar>
                         <q-icon name="eva-bar-chart" />
                     </q-item-section>
                     <q-item-section>
-                        <q-item-label>Ações</q-item-label>
+                        <q-item-label>Carteira</q-item-label>
                     </q-item-section>
                 </q-item>
                 <q-item clickable to="/stock-history">

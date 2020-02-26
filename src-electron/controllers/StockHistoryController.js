@@ -3,37 +3,44 @@ import StockHistoryService from '../services/StockHistoryService';
 
 const stockHistoryService = new StockHistoryService();
 
-ipcMain.on('stockHistory/get', async (event, arg) => {
+const METHODS = {
+    GET: 'stockHistory/get',
+    DELETE: 'stockHistory/delete',
+    CREATE: 'stockHistory/create',
+    REFRESH: 'stockHistory/refresh'
+};
+
+ipcMain.on(METHODS.GET, async (event, arg) => {
     const stockHistory = await stockHistoryService.getStockHistory();
 
-    event.reply('stockHistory/get', stockHistory);
+    event.reply(METHODS.GET, stockHistory);
 });
 
-ipcMain.on('stockHistory/delete', async (event, id) => {
+ipcMain.on(METHODS.DELETE, async (event, id) => {
     try {
         stockHistoryService.deleteStockOperation(id);
-        event.reply('stockHistory/delete', { status: 'success', id: id });
+        event.reply(METHODS.DELETE, { status: 'success', id: id });
     } catch (e) {
-        event.reply('stockHistory/delete', { status: 'error', error: e });
+        event.reply(METHODS.DELETE, { status: 'error', error: e });
     }
 });
 
-ipcMain.on('stockHistory/create', async (event, stockOperation) => {
+ipcMain.on(METHODS.CREATE, async (event, stockOperation) => {
     try {
         stockOperation.date = new Date(stockOperation.date);
         const savedOperation = await stockHistoryService.createStockOperation(stockOperation);
-        event.reply('stockHistory/create', { status: 'success', operation: savedOperation });
+        event.reply(METHODS.CREATE, { status: 'success', operation: savedOperation });
     } catch (e) {
-        event.reply('stockHistory/create', { status: 'error', error: e });
+        event.reply(METHODS.CREATE, { status: 'error', error: e });
     }
 });
 
-ipcMain.on('stockHistory/refresh', async (event, arg) => {
+ipcMain.on(METHODS.REFRESH, async (event, arg) => {
     try {
         await stockHistoryService.refreshHistory();
-        event.reply('stockHistory/refresh', { status: 'success' });
+        event.reply(METHODS.REFRESH, { status: 'success' });
     } catch (e) {
-        event.reply('stockHistory/refresh', { status: 'error', error: e });
+        event.reply(METHODS.REFRESH, { status: 'error', error: e });
     }
 });
 

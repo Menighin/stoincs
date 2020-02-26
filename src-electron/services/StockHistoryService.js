@@ -38,7 +38,7 @@ class StockHistoryService {
 
         if (!overwrite) {
             // Reading data
-            const stockHistory = JSON.parse((await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || '[]');
+            const stockHistory = await this.getStockHistory();
 
             // Merging / appending data
             for (const newStock of stocks) {
