@@ -1,7 +1,8 @@
 import fs from 'fs';
 import StockHistoryService from './StockHistoryService';
+import AlphaVantageService from './AlphaVantageService';
 import FileSystemUtils from '../utils/FileSystemUtils';
-// ZF71QL893E5Z2X0A
+
 const FILES = {
     STOCKS_WALLET: 'wallet'
 };
@@ -11,6 +12,7 @@ class WalletService {
 
     constructor() {
         this.stockHistoryService = new StockHistoryService();
+        this.alphaVantageService = new AlphaVantageService();
     }
 
     async getWallet() {
@@ -41,6 +43,10 @@ class WalletService {
                         quantitySold: 0,
                         valueBought: 0,
                         valueSold: 0,
+                        price: 0,
+                        changePrice: 0,
+                        changePercent: 0,
+                        lastTradingDay: null,
                         source: 'CEI'
                     };
                 }
@@ -72,6 +78,30 @@ class WalletService {
                 oldWallet.push(w);
             await fs.promises.writeFile(path, JSON.stringify(oldWallet));
         }
+    }
+
+    async updateLastValues(stocks) {
+        const promises = stocks.map(s => this.alphaVantageService.getLastValue(s));
+
+        const results = (await Promise.all(promises)).filter(o => o !== null);
+
+        const wallet = await this.getWallet();
+
+        for (const r of results) {
+            for (const w of wallet) {
+                if (r.code === w.code) {
+                    w.price = r.price;
+                    w.changePrice = r.changePrice;
+                    w.changePercent = r.changePercent;
+                    w.lastTradingDay = r.lastTradingDay;
+                    break;
+                }
+            }
+        }
+
+        await this.saveWallet(wallet, true);
+
+        return results;
     }
     
 }

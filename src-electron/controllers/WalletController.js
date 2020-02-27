@@ -5,7 +5,8 @@ const walletService = new WalletService();
 
 const METHODS = {
     GET_WALLET: 'wallet/get',
-    REFRESH_FROM_HISTORY: 'wallet/refresh-from-history'
+    REFRESH_FROM_HISTORY: 'wallet/refresh-from-history',
+    UPDATE_LAST_VALUE: 'wallet/update-last-value'
 };
 
 ipcMain.on(METHODS.GET_WALLET, async (event, arg) => {
@@ -14,7 +15,7 @@ ipcMain.on(METHODS.GET_WALLET, async (event, arg) => {
     try {
         event.reply(METHODS.GET_WALLET, { status: 'success', data: wallet });
     } catch (e) {
-        event.reply(METHODS.GET_WALLET, { status: 'error', error: e });
+        event.reply(METHODS.GET_WALLET, { status: 'error', message: e.message });
     }
 });
 
@@ -23,7 +24,16 @@ ipcMain.on(METHODS.REFRESH_FROM_HISTORY, async (event, arg) => {
         await walletService.refreshWalletFromHistory();
         event.reply(METHODS.REFRESH_FROM_HISTORY, { status: 'success' });
     } catch (e) {
-        event.reply(METHODS.REFRESH_FROM_HISTORY, { status: 'error', error: e });
+        event.reply(METHODS.REFRESH_FROM_HISTORY, { status: 'error', message: e.message });
+    }
+});
+
+ipcMain.on(METHODS.UPDATE_LAST_VALUE, async (event, arg) => {
+    try {
+        const lastValues = await walletService.updateLastValues(arg.stocks);
+        event.reply(METHODS.UPDATE_LAST_VALUE, { status: 'success', data: lastValues });
+    } catch(e) {
+        event.reply(METHODS.UPDATE_LAST_VALUE, { status: 'error', message: e.message });
     }
 });
 

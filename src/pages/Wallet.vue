@@ -66,7 +66,7 @@ export default {
             pagination: {
                 rowsPerPage: 50
             },
-            visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'valueSold', 'lastValue', 'totalValue', 'source' ],
+            visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'valueSold', 'price', 'totalValue', 'source' ],
             columns: [
                 {
                     name: 'code',
@@ -113,10 +113,10 @@ export default {
                     format: val => NumberUtils.formatCurrency(val)
                 },
                 {
-                    name: 'lastValue',
+                    name: 'price',
                     align: 'right',
                     label: 'Último Valor',
-                    field: 'lastValue',
+                    field: 'price',
                     sortable: true,
                     format: val => NumberUtils.formatCurrency(val)
                 },
@@ -159,6 +159,9 @@ export default {
         },
         init() {
             ipcRenderer.send('wallet/get');
+            setTimeout(() => {
+                ipcRenderer.send('wallet/update-last-value', { stocks: this.data.slice(0, 2).map(o => o.code) });
+            }, 2000);
         }
     },
     computed: {
@@ -172,7 +175,7 @@ export default {
                         quantityBalance: Math.max(d.quantityBought - d.quantitySold, 0),
                         valueBought: d.valueBought,
                         valueSold: d.valueSold,
-                        lastValue: 0,
+                        price: 0,
                         totalValue: 0,
                         source: d.source
                     };
@@ -197,6 +200,21 @@ export default {
             } else {
                 this.$q.notify({ type: 'negative', message: `Error pegar carteira do seu histórico: ${response.error.message}` });
                 console.error(response.error);
+            }
+        });
+
+        ipcRenderer.on('wallet/update-last-value', (event, response) => {
+            console.log(response)
+            for (const r in response.data) {
+                for (const d in this.data) {
+                    if (r.code === d.code) {
+                        d.price = r.price;
+                        d.changePrice = r.changePrice;
+                        d.changePercent = r.changePercent;
+                        d.lastTradingDay = r.lastTradingDay;
+                        break;
+                    }
+                }
             }
         });
 
