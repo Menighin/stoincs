@@ -2,6 +2,7 @@
     <q-page class="">
         <div class="filter">
             <q-btn outline color="primary" label="Baixar do Histórico" class="q-mx-sm q-my-lg" icon="eva-cloud-download-outline" @click="downloadFromHistory"/>
+            <q-btn outline color="primary" class="q-mx-sm q-my-lg" icon="eva-settings-2-outline" @click="configDialog = true"/>
         </div>
 
         <q-table
@@ -47,6 +48,31 @@
                 <q-btn flat icon="eva-trash-2-outline" @click="deleteRow(props.row)" color="primary" />
             </q-td>
         </q-table>
+
+        <q-dialog v-model="configDialog">
+            <q-card>
+                <q-card-section>
+                    <div class="text-h6">Configurações</div>
+                </q-card-section>
+
+                <q-separator />
+
+                <q-card-section style="max-height: 50vh" class="scroll">
+
+                    <q-item-label header>Quais ações devem ter o valor atualizado?</q-item-label>
+                    <q-radio v-model="configuration.which" val="all" label="Todas" />
+                    <q-radio v-model="configuration.which" val="balance" label="As que possuem saldo" />
+
+                </q-card-section>
+
+                <q-separator />
+
+                <q-card-actions align="right">
+                    <q-btn flat label="Decline" color="primary" v-close-popup />
+                    <q-btn flat label="Accept" color="primary" v-close-popup />
+                </q-card-actions>
+            </q-card>
+        </q-dialog>
     </q-page>
 </template>
 
@@ -61,8 +87,12 @@ export default {
     data() {
         return {
             data: [],
+            configuration: {
+                which: 'all'
+            },
             tableLoading: false,
             showCreateForm: false,
+            configDialog: false,
             pagination: {
                 rowsPerPage: 50
             },
@@ -175,7 +205,7 @@ export default {
                         quantityBalance: Math.max(d.quantityBought - d.quantitySold, 0),
                         valueBought: d.valueBought,
                         valueSold: d.valueSold,
-                        price: 0,
+                        price: d.price,
                         totalValue: 0,
                         source: d.source
                     };
@@ -204,9 +234,8 @@ export default {
         });
 
         ipcRenderer.on('wallet/update-last-value', (event, response) => {
-            console.log(response)
-            for (const r in response.data) {
-                for (const d in this.data) {
+            for (const r of response.data) {
+                for (const d of this.data) {
                     if (r.code === d.code) {
                         d.price = r.price;
                         d.changePrice = r.changePrice;
