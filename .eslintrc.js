@@ -55,6 +55,7 @@ module.exports = {
     'padded-blocks': ['error', { blocks: 'never', classes: 'always', switches: 'never' }],
     'no-unused-vars': ['off', { vars: 'local', args: 'after-used', ignoreRestSiblings: false }],
     'no-labels': 'off',
+    'curly': 'off',
 
     // allow debugger during development only
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'

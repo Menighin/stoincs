@@ -50,31 +50,33 @@
         </q-table>
 
         <q-dialog v-model="configDialog">
-            <q-card class="q-pb-lg q-pl-md q-pr-md">
+            <q-card class="q-pb-lg" style="min-width: 550px">
                 <q-card-section class="row q-ma-sm justify-between items-center">
                     <div class="text-h6">Configurações</div>
                     <q-icon name="help" class="cursor-pointer" size="24px" color="info">
                         <q-menu anchor="top right" self="bottom right" content-class="q-pa-sm">
-                            Usuário e senha do CEI utilizados para processar suas informações.
+                            A API grátis da Alpha Vantage é limitada a 5 requisições por minuto e 500 requisições diárias.<br />
+                            Caso esteja usando uma chave grátis da API, tenha cuidado para não ficar sem requisições. <br />
+                            O quadro de resumo te auxilia a encontrar os melhores parametros para utilizar a atualização automatica dos valores.
                         </q-menu>
                     </q-icon>
                 </q-card-section>
 
                 <q-separator />
 
-                <q-card-section style="max-height: 50vh" class="scroll">
+                <q-card-section style="max-height: 80vh" class="scroll">
 
                     <q-card-section>
                         <q-item-label header>Quais ações devem ter o valor atualizado?</q-item-label>
-                        <q-radio v-model="configuration.which" val="all" label="Todas" />
-                        <q-radio v-model="configuration.which" val="balance" label="As que possuem saldo" />
-                        <q-radio v-model="configuration.which" val="none" label="Nenhuma" />
+                        <q-radio @input="saveConfig" v-model="configuration.which" val="all" label="Todas" />
+                        <q-radio @input="saveConfig" v-model="configuration.which" val="balance" label="As que possuem saldo" />
+                        <q-radio @input="saveConfig" v-model="configuration.which" val="none" label="Nenhuma" />
 
                         <q-item-label header>Quantas ações devem ser atualizadas por tick?</q-item-label>
-                        <q-input v-model="configuration.many" type="number" filled/>
+                        <q-input @change="saveConfig" v-model="configuration.many" type="number" filled/>
 
                         <q-item-label header>Qual o intervalo, em minutos, entre cada tick?</q-item-label>
-                        <q-input v-model="configuration.when" type="number" filled/>
+                        <q-input @change="saveConfig" v-model="configuration.when" type="number" filled/>
                     </q-card-section>
 
                     <q-separator />
@@ -82,7 +84,7 @@
                     <q-card-section>
 
                         <q-item-label header>Resumo</q-item-label>
-                        {{ configSummary }}
+                        <p v-for="(p, i) in configSummary" :key="`p-${i}`" v-html="p" />
 
                     </q-card-section>
 
@@ -206,8 +208,15 @@ export default {
                 ipcRenderer.send('wallet/refresh-from-history');
             });
         },
+        saveConfig() {
+            localStorage.setItem('wallet/config', JSON.stringify(this.configuration));
+        },
         init() {
             ipcRenderer.send('wallet/get');
+            const config = localStorage.getItem('wallet/config');
+            if (config) {
+                this.configuration = JSON.parse(config);
+            }
             setTimeout(() => {
                 ipcRenderer.send('wallet/update-last-value', { stocks: this.data.slice(0, 2).map(o => o.code) });
             }, 2000);
@@ -233,7 +242,7 @@ export default {
         },
         configSummary() {
             if (this.configuration.which === 'none') {
-                return 'Nenhum valor de ação será atualizado automaticamente';
+                return ['Nenhum valor de ação será atualizado automaticamente'];
             }
 
             let many = this.dataTable.length;
@@ -242,12 +251,15 @@ export default {
             }
 
             const interval = (Math.max(1, many / this.configuration.many) * this.configuration.when).toFixed(2);
+            const ticksPerHour = 60 / this.configuration.when;
+            const updatesPerHour = parseInt(Math.ceil(ticksPerHour * Math.min(this.configuration.many, many)));
 
-            let msg = `${many} ações serão atualizadas.`;
-            msg += `A cada ${this.configuration.when} minuto(s), ${this.configuration.many} ações serão atualizadas.`;
-            msg += `Isso significa que uma mesma ação será atualizada a cada ${interval} minutos.`;
+            const msgs = [`<strong>${many}</strong> ações serão atualizadas.`];
+            msgs.push(`A cada <strong>${NumberUtils.getFormatedHoursFromMinutes(this.configuration.when)}</strong>, <strong>${this.configuration.many}</strong> ações serão atualizadas.`);
+            msgs.push(`Isso significa que uma mesma ação será atualizada a cada <strong>${NumberUtils.getFormatedHoursFromMinutes(interval)}</strong>.`);
+            msgs.push(`Serão <strong>${updatesPerHour}</strong> atualizações por hora, totalizando <strong>${updatesPerHour * 24}</strong> atualizações por dia.`);
 
-            return msg;
+            return msgs;
         }
     },
     mounted() {
