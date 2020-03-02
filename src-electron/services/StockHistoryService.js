@@ -97,7 +97,7 @@ class StockHistoryService {
 
                 for (const s of account.stockHistory) {
                     if (s.id === stockOperation.id)
-                        throw new Exception('Operação já existente');
+                        throw new Error('Operação já existente');
                 }
 
                 delete stockOperation.account;

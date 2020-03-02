@@ -106,6 +106,7 @@ export default {
     data() {
         return {
             data: [],
+            loadingStocks: new Set(),
             configuration: {
                 which: 'all',
                 many: 5,
@@ -218,8 +219,18 @@ export default {
                 this.configuration = JSON.parse(config);
             }
             setTimeout(() => {
-                ipcRenderer.send('wallet/update-last-value', { stocks: this.data.slice(0, 2).map(o => o.code) });
+                this.loadingStocks.clear();
+                const stocks = this.data.slice(0, 2).map(o => o.code);
+
+                for (const s of stocks) {
+                    this.loadingStocks.add(s);
+                }
+
+                ipcRenderer.send('wallet/update-last-value', { stocks: stocks });
             }, 2000);
+        },
+        getStockValue(stock) {
+
         }
     },
     computed: {
