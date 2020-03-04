@@ -44,6 +44,12 @@
                 <q-btn flat class="q-ma-sm" icon="eva-plus-circle-outline" @click="showCreateForm = true" color="primary" />
             </template>
 
+            <q-td auto-width slot="body-cell-price" slot-scope="props" :props="props">
+                {{loadingStocks.has(props.row.code)}}
+                <q-spinner v-if="loadingStocks.has(props.row.code)" color="primary" size="12px" />
+                <div style="display: inline; vertical-align: middle" class="q-pl-sm" :class="{'updating-price': loadingStocks.has(props.row.code)}">{{ NumberUtils.formatCurrency(props.row.price) }}</div>
+            </q-td>
+
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
                 <q-btn flat icon="eva-trash-2-outline" @click="deleteRow(props.row)" color="primary" />
             </q-td>
@@ -195,7 +201,11 @@ export default {
                 }
             ],
             newOperation: {
-            }
+            },
+            NumberUtils: NumberUtils,
+            updatePricesInterval: null,
+            shouldUpdateInterval: false,
+            updateSlice: []
         };
     },
     methods: {
@@ -211,26 +221,53 @@ export default {
         },
         saveConfig() {
             localStorage.setItem('wallet/config', JSON.stringify(this.configuration));
+            this.refreshAutoUpdate(true);
         },
         init() {
             ipcRenderer.send('wallet/get');
             const config = localStorage.getItem('wallet/config');
-            if (config) {
+            if (config)
                 this.configuration = JSON.parse(config);
-            }
-            setTimeout(() => {
-                this.loadingStocks.clear();
-                const stocks = this.data.slice(0, 2).map(o => o.code);
-
-                for (const s of stocks) {
-                    this.loadingStocks.add(s);
-                }
-
-                ipcRenderer.send('wallet/update-last-value', { stocks: stocks });
-            }, 2000);
         },
-        getStockValue(stock) {
+        refreshAutoUpdate(force = false) {
+            if (!(force || this.shouldUpdateInterval)) return;
 
+            if (this.updatePricesInterval !== null)
+                clearInterval(this.updatePricesInterval);
+
+            if (this.configuration.which === 'none') return;
+
+            if (this.loadingStocks.size === 0) {
+                this.updatePricesInterval = setInterval(() => {
+                    this.loadingStocks.clear();
+
+                    const stocksToUpdate = this.configuration.which === 'all'
+                        ? this.dataTable
+                        : this.dataTable.filter(o => o.quantityBalance > 0);
+
+                    const totalToUpdate = stocksToUpdate.length;
+
+                    if (this.updateSlice.length === 0 || this.updateSlice[1] === totalToUpdate) {
+                        this.updateSlice = [0, this.configuration.many];
+                    } else {
+                        this.updateSlice[0] = this.updateSlice[1];
+                        this.updateSlice[1] = Math.min(this.updateSlice[1] + this.configuration.many, totalToUpdate);
+                    }
+
+                    const stocks = this.data.slice(this.updateSlice[0], this.updateSlice[1]).map(o => o.code);
+
+                    console.log(`Stocks: ${stocks.join(' - ')}`);
+
+                    for (const s of stocks) {
+                        this.loadingStocks.add(s);
+                    }
+
+                    // ipcRenderer.send('wallet/update-last-value', { stocks: stocks });
+                }, 1000); // this.configuration.when * 1000);
+                this.shouldUpdateInterval = false;
+            } else {
+                this.shouldUpdateInterval = true;
+            }
         }
     },
     computed: {
@@ -305,9 +342,11 @@ export default {
                     }
                 }
             }
+            this.refreshAutoUpdate();
         });
 
         this.init();
+        this.refreshAutoUpdate(true);
     }
 };
 </script>
@@ -339,6 +378,10 @@ export default {
                 tbody {
                     tr:nth-child(odd) {
                         background: #f7f7f7;
+                    }
+
+                    .updating-price {
+                        color: #aaa;
                     }
                 }
             }
