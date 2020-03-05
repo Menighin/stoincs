@@ -32,7 +32,7 @@ ipcMain.on(METHODS.UPDATE_LAST_VALUE, async (event, arg) => {
     try {
         const lastValues = await walletService.updateLastValues(arg.stocks);
         event.reply(METHODS.UPDATE_LAST_VALUE, { status: 'success', data: lastValues });
-    } catch(e) {
+    } catch (e) {
         event.reply(METHODS.UPDATE_LAST_VALUE, { status: 'error', message: e.message });
     }
 });

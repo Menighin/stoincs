@@ -20,7 +20,7 @@ class AlphaVantageService {
 
     async getLastValue(code) {
         const key = await this.getKey();
-
+        console.log(`Getting price for ${code}`)
         const res = await axios.get('https://www.alphavantage.co/query', {
             params: {
                 function: ALPHA_VANTAGE_FUNCTIONS.GLOBAL_QUOTE,
@@ -29,6 +29,7 @@ class AlphaVantageService {
             }
         });
 
+        console.log(`Response for ${code} is ${JSON.stringify(res.data)}`);
         if (!('Global Quote' in res.data)) return null;
 
         const globalQuote = res.data['Global Quote'];

@@ -1,7 +1,7 @@
 <template>
     <q-page class="">
         <div class="filter">
-            <q-btn outline color="primary" label="Baixar do Histórico" class="q-mx-sm q-my-lg" icon="eva-cloud-download-outline" @click="downloadFromHistory"/>
+            <q-btn outline color="primary" label="Sincronizar com Histórico" class="q-mx-sm q-my-lg" icon="eva-sync-outline" @click="downloadFromHistory"/>
             <q-btn outline color="primary" class="q-mx-sm q-my-lg" icon="eva-settings-2-outline" @click="configDialog = true"/>
         </div>
 
@@ -9,7 +9,7 @@
             class="table-container q-mx-lg"
             table-class="stock-table"
             title="Carteira de ações"
-            :data="dataTable"
+            :data="filteredDataTable"
             :columns="columns"
             row-key="row => row.code"
             flat
@@ -24,6 +24,8 @@
                 <h5 style="margin: 0">Carteira de Ações</h5>
 
                 <q-space />
+
+                <q-checkbox v-model="withBalanceOnly" label="Somente ações com saldo" />
 
                 <q-select
                     v-model="visibleColumns"
@@ -45,9 +47,12 @@
             </template>
 
             <q-td auto-width slot="body-cell-price" slot-scope="props" :props="props">
-                {{loadingStocks.has(props.row.code)}}
-                <q-spinner v-if="loadingStocks.has(props.row.code)" color="primary" size="12px" />
-                <div style="display: inline; vertical-align: middle" class="q-pl-sm" :class="{'updating-price': loadingStocks.has(props.row.code)}">{{ NumberUtils.formatCurrency(props.row.price) }}</div>
+                <q-spinner v-if="true || props.row.code in loadingStocks" color="primary" size="12px" />
+                <div style="display: inline-block; vertical-align: middle" class="q-pl-sm" :class="{'updating-price': props.row.code in loadingStocks}">{{ NumberUtils.formatCurrency(props.row.price) }}</div>
+                <div style="display: inline-block; vertical-align: middle; font-size: 10px">
+                    <div>{{ props.row.changePrice }}</div>
+                    <div>{{ props.row.changePercent }}</div>
+                </div>
             </q-td>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
@@ -112,7 +117,7 @@ export default {
     data() {
         return {
             data: [],
-            loadingStocks: new Set(),
+            loadingStocks: {},
             configuration: {
                 which: 'all',
                 many: 5,
@@ -205,7 +210,9 @@ export default {
             NumberUtils: NumberUtils,
             updatePricesInterval: null,
             shouldUpdateInterval: false,
-            updateSlice: []
+            updateSlice: [],
+            withBalanceOnly: true,
+            firstLoad: false
         };
     },
     methods: {
@@ -237,9 +244,9 @@ export default {
 
             if (this.configuration.which === 'none') return;
 
-            if (this.loadingStocks.size === 0) {
-                this.updatePricesInterval = setInterval(() => {
-                    this.loadingStocks.clear();
+            if (Object.keys(this.loadingStocks).length === 0) {
+                const intervalFunction = () => {
+                    this.loadingStocks = {};
 
                     const stocksToUpdate = this.configuration.which === 'all'
                         ? this.dataTable
@@ -254,16 +261,17 @@ export default {
                         this.updateSlice[1] = Math.min(this.updateSlice[1] + this.configuration.many, totalToUpdate);
                     }
 
-                    const stocks = this.data.slice(this.updateSlice[0], this.updateSlice[1]).map(o => o.code);
-
-                    console.log(`Stocks: ${stocks.join(' - ')}`);
+                    const stocks = stocksToUpdate.slice(this.updateSlice[0], this.updateSlice[1]).map(o => o.code);
 
                     for (const s of stocks) {
-                        this.loadingStocks.add(s);
+                        this.loadingStocks[s] = 1;
                     }
 
-                    // ipcRenderer.send('wallet/update-last-value', { stocks: stocks });
-                }, 1000); // this.configuration.when * 1000);
+                    ipcRenderer.send('wallet/update-last-value', { stocks: stocks });
+                };
+
+                intervalFunction();
+                this.updatePricesInterval = setInterval(intervalFunction, this.configuration.when * 1000 * 60);
                 this.shouldUpdateInterval = false;
             } else {
                 this.shouldUpdateInterval = true;
@@ -282,11 +290,20 @@ export default {
                         valueBought: d.valueBought,
                         valueSold: d.valueSold,
                         price: d.price,
+                        changePrice: d.changePrice,
+                        changePercent: d.changePercent,
+                        lastTradingDay: d.lastTradingDay,
                         totalValue: 0,
                         source: d.source
                     };
                 })
                 .sort((a, b) => a.code < b.code ? -1 : (a.code > b.code ? 1 : 0));
+        },
+        filteredDataTable() {
+            if (this.withBalanceOnly)
+                return this.dataTable.filter(o => o.quantityBalance > 0);
+            else
+                return this.dataTable;
         },
         configSummary() {
             if (this.configuration.which === 'none') {
@@ -318,6 +335,11 @@ export default {
                 this.$q.notify({ type: 'negative', message: `Error ao ler sua carteira: ${response.error.message}` });
                 console.error(response.error);
             }
+
+            if (!this.firstLoad)
+                this.refreshAutoUpdate(true);
+
+            this.firstLoad = true;
         });
 
         ipcRenderer.on('wallet/refresh-from-history', (event, response) => {
@@ -331,6 +353,7 @@ export default {
         });
 
         ipcRenderer.on('wallet/update-last-value', (event, response) => {
+            this.loadingStocks = {};
             for (const r of response.data) {
                 for (const d of this.data) {
                     if (r.code === d.code) {
@@ -346,7 +369,9 @@ export default {
         });
 
         this.init();
-        this.refreshAutoUpdate(true);
+    },
+    beforeDestroy() {
+        clearInterval(this.updatePricesInterval);
     }
 };
 </script>
@@ -360,7 +385,7 @@ export default {
     .table-container {
 
         .q-table__middle {
-            max-height: 500px;
+            max-height: 700px;
         }
 
         thead tr th {
