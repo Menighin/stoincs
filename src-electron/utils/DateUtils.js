@@ -22,6 +22,25 @@ class DateUtils {
         return new Date(year, month - 1, day);
     }
 
+    /**
+     * Format the date to the given format
+     * @param {Date} date - Date to be formated
+     * @param {boolean} [showDate=true] - Whether it should print the date
+     * @param {boolean} [showTime =true] - Whether it should print the time
+     * @return {String} - The formatted date
+     */
+    static toString(date, showDate = true, showTime = true) {
+        const dateStr = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+        const timeStr = `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+
+        if (showDate && showTime)
+            return `${dateStr} ${timeStr}`;
+        if (showDate)
+            return dateStr;
+        if (showTime)
+            return timeStr;
+    }
+
 }
 
 export default DateUtils;

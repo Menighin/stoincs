@@ -7,8 +7,22 @@ class NumberUtils {
      * @param {String} [locale=pt-BR] - Locale to be formated
      * @returns {String} - Formated number
      */
-    static formatCurrency(n, currency = 'R$', locale = 'pt-BR') {
-        return `${currency} ${n.toLocaleString(locale, { minimumFractionDigits: 2 })}`;
+    static formatCurrency(n, showSign = false, currency = 'R$', locale = 'pt-BR') {
+        if (!showSign)
+            return `${currency} ${n.toLocaleString(locale, { minimumFractionDigits: 2 })}`;
+        const sign = n < 0 ? '-' : '+';
+        return `${currency} ${sign}${n.toLocaleString(locale, { minimumFractionDigits: 2 })}`;
+    }
+
+    /**
+     * Returns the number formated as percentage
+     * @param {Number} n - Number to be formated
+     * @param {String} [locale=pt-BR] - Locale to be formated
+     * @returns {String} - Formated number
+     */
+    static formatPercentage(n, locale = 'pt-BR') {
+        const sign = n < 0 ? '-' : '+';
+        return `${sign}${n.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
     }
 
     /**

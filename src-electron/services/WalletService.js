@@ -7,7 +7,6 @@ const FILES = {
     STOCKS_WALLET: 'wallet'
 };
 
-
 class WalletService {
 
     constructor() {
@@ -30,7 +29,6 @@ class WalletService {
         const dataByStock = {};
         for (const acc of stockHistory) {
             for (const stockOperation of acc.stockHistory) {
-                
                 // If it is a Fracionary stock, trimm the last 'F'
                 let code = stockOperation.code;
                 if (code.match(/\dF$/) != null)
@@ -47,6 +45,7 @@ class WalletService {
                         changePrice: 0,
                         changePercent: 0,
                         lastTradingDay: null,
+                        lastUpdated: null,
                         source: 'CEI'
                     };
                 }
@@ -86,6 +85,7 @@ class WalletService {
         const results = (await Promise.all(promises)).filter(o => o !== null);
 
         const wallet = await this.getWallet();
+        const now = new Date();
 
         for (const r of results) {
             for (const w of wallet) {
@@ -94,6 +94,8 @@ class WalletService {
                     w.changePrice = r.changePrice;
                     w.changePercent = r.changePercent;
                     w.lastTradingDay = r.lastTradingDay;
+                    w.lastUpdated = now;
+                    r.lastUpdated = now;
                     break;
                 }
             }
@@ -103,7 +105,7 @@ class WalletService {
 
         return results;
     }
-    
+
 }
 
 export default WalletService;

@@ -167,9 +167,7 @@ export default {
                     label: 'Data',
                     field: 'date',
                     sortable: true,
-                    format: val => {
-                        return `${val.getDate().toString().padStart(2, '0')}/${(val.getMonth() + 1).toString().padStart(2, '0')}/${val.getFullYear()}`;
-                    }
+                    format: val => DateUtils.toString(val, true, false)
                 },
                 {
                     name: 'quantity',

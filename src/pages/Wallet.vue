@@ -47,11 +47,11 @@
             </template>
 
             <q-td auto-width slot="body-cell-price" slot-scope="props" :props="props">
-                <q-spinner v-if="true || props.row.code in loadingStocks" color="primary" size="12px" />
-                <div style="display: inline-block; vertical-align: middle" class="q-pl-sm" :class="{'updating-price': props.row.code in loadingStocks}">{{ NumberUtils.formatCurrency(props.row.price) }}</div>
-                <div style="display: inline-block; vertical-align: middle; font-size: 10px">
-                    <div>{{ props.row.changePrice }}</div>
-                    <div>{{ props.row.changePercent }}</div>
+                <q-spinner v-if="props.row.code in loadingStocks" color="primary" size="12px" />
+                <div class="q-pl-sm price-cell" :class="{ 'updating-price': props.row.code in loadingStocks, 'price-up': props.row.changePrice > 0, 'price-down': props.row.changePrice < 0 }">
+                    {{ NumberUtils.formatCurrency(props.row.price) }}
+                    <div class="variation" v-if="configuration.variation === 'price'">{{ NumberUtils.formatCurrency(props.row.changePrice, true) }}</div>
+                    <div class="variation" v-if="configuration.variation === 'percentage'">{{ NumberUtils.formatPercentage(props.row.changePercent) }}</div>
                 </div>
             </q-td>
 
@@ -78,6 +78,17 @@
                 <q-card-section style="max-height: 80vh" class="scroll">
 
                     <q-card-section>
+                        <div class="text-h6">Visualização</div>
+                        <q-item-label header>Como devem ser exibidas as variações de valor?</q-item-label>
+                        <q-radio @input="saveConfig" v-model="configuration.variation" val="price" label="Reais" />
+                        <q-radio @input="saveConfig" v-model="configuration.variation" val="percentage" label="Porcentagem" />
+                    </q-card-section>
+
+                    <q-separator />
+
+                    <q-card-section>
+                        <div class="text-h6">Atualização de preços</div>
+
                         <q-item-label header>Quais ações devem ter o valor atualizado?</q-item-label>
                         <q-radio @input="saveConfig" v-model="configuration.which" val="all" label="Todas" />
                         <q-radio @input="saveConfig" v-model="configuration.which" val="balance" label="As que possuem saldo" />
@@ -88,11 +99,6 @@
 
                         <q-item-label header>Qual o intervalo, em minutos, entre cada tick?</q-item-label>
                         <q-input @change="saveConfig" v-model="configuration.when" type="number" filled/>
-                    </q-card-section>
-
-                    <q-separator />
-
-                    <q-card-section>
 
                         <q-item-label header>Resumo</q-item-label>
                         <p v-for="(p, i) in configSummary" :key="`p-${i}`" v-html="p" />
@@ -121,7 +127,8 @@ export default {
             configuration: {
                 which: 'all',
                 many: 5,
-                when: 15
+                when: 15,
+                variation: 'percentage'
             },
             tableLoading: false,
             showCreateForm: false,
@@ -129,7 +136,7 @@ export default {
             pagination: {
                 rowsPerPage: 50
             },
-            visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'valueSold', 'price', 'totalValue', 'source' ],
+            visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'valueSold', 'lastUpdated', 'price', 'totalValue', 'source' ],
             columns: [
                 {
                     name: 'code',
@@ -182,6 +189,13 @@ export default {
                     field: 'price',
                     sortable: true,
                     format: val => NumberUtils.formatCurrency(val)
+                },
+                {
+                    name: 'lastUpdated',
+                    align: 'center',
+                    label: 'Atualizado em',
+                    field: 'lastUpdated',
+                    format: val => val ? DateUtils.toString(new Date(val)) : null
                 },
                 {
                     name: 'totalValue',
@@ -293,6 +307,7 @@ export default {
                         changePrice: d.changePrice,
                         changePercent: d.changePercent,
                         lastTradingDay: d.lastTradingDay,
+                        lastUpdated: d.lastUpdated,
                         totalValue: 0,
                         source: d.source
                     };
@@ -354,6 +369,7 @@ export default {
 
         ipcRenderer.on('wallet/update-last-value', (event, response) => {
             this.loadingStocks = {};
+            console.log(response.data);
             for (const r of response.data) {
                 for (const d of this.data) {
                     if (r.code === d.code) {
@@ -361,6 +377,7 @@ export default {
                         d.changePrice = r.changePrice;
                         d.changePercent = r.changePercent;
                         d.lastTradingDay = r.lastTradingDay;
+                        d.lastUpdated = r.lastUpdated;
                         break;
                     }
                 }
@@ -401,12 +418,29 @@ export default {
         .stock-table {
             table {
                 tbody {
-                    tr:nth-child(odd) {
-                        background: #f7f7f7;
+                    .price-cell {
+                        display: inline-block;
+                        vertical-align: middle;
+
+                        &.updating-price {
+                            color: #aaa !important;
+                        }
+
+                        &.price-up {
+                            color: #21BA45;
+                        }
+
+                        &.price-down {
+                            color: #C10015;
+                        }
+
+                        .variation {
+                            font-size: 10px;
+                        }
                     }
 
-                    .updating-price {
-                        color: #aaa;
+                    tr:nth-child(odd) {
+                        background: #f7f7f7;
                     }
                 }
             }
