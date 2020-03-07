@@ -43,20 +43,24 @@
                     class="q-ma-sm"
                 />
 
-                <q-btn flat class="q-ma-sm" icon="eva-plus-circle-outline" @click="showCreateForm = true" color="primary" />
+                {{ nextTick }}
             </template>
 
             <q-td auto-width slot="body-cell-price" slot-scope="props" :props="props">
                 <q-spinner v-if="props.row.code in loadingStocks" color="primary" size="12px" />
-                <div class="q-pl-sm price-cell" :class="{ 'updating-price': props.row.code in loadingStocks, 'price-up': props.row.changePrice > 0, 'price-down': props.row.changePrice < 0 }">
+                <div class="q-pl-sm price-cell" :class="{ 'updating-price': props.row.code in loadingStocks, 'value-up': props.row.changePrice > 0, 'value-down': props.row.changePrice < 0 }">
                     {{ NumberUtils.formatCurrency(props.row.price) }}
                     <div class="variation" v-if="configuration.variation === 'price'">{{ NumberUtils.formatCurrency(props.row.changePrice, true) }}</div>
                     <div class="variation" v-if="configuration.variation === 'percentage'">{{ NumberUtils.formatPercentage(props.row.changePercent) }}</div>
                 </div>
             </q-td>
 
+            <q-td auto-width slot="body-cell-totalValue" slot-scope="props" :props="props" :class="{ 'value-up': props.row.totalValue > 0, 'value-down': props.row.totalValue < 0 }">
+                {{ NumberUtils.formatCurrency(props.row.totalValue) }}
+            </q-td>
+
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
-                <q-btn flat icon="eva-trash-2-outline" @click="deleteRow(props.row)" color="primary" />
+                <q-btn flat icon="eva-sync-outline" @click="syncRow(props.row)" color="primary" />
             </q-td>
         </q-table>
 
@@ -80,8 +84,8 @@
                     <q-card-section>
                         <div class="text-h6">Visualização</div>
                         <q-item-label header>Como devem ser exibidas as variações de valor?</q-item-label>
-                        <q-radio @input="saveConfig" v-model="configuration.variation" val="price" label="Reais" />
-                        <q-radio @input="saveConfig" v-model="configuration.variation" val="percentage" label="Porcentagem" />
+                        <q-radio @input="saveConfig(false)" v-model="configuration.variation" val="price" label="Reais" />
+                        <q-radio @input="saveConfig(false)" v-model="configuration.variation" val="percentage" label="Porcentagem" />
                     </q-card-section>
 
                     <q-separator />
@@ -90,15 +94,15 @@
                         <div class="text-h6">Atualização de preços</div>
 
                         <q-item-label header>Quais ações devem ter o valor atualizado?</q-item-label>
-                        <q-radio @input="saveConfig" v-model="configuration.which" val="all" label="Todas" />
-                        <q-radio @input="saveConfig" v-model="configuration.which" val="balance" label="As que possuem saldo" />
-                        <q-radio @input="saveConfig" v-model="configuration.which" val="none" label="Nenhuma" />
+                        <q-radio @input="saveConfig(true)" v-model="configuration.which" val="all" label="Todas" />
+                        <q-radio @input="saveConfig(true)" v-model="configuration.which" val="balance" label="As que possuem saldo" />
+                        <q-radio @input="saveConfig(true)" v-model="configuration.which" val="none" label="Nenhuma" />
 
                         <q-item-label header>Quantas ações devem ser atualizadas por tick?</q-item-label>
-                        <q-input @change="saveConfig" v-model="configuration.many" type="number" filled/>
+                        <q-input @change="saveConfig(true)" v-model="configuration.many" type="number" filled/>
 
                         <q-item-label header>Qual o intervalo, em minutos, entre cada tick?</q-item-label>
-                        <q-input @change="saveConfig" v-model="configuration.when" type="number" filled/>
+                        <q-input @change="saveConfig(true)" v-model="configuration.when" type="number" filled/>
 
                         <q-item-label header>Resumo</q-item-label>
                         <p v-for="(p, i) in configSummary" :key="`p-${i}`" v-html="p" />
@@ -136,7 +140,7 @@ export default {
             pagination: {
                 rowsPerPage: 50
             },
-            visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'valueSold', 'lastUpdated', 'price', 'totalValue', 'source' ],
+            visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'valueSold', 'lastUpdated', 'price', 'totalValue' ],
             columns: [
                 {
                     name: 'code',
@@ -226,7 +230,9 @@ export default {
             shouldUpdateInterval: false,
             updateSlice: [],
             withBalanceOnly: true,
-            firstLoad: false
+            firstLoad: false,
+            nextTick: 0,
+            tickInterval: null
         };
     },
     methods: {
@@ -240,15 +246,19 @@ export default {
                 ipcRenderer.send('wallet/refresh-from-history');
             });
         },
-        saveConfig() {
+        saveConfig(refreshInterval = false) {
             localStorage.setItem('wallet/config', JSON.stringify(this.configuration));
-            this.refreshAutoUpdate(true);
+            if (refreshInterval)
+                this.refreshAutoUpdate(true);
         },
         init() {
             ipcRenderer.send('wallet/get');
             const config = localStorage.getItem('wallet/config');
             if (config)
                 this.configuration = JSON.parse(config);
+        },
+        syncRow(row) {
+
         },
         refreshAutoUpdate(force = false) {
             if (!(force || this.shouldUpdateInterval)) return;
@@ -296,11 +306,12 @@ export default {
         dataTable() {
             return this.data
                 .map(d => {
+                    const quantityBalance = Math.max(d.quantityBought - d.quantitySold, 0);
                     return {
                         code: d.code,
                         quantityBought: d.quantityBought,
                         quantitySold: d.quantitySold,
-                        quantityBalance: Math.max(d.quantityBought - d.quantitySold, 0),
+                        quantityBalance: quantityBalance,
                         valueBought: d.valueBought,
                         valueSold: d.valueSold,
                         price: d.price,
@@ -308,7 +319,7 @@ export default {
                         changePercent: d.changePercent,
                         lastTradingDay: d.lastTradingDay,
                         lastUpdated: d.lastUpdated,
-                        totalValue: 0,
+                        totalValue: d.valueSold + quantityBalance * d.price - d.valueBought,
                         source: d.source
                     };
                 })
@@ -382,13 +393,24 @@ export default {
                     }
                 }
             }
+
+            // Updating tick countdown
+            if (this.configuration.which !== 'none')
+                this.nextTick = this.configuration.when * 60;
+
             this.refreshAutoUpdate();
         });
+
+        this.tickInterval = setInterval(() => {
+            if (this.nextTick > 0)
+                this.nextTick--;
+        }, 1000);
 
         this.init();
     },
     beforeDestroy() {
         clearInterval(this.updatePricesInterval);
+        clearInterval(this.tickInterval);
     }
 };
 </script>
@@ -426,17 +448,17 @@ export default {
                             color: #aaa !important;
                         }
 
-                        &.price-up {
-                            color: #21BA45;
-                        }
-
-                        &.price-down {
-                            color: #C10015;
-                        }
-
                         .variation {
                             font-size: 10px;
                         }
+                    }
+
+                    .value-up {
+                        color: #21BA45;
+                    }
+
+                    .value-down {
+                        color: #C10015;
                     }
 
                     tr:nth-child(odd) {
