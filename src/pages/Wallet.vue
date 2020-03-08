@@ -55,6 +55,10 @@
                 </div>
             </q-td>
 
+            <q-td auto-width slot="body-cell-lastUpdated" slot-scope="props" :props="props">
+                {{ props.row.lastUpdated ? `${DateUtils.getFormatedHoursFromSeconds(parseInt((new Date() - new Date(props.row.lastUpdated)) / 1000), true, true, false) } atrás` : null }}
+            </q-td>
+
             <q-td auto-width slot="body-cell-totalValue" slot-scope="props" :props="props" :class="{ 'value-up': props.row.totalValue > 0, 'value-down': props.row.totalValue < 0 }">
                 {{ NumberUtils.formatCurrency(props.row.totalValue) }}
             </q-td>
@@ -127,6 +131,7 @@ export default {
     data() {
         return {
             data: [],
+            now: new Date(),
             loadingStocks: {},
             configuration: {
                 which: 'all',
@@ -197,7 +202,7 @@ export default {
                 {
                     name: 'lastUpdated',
                     align: 'center',
-                    label: 'Atualizado em',
+                    label: 'Atualizado',
                     field: 'lastUpdated',
                     format: val => val ? DateUtils.toString(new Date(val)) : null
                 },
@@ -226,6 +231,7 @@ export default {
             newOperation: {
             },
             NumberUtils: NumberUtils,
+            DateUtils: DateUtils,
             updatePricesInterval: null,
             shouldUpdateInterval: false,
             updateSlice: [],
@@ -258,7 +264,8 @@ export default {
                 this.configuration = JSON.parse(config);
         },
         syncRow(row) {
-
+            this.loadingStocks[row.code] = 1;
+            ipcRenderer.send('wallet/update-last-value', { stocks: [row.code], type: 'manual' });
         },
         refreshAutoUpdate(force = false) {
             if (!(force || this.shouldUpdateInterval)) return;
@@ -291,7 +298,7 @@ export default {
                         this.loadingStocks[s] = 1;
                     }
 
-                    ipcRenderer.send('wallet/update-last-value', { stocks: stocks });
+                    ipcRenderer.send('wallet/update-last-value', { stocks: stocks, type: 'auto' });
                 };
 
                 intervalFunction();
@@ -346,8 +353,8 @@ export default {
             const updatesPerHour = parseInt(Math.ceil(ticksPerHour * Math.min(this.configuration.many, many)));
 
             const msgs = [`<strong>${many}</strong> ações serão atualizadas.`];
-            msgs.push(`A cada <strong>${NumberUtils.getFormatedHoursFromMinutes(this.configuration.when)}</strong>, <strong>${this.configuration.many}</strong> ações serão atualizadas.`);
-            msgs.push(`Isso significa que uma mesma ação será atualizada a cada <strong>${NumberUtils.getFormatedHoursFromMinutes(interval)}</strong>.`);
+            msgs.push(`A cada <strong>${DateUtils.getFormatedHoursFromSeconds(this.configuration.when * 60, true, true, false)}</strong>, <strong>${this.configuration.many}</strong> ações serão atualizadas.`);
+            msgs.push(`Isso significa que uma mesma ação será atualizada a cada <strong>${DateUtils.getFormatedHoursFromSeconds(interval * 60, true, true, false)}</strong>.`);
             msgs.push(`Serão <strong>${updatesPerHour}</strong> atualizações por hora, totalizando <strong>${updatesPerHour * 24}</strong> atualizações por dia.`);
 
             return msgs;
@@ -379,9 +386,13 @@ export default {
         });
 
         ipcRenderer.on('wallet/update-last-value', (event, response) => {
-            this.loadingStocks = {};
             console.log(response.data);
-            for (const r of response.data) {
+
+            for (const r of response.data.stocks)
+                delete this.loadingStocks[r.code];
+
+            // Update successfull updates
+            for (const r of response.data.stocks.filter(o => o.status === 'success')) {
                 for (const d of this.data) {
                     if (r.code === d.code) {
                         d.price = r.price;
@@ -394,8 +405,13 @@ export default {
                 }
             }
 
+            // Prompt errors
+            for (const r of response.data.stocks.filter(o => o.status === 'error')) {
+                this.$q.notify({ type: 'negative', message: `${r.code}: ${r.errorMessage}` });
+            }
+
             // Updating tick countdown
-            if (this.configuration.which !== 'none')
+            if (this.configuration.which !== 'none' && response.data.type === 'auto')
                 this.nextTick = this.configuration.when * 60;
 
             this.refreshAutoUpdate();

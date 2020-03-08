@@ -89,7 +89,7 @@ class WalletService {
 
         for (const r of results) {
             for (const w of wallet) {
-                if (r.code === w.code) {
+                if (r.code === w.code && r.status === 'success') {
                     w.price = r.price;
                     w.changePrice = r.changePrice;
                     w.changePercent = r.changePercent;

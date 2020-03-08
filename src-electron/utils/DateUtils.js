@@ -41,6 +41,29 @@ class DateUtils {
             return timeStr;
     }
 
+    /**
+     * Return the minutes formated as XhYm. E.g.: 100 => 1h40m
+     * @param {Number} n The total seconds
+     */
+    static getFormatedHoursFromSeconds(n, showHours = true, showMinutes = true, showSeconds = true) {
+        let secondsLeft = n;
+        const hours = parseInt(n / 3600);
+        secondsLeft -= hours * 3600;
+
+        const minutes = parseInt(secondsLeft / 60);
+        secondsLeft -= minutes * 60;
+        const seconds = secondsLeft;
+
+        let res = '';
+        if (showHours)
+            res += `${hours.toString().padStart(2, '0')}h`;
+        if (showMinutes)
+            res += `${minutes.toString().padStart(2, '0')}m`;
+        if (showSeconds)
+            res += `${seconds.toString().padStart(2, '0')}s`;
+        return res;
+    }
+
 }
 
 export default DateUtils;
