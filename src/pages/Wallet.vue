@@ -56,7 +56,7 @@
             </q-td>
 
             <q-td auto-width slot="body-cell-lastUpdated" slot-scope="props" :props="props">
-                {{ props.row.lastUpdated ? `${DateUtils.getFormatedHoursFromSeconds(parseInt((new Date() - new Date(props.row.lastUpdated)) / 1000), true, true, false) } atrás` : null }}
+                {{ props.row.lastUpdated ? `${DateUtils.getFormatedHoursFromSeconds(parseInt((new Date() - new Date(props.row.lastUpdated)) / 1000), true, true, false) }` : null }}
             </q-td>
 
             <q-td auto-width slot="body-cell-totalValue" slot-scope="props" :props="props" :class="{ 'value-up': props.row.totalValue > 0, 'value-down': props.row.totalValue < 0 }">
@@ -202,7 +202,7 @@ export default {
                 {
                     name: 'lastUpdated',
                     align: 'center',
-                    label: 'Atualizado',
+                    label: 'Atualizado a',
                     field: 'lastUpdated',
                     format: val => val ? DateUtils.toString(new Date(val)) : null
                 },

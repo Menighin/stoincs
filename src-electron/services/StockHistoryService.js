@@ -98,6 +98,30 @@ class StockHistoryService {
         this.saveStockHistory(stockHistory, true);
     }
 
+    async updateStockOperation(stockOperation) {
+        const stockHistory = await this.getStockHistory();
+
+        searchId:
+        for (const account of stockHistory) {
+            if (account.account === stockOperation.account && account.institution === stockOperation.institution) {
+                for (let i = 0; i < account.stockHistory.length; i++) {
+                    if (account.stockHistory[i].id === stockOperation.id) {
+                        delete stockOperation.account;
+                        delete stockOperation.institution;
+                        stockOperation.source = account.stockHistory[i].source;
+                        account.stockHistory[i] = stockOperation;
+                        console.log(stockOperation);
+                        break searchId;
+                    }
+                }
+            }
+        }
+
+        this.saveStockHistory(stockHistory, true);
+
+        return stockOperation;
+    }
+
     async createStockOperation(stockOperation) {
         const stockHistory = await this.getStockHistory();
         let found = false;
@@ -105,7 +129,6 @@ class StockHistoryService {
         stockOperation.source = 'Manual';
         for (const account of stockHistory) {
             if (account.account === stockOperation.account && account.institution === stockOperation.institution) {
-
                 for (const s of account.stockHistory) {
                     if (s.id === stockOperation.id)
                         throw new Error('Operação já existente');
@@ -141,7 +164,7 @@ class StockHistoryService {
         // Clearing history
         const stockHistory = await this.getStockHistory();
         stockHistory.forEach(acc => {
-            acc.stockHistory = acc.stockHistory.filter(o => o.source && o.source != 'CEI');
+            acc.stockHistory = acc.stockHistory.filter(o => o.source && o.source !== 'CEI');
         });
         await this.saveStockHistory(stockHistory, true);
 

@@ -66,7 +66,7 @@
                     class="q-ma-sm"
                 />
 
-                <q-btn flat class="q-ma-sm" icon="eva-plus-circle-outline" @click="newOperation = {}; isEdit = false; showCreateForm = true;" color="primary" />
+                <q-btn flat class="q-ma-sm" icon="eva-plus-circle-outline" @click="showCreateDialog" color="primary" />
             </template>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
@@ -97,7 +97,7 @@
                                     </q-icon>
                                 </template>
                             </q-input>
-                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.quantity" label="Quantidade" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.quantity" label="Quantidade" lazy-rules :rules="[ val => val && val != null ]" />
                             <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.price" label="Preço" mask="R$ #,##" reverse-fill-mask lazy-rules :rules="[ val => val && val.length > 0 || '']" />
                             <q-input class="q-ma-sm" style="padding-bottom: 0" filled :value="totalNewOperation" label="Total" disable />
                         </div>
@@ -213,6 +213,11 @@ export default {
         };
     },
     methods: {
+        showCreateDialog() {
+            this.newOperation = {};
+            this.isEdit = false;
+            this.showCreateForm = true;
+        },
         deleteRow(row) {
             this.$q.dialog({
                 title: 'Confirmação',
@@ -224,29 +229,32 @@ export default {
             });
         },
         editRow(row) {
-            console.log(row);
             this.isEdit = true;
+            this.newOperation.id = row.id;
             this.newOperation.institution = row.institution;
             this.newOperation.account = row.account;
             this.newOperation.code = row.code;
             this.newOperation.operation = row.operation;
-            this.newOperation.date = row.date;
+            this.newOperation.date = row.date.toJSON();
             this.newOperation.quantity = row.quantity;
-            this.newOperation.price = row.price;
+            this.newOperation.price = `R$ ${row.price.toFixed(2).replace('.', ',')}`;
 
             this.showCreateForm = true;
         },
         saveOperation() {
-            const a = this.newOperation;
             const payload = {
                 ...this.newOperation,
                 totalValue: NumberUtils.getNumberFromCurrency(this.totalNewOperation),
-                date: DateUtils.fromDateStr(this.newOperation.date),
+                date: new Date(this.newOperation.date),
                 price: NumberUtils.getNumberFromCurrency(this.newOperation.price),
                 quantity: parseInt(this.newOperation.quantity)
             };
 
-            ipcRenderer.send('stockHistory/create', payload);
+            if (!this.isEdit)
+                ipcRenderer.send('stockHistory/create', payload);
+            else
+                ipcRenderer.send('stockHistory/update', payload);
+
             this.showCreateForm = false;
         },
         refreshHistory() {
@@ -348,6 +356,23 @@ export default {
                 this.$q.notify({ type: 'positive', message: 'Operação adicionada com sucesso' });
                 args.operation.date = new Date(args.operation.date);
                 this.dataTable.push(args.operation);
+            } else {
+                this.$q.notify({ type: 'negative', message: args.error.message });
+                console.error(args.error);
+            }
+        });
+
+        ipcRenderer.on('stockHistory/update', (event, args) => {
+            if (args.status === 'success') {
+                this.$q.notify({ type: 'positive', message: 'Operação editada com sucesso' });
+                args.operation.date = new Date(args.operation.date);
+
+                this.dataTable.forEach((o, i) => {
+                    if (o.id === args.operation.id) {
+                        this.dataTable[i].quantity = args.operation.quantity;
+                        this.dataTable[i].price = args.operation.price;
+                    }
+                });
             } else {
                 this.$q.notify({ type: 'negative', message: args.error.message });
                 console.error(args.error);

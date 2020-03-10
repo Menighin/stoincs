@@ -7,6 +7,7 @@ const METHODS = {
     GET: 'stockHistory/get',
     DELETE: 'stockHistory/delete',
     CREATE: 'stockHistory/create',
+    UPDATE: 'stockHistory/update',
     REFRESH: 'stockHistory/refresh'
 };
 
@@ -32,6 +33,16 @@ ipcMain.on(METHODS.CREATE, async (event, stockOperation) => {
         event.reply(METHODS.CREATE, { status: 'success', operation: savedOperation });
     } catch (e) {
         event.reply(METHODS.CREATE, { status: 'error', error: e });
+    }
+});
+
+ipcMain.on(METHODS.UPDATE, async (event, stockOperation) => {
+    try {
+        stockOperation.date = new Date(stockOperation.date);
+        const updatedOperation = await stockHistoryService.updateStockOperation(stockOperation);
+        event.reply(METHODS.UPDATE, { status: 'success', operation: updatedOperation });
+    } catch (e) {
+        event.reply(METHODS.UPDATE, { status: 'error', error: e });
     }
 });
 
