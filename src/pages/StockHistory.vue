@@ -66,10 +66,11 @@
                     class="q-ma-sm"
                 />
 
-                <q-btn flat class="q-ma-sm" icon="eva-plus-circle-outline" @click="showCreateForm = true" color="primary" />
+                <q-btn flat class="q-ma-sm" icon="eva-plus-circle-outline" @click="newOperation = {}; isEdit = false; showCreateForm = true;" color="primary" />
             </template>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
+                <q-btn flat icon="eva-edit-2-outline" @click="editRow(props.row)" color="primary" />
                 <q-btn flat icon="eva-trash-2-outline" @click="deleteRow(props.row)" color="primary" />
             </q-td>
         </q-table>
@@ -82,12 +83,12 @@
                 >
                     <q-card-section class="row items-center">
                         <div class="q-gutter-md q-ma-md" style="width: 400px; max-width: 500px">
-                            <div class="text-h5">Nova operação</div>
-                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.institution" label="Instituição" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
-                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.account" label="Conta" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
-                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.code" label="Ativo" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
-                            <q-select :options="['C', 'V']" style="padding-bottom: 0" class="q-ma-sm" filled v-model="newOperation.operation" label="Operação" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
-                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.date" mask="##/##/####" label="Data"  lazy-rules :rules="[ val => val && val.length > 0 || '']">
+                            <div class="text-h5">{{isEdit ? 'Editar Operação' : 'Nova Operação'}}</div>
+                            <q-input :disable="isEdit" class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.institution" label="Instituição" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input :disable="isEdit" class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.account" label="Conta" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input :disable="isEdit" class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.code" label="Ativo" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-select :disable="isEdit" :options="['C', 'V']" style="padding-bottom: 0" class="q-ma-sm" filled v-model="newOperation.operation" label="Operação" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input :disable="isEdit" class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.date" mask="##/##/####" label="Data"  lazy-rules :rules="[ val => val && val.length > 0 || '']">
                                 <template v-slot:append>
                                     <q-icon name="event" class="cursor-pointer">
                                         <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
@@ -127,6 +128,7 @@ export default {
             selectedMonth: 'Todos',
             tableLoading: false,
             showCreateForm: false,
+            isEdit: false,
             pagination: {
                 rowsPerPage: 25
             },
@@ -220,6 +222,19 @@ export default {
             }).onOk(() => {
                 ipcRenderer.send('stockHistory/delete', row.id);
             });
+        },
+        editRow(row) {
+            console.log(row);
+            this.isEdit = true;
+            this.newOperation.institution = row.institution;
+            this.newOperation.account = row.account;
+            this.newOperation.code = row.code;
+            this.newOperation.operation = row.operation;
+            this.newOperation.date = row.date;
+            this.newOperation.quantity = row.quantity;
+            this.newOperation.price = row.price;
+
+            this.showCreateForm = true;
         },
         saveOperation() {
             const a = this.newOperation;

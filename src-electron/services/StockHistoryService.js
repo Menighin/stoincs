@@ -45,7 +45,18 @@ class StockHistoryService {
                 let alreadySaved = false;
                 for (const savedStock of stockHistory) {
                     if (newStock.institution === savedStock.institution && newStock.account === savedStock.account) {
-                        savedStock.stockHistory = [...savedStock.stockHistory, ...newStock.stockHistory];
+                        for (const newOperation of newStock.stockHistory) {
+                            let foundOperation = false;
+                            for (let i = 0; i < savedStock.stockHistory.length; i++) {
+                                if (savedStock.stockHistory[i].id === newOperation.id) {
+                                    savedStock.stockHistory[i] = newOperation;
+                                    foundOperation = true;
+                                    break;
+                                }
+                            }
+                            if (!foundOperation)
+                                savedStock.stockHistory.push(newOperation);
+                        }
                         alreadySaved = true;
                     }
                 }
