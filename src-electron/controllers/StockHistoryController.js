@@ -8,7 +8,8 @@ const METHODS = {
     DELETE: 'stockHistory/delete',
     CREATE: 'stockHistory/create',
     UPDATE: 'stockHistory/update',
-    REFRESH: 'stockHistory/refresh'
+    REFRESH: 'stockHistory/refresh',
+    SPLIT: 'stockHistory/split'
 };
 
 ipcMain.on(METHODS.GET, async (event, arg) => {
@@ -52,6 +53,15 @@ ipcMain.on(METHODS.REFRESH, async (event, arg) => {
         event.reply(METHODS.REFRESH, { status: 'success' });
     } catch (e) {
         event.reply(METHODS.REFRESH, { status: 'error', error: e });
+    }
+});
+
+ipcMain.on(METHODS.SPLIT, async (event, arg) => {
+    try {
+        const splitted = await stockHistoryService.splitOperations(arg);
+        event.reply(METHODS.SPLIT, { status: 'success', count: splitted });
+    } catch (e) {
+        event.reply(METHODS.SPLIT, { status: 'error', error: e });
     }
 });
 

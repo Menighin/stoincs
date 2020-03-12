@@ -110,7 +110,6 @@ class StockHistoryService {
                         delete stockOperation.institution;
                         stockOperation.source = account.stockHistory[i].source;
                         account.stockHistory[i] = stockOperation;
-                        console.log(stockOperation);
                         break searchId;
                     }
                 }
@@ -169,6 +168,29 @@ class StockHistoryService {
         await this.saveStockHistory(stockHistory, true);
 
         new UpdateStockHistoryJob().run();
+    }
+
+    async splitOperations(splitConfig) {
+        const stockHistory = await this.getStockHistory();
+
+        const limitDate = new Date(splitConfig.date);
+        const ratio = splitConfig.from / splitConfig.to;
+        let splitted = 0;
+        for (const account of stockHistory) {
+            for (let i = 0; i < account.stockHistory.length; i++) {
+                const operation = account.stockHistory[i];
+                const operationDate = new Date(operation.date);
+
+                if (operation.code === splitConfig.code && operationDate <= limitDate) {
+                    operation.quantity = Math.floor(operation.quantity / ratio);
+                    operation.price = Math.round((operation.price * ratio + Number.EPSILON) * 100) / 100;
+                    splitted++;
+                }
+            }
+        }
+
+        this.saveStockHistory(stockHistory, true);
+        return splitted;
     }
 
 }

@@ -66,6 +66,7 @@
                     class="q-ma-sm"
                 />
 
+                <q-btn flat class="q-ma-sm" icon="eva-percent-outline" @click="split = {}; showSplitDialog = true" color="primary" />
                 <q-btn flat class="q-ma-sm" icon="eva-plus-circle-outline" @click="showCreateDialog" color="primary" />
             </template>
 
@@ -77,10 +78,7 @@
 
         <q-dialog v-model="showCreateForm" persistent>
             <q-card>
-                <q-form
-                    @submit="saveOperation"
-                    class="q-gutter-md"
-                >
+                <q-form @submit="saveOperation" class="q-gutter-md">
                     <q-card-section class="row items-center">
                         <div class="q-gutter-md q-ma-md" style="width: 400px; max-width: 500px">
                             <div class="text-h5">{{isEdit ? 'Editar Operação' : 'Nova Operação'}}</div>
@@ -110,6 +108,43 @@
                 </q-form>
             </q-card>
         </q-dialog>
+
+        <q-dialog v-model="showSplitDialog" persistent>
+            <q-card>
+                <q-form @submit="splitStocks" class="q-gutter-md">
+                    <q-card-section class="row items-center">
+                        <div class="q-gutter-md q-ma-md" style="width: 400px; max-width: 500px">
+                            <q-card-section>
+                                <div class="text-h5">Split de ações</div>
+                                <q-select :disable="isEdit" :options="stockCodes" style="padding-bottom: 0" class="q-ma-sm" filled v-model="split.code" label="Ação" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                                <q-input :disable="isEdit" class="q-ma-sm" style="padding-bottom: 0" filled v-model="split.date" mask="##/##/####" label="Data"  lazy-rules :rules="[ val => val && val.length > 0 || '']">
+                                    <template v-slot:append>
+                                        <q-icon name="event" class="cursor-pointer">
+                                            <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
+                                                <q-date mask="DD/MM/YYYY" v-model="split.date" @input="() => $refs.qDateProxy.hide()" />
+                                            </q-popup-proxy>
+                                        </q-icon>
+                                    </template>
+                                </q-input>
+                                <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="split.from" label="De" lazy-rules :rules="[ val => val && val != null ]" />
+                                <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="split.to" label="Para" lazy-rules :rules="[ val => val && val != null ]" />
+                            </q-card-section>
+
+                            <q-separator />
+
+                            <q-card-section v-show="split.from && split.to">
+                                Resultado: Uma operação de <strong>100</strong> papéis custando <strong>R$ 15,00</strong> cada, passará a ser uma operação de
+                                <strong>{{ Math.floor(100 / (split.from / split.to)) }}</strong> papéis custando <strong>{{  NumberUtils.formatCurrency((15.00 * (split.from / split.to))) }}</strong> cada.
+                            </q-card-section>
+                        </div>
+                    </q-card-section>
+                    <q-card-actions align="right">
+                        <q-btn flat label="Cancelar" color="primary" v-close-popup />
+                        <q-btn flat label="Salvar" type="submit" color="primary" />
+                    </q-card-actions>
+                </q-form>
+            </q-card>
+        </q-dialog>
     </q-page>
 </template>
 
@@ -128,7 +163,10 @@ export default {
             selectedMonth: 'Todos',
             tableLoading: false,
             showCreateForm: false,
+            showSplitDialog: false,
             isEdit: false,
+            Math: Math,
+            NumberUtils: NumberUtils,
             pagination: {
                 rowsPerPage: 25
             },
@@ -208,8 +246,8 @@ export default {
                     required: true
                 }
             ],
-            newOperation: {
-            }
+            newOperation: {},
+            split: {}
         };
     },
     methods: {
@@ -245,7 +283,7 @@ export default {
             const payload = {
                 ...this.newOperation,
                 totalValue: NumberUtils.getNumberFromCurrency(this.totalNewOperation),
-                date: new Date(this.newOperation.date),
+                date: this.isEdit ? new Date(this.newOperation.date) : DateUtils.fromDateStr(this.newOperation.date),
                 price: NumberUtils.getNumberFromCurrency(this.newOperation.price),
                 quantity: parseInt(this.newOperation.quantity)
             };
@@ -256,6 +294,15 @@ export default {
                 ipcRenderer.send('stockHistory/update', payload);
 
             this.showCreateForm = false;
+        },
+        splitStocks() {
+            const payload = {
+                ...this.split,
+                date: DateUtils.fromDateStr(this.split.date)
+            };
+            console.log('payload', payload);
+            ipcRenderer.send('stockHistory/split', payload);
+            this.showSplitDialog = false;
         },
         refreshHistory() {
             this.$q.dialog({
@@ -312,6 +359,13 @@ export default {
             const price = this.newOperation.price ? NumberUtils.getNumberFromCurrency(this.newOperation.price) : 0;
             const result = price * this.newOperation.quantity || 0;
             return NumberUtils.formatCurrency(result);
+        },
+        stockCodes() {
+            const stocks = {};
+            for (const stock of this.dataTable) {
+                stocks[stock.code] = 1;
+            }
+            return Object.keys(stocks).sort();
         }
     },
     mounted() {
@@ -382,6 +436,16 @@ export default {
         ipcRenderer.on('stockHistory/refresh', (event, args) => {
             if (args.status === 'success') {
                 this.$q.notify({ type: 'positive', message: 'Histórico limpo. Buscando dados novamente...' });
+                ipcRenderer.send('stockHistory/get');
+            } else {
+                this.$q.notify({ type: 'negative', message: args.error.message });
+                console.error(args.error);
+            }
+        });
+
+        ipcRenderer.on('stockHistory/split', (event, args) => {
+            if (args.status === 'success') {
+                this.$q.notify({ type: 'positive', message: `${args.count} operações splitadas com sucesso!` });
                 ipcRenderer.send('stockHistory/get');
             } else {
                 this.$q.notify({ type: 'negative', message: args.error.message });
