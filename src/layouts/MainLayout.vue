@@ -17,6 +17,14 @@
 
                 <NotificationPopup />
 
+                <q-btn
+                    flat
+                    dense
+                    round
+                    @click="login"
+                    icon="eva-user-outline"
+                />
+
             </q-toolbar>
         </q-header>
 
@@ -76,6 +84,7 @@
 
 <script>
 import NotificationPopup from '../components/NotificationPopup';
+import { ipcRenderer } from 'electron';
 
 export default {
     name: 'MainLayout',
@@ -88,6 +97,22 @@ export default {
             miniState: true,
             notificationOpen: false
         };
+    },
+    methods: {
+        login() {
+            ipcRenderer.send('google-drive/login');
+        }
+    },
+    mounted() {
+        ipcRenderer.on('google-drive/login', (event, response) => {
+            console.log(response);
+            if (response.status === 'success') {
+                window.open(response.url, '_blank');
+            } else {
+                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.error.message}` });
+                console.error(response.error);
+            }
+        });
     }
 };
 </script>
