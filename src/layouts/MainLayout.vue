@@ -107,7 +107,7 @@ export default {
         ipcRenderer.on('google-drive/login', (event, response) => {
             console.log(response);
             if (response.status === 'success') {
-                window.open(response.url, '_blank');
+                // window.open(response.url, '_blank');
             } else {
                 this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.error.message}` });
                 console.error(response.error);
