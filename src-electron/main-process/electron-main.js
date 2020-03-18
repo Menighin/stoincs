@@ -50,8 +50,6 @@ app.on('ready', () => {
     createWindow();
     updateStockHistoryJob = new UpdateStockHistoryJob();
     updateStockHistoryJob.setup(new StockHistoryService(), mainWindow);
-
-    new GoogleDriveService().listFiles();
 });
 
 app.on('window-all-closed', () => {
