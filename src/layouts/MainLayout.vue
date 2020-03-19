@@ -22,7 +22,7 @@
                     dense
                     round
                     @click="login"
-                    icon="eva-user-outline"
+                    icon="eva-google-outline"
                 />
 
             </q-toolbar>

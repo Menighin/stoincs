@@ -6,7 +6,10 @@ import opn from 'open';
 import express from 'express';
 import FileSystemUtils from '../utils/FileSystemUtils';
 
-const SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly'];
+const SCOPES = [
+    'https://www.googleapis.com/auth/drive.metadata.readonly',
+    'https://www.googleapis.com/auth/userinfo.profile'
+];
 const TOKEN_FILE = 'token.json';
 
 class GoogleDriveService {
@@ -26,6 +29,7 @@ class GoogleDriveService {
         if (tokenStr.length > 0) {
             oAuth2Client.credentials = JSON.parse(tokenStr);
             await this.listFiles(oAuth2Client);
+            await this.getPicture(oAuth2Client);
         } else {
             const app = express();
             app.get('/oauth2callback', async (req, res) => {
@@ -42,6 +46,7 @@ class GoogleDriveService {
                     res.send('Authentication successful! Please return to the console.');
                     server.close();
                     await this.listFiles(oAuth2Client);
+                    await this.getPicture(oAuth2Client);
                 });
             });
             const server = app.listen(3000, () => {
@@ -70,6 +75,21 @@ class GoogleDriveService {
                 console.log('No files found.');
             }
         });
+    }
+
+    async getPicture(auth) {
+        console.log('getting picture');
+        const people = google.people({ version: 'v1', auth });
+        try {
+            const res = await people.people.get({
+                resourceName: 'people/me',
+                personFields: 'emailAddresses,names,photos'
+            });
+            console.log(res.data);
+        } catch (e) {
+            console.log('Error!');
+            console.log(e);
+        }
     }
 
 }
