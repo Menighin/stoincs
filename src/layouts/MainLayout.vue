@@ -18,12 +18,20 @@
                 <NotificationPopup />
 
                 <q-btn
+                    class="q-mx-sm"
+                    v-if="userInfo === null"
                     flat
                     dense
                     round
                     @click="login"
                     icon="eva-google-outline"
                 />
+
+                <q-btn round v-if="userInfo !== null" class="q-mx-sm">
+                    <q-avatar size="32px">
+                        <img :src="userInfo.photo">
+                    </q-avatar>
+                </q-btn>
 
             </q-toolbar>
         </q-header>
@@ -95,7 +103,8 @@ export default {
         return {
             leftDrawerOpen: false,
             miniState: true,
-            notificationOpen: false
+            notificationOpen: false,
+            userInfo: null
         };
     },
     methods: {
@@ -104,10 +113,11 @@ export default {
         }
     },
     mounted() {
-        ipcRenderer.on('google-drive/login', (event, response) => {
+        ipcRenderer.on('notification/login-success', (event, response) => {
             console.log(response);
             if (response.status === 'success') {
-                // window.open(response.url, '_blank');
+                console.log('oi');
+                this.userInfo = response.data;
             } else {
                 this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.error.message}` });
                 console.error(response.error);

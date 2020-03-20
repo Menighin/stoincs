@@ -1,13 +1,18 @@
-import { ipcMain } from 'electron';
+import { BrowserWindow } from 'electron';
 
 class NotificationService {
 
     notifyStartJob() {
-        ipcMain.emit('notification/start-job');
+        BrowserWindow.getFocusedWindow().webContents.send('notification/start-job');
     }
 
     notifyEndJob() {
-        ipcMain.emit('notification/end-job');
+        BrowserWindow.getFocusedWindow().webContents.send('notification/end-job');
+    }
+
+    notifyLoginSuccess(data) {
+        console.log('notifying');
+        BrowserWindow.getFocusedWindow().webContents.send('notification/login-success', { status: 'success', data: data });
     }
 
 }

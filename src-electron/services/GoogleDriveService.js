@@ -5,36 +5,46 @@ import GoogleCredentials from '../resources/GoogleCredentials';
 import opn from 'open';
 import express from 'express';
 import FileSystemUtils from '../utils/FileSystemUtils';
+import NotificationService from './NotificationService';
 
 const SCOPES = [
     'https://www.googleapis.com/auth/drive.metadata.readonly',
     'https://www.googleapis.com/auth/userinfo.profile'
 ];
 const TOKEN_FILE = 'token.json';
+const notificationService = new NotificationService();
 
 class GoogleDriveService {
 
-    async getLoginUrl() {
+    async getOAuth2ClientFromDisk() {
+        const path = `${await FileSystemUtils.getDataPath()}/${TOKEN_FILE}`;
         const { clientSecret, clientId, redirectUris } = GoogleCredentials.installed;
         const oAuth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUris[1]);
-        const url = oAuth2Client.generateAuthUrl({
-            access_type: 'offline',
-            scope: SCOPES
-        });
-
-        const path = `${await FileSystemUtils.getDataPath()}/${TOKEN_FILE}`;
 
         const tokenStr = (await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString();
-        console.log(`TOKENSTR: ${tokenStr}`);
         if (tokenStr.length > 0) {
             oAuth2Client.credentials = JSON.parse(tokenStr);
-            await this.listFiles(oAuth2Client);
-            await this.getPicture(oAuth2Client);
+            return oAuth2Client;
+        }
+        return null;
+    }
+
+    async login() {
+        let oAuth2Client = await this.getOAuth2ClientFromDisk();
+        if (oAuth2Client !== null) {
+            const picture = await this.getPicture(oAuth2Client);
+            notificationService.notifyLoginSuccess(picture);
         } else {
+            const path = `${await FileSystemUtils.getDataPath()}/${TOKEN_FILE}`;
+            const { clientSecret, clientId, redirectUris } = GoogleCredentials.installed;
+            oAuth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUris[1]);
+            const url = oAuth2Client.generateAuthUrl({
+                access_type: 'offline',
+                scope: SCOPES
+            });
+
             const app = express();
             app.get('/oauth2callback', async (req, res) => {
-                console.log('DEU CERTO!');
-                console.log(req.query.code);
                 const code = req.query.code;
                 oAuth2Client.getToken(code, async (err, tokens) => {
                     if (err) {
@@ -45,8 +55,9 @@ class GoogleDriveService {
                     await fs.promises.writeFile(path, JSON.stringify(tokens));
                     res.send('Authentication successful! Please return to the console.');
                     server.close();
-                    await this.listFiles(oAuth2Client);
-                    await this.getPicture(oAuth2Client);
+
+                    const picture = await this.getPicture(oAuth2Client);
+                    notificationService.notifyLoginSuccess(picture);
                 });
             });
             const server = app.listen(3000, () => {
@@ -54,7 +65,6 @@ class GoogleDriveService {
                 opn(url, { wait: false });
             });
         }
-        return url;
     }
 
     async listFiles(auth) {
@@ -78,18 +88,21 @@ class GoogleDriveService {
     }
 
     async getPicture(auth) {
-        console.log('getting picture');
         const people = google.people({ version: 'v1', auth });
         try {
             const res = await people.people.get({
                 resourceName: 'people/me',
                 personFields: 'emailAddresses,names,photos'
             });
-            console.log(res.data);
+            return {
+                name: res.data.names[0].displayName,
+                photo: res.data.photos[0].url
+            };
         } catch (e) {
             console.log('Error!');
             console.log(e);
         }
+        return null;
     }
 
 }
