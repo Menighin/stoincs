@@ -3,16 +3,15 @@ import { BrowserWindow } from 'electron';
 class NotificationService {
 
     notifyStartJob() {
-        BrowserWindow.getFocusedWindow().webContents.send('notification/start-job');
+        BrowserWindow.getAllWindows()[0].webContents.send('notification/start-job');
     }
 
     notifyEndJob() {
-        BrowserWindow.getFocusedWindow().webContents.send('notification/end-job');
+        BrowserWindow.getAllWindows()[0].webContents.send('notification/end-job');
     }
 
     notifyLoginSuccess(data) {
-        console.log('notifying');
-        BrowserWindow.getFocusedWindow().webContents.send('notification/login-success', { status: 'success', data: data });
+        BrowserWindow.getAllWindows()[0].webContents.send('notification/login-success', { status: 'success', data: data });
     }
 
 }

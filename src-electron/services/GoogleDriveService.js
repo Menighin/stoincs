@@ -29,6 +29,13 @@ class GoogleDriveService {
         return null;
     }
 
+    async autoLogin() {
+        const oAuth2Client = await this.getOAuth2ClientFromDisk();
+        if (oAuth2Client === null) return null;
+        const picture = await this.getPicture(oAuth2Client);
+        notificationService.notifyLoginSuccess(picture);
+    }
+
     async login() {
         let oAuth2Client = await this.getOAuth2ClientFromDisk();
         if (oAuth2Client !== null) {
@@ -65,6 +72,11 @@ class GoogleDriveService {
                 opn(url, { wait: false });
             });
         }
+    }
+
+    async logout() {
+        const path = `${await FileSystemUtils.getDataPath()}/${TOKEN_FILE}`;
+        await fs.promises.unlink(path);
     }
 
     async listFiles(auth) {

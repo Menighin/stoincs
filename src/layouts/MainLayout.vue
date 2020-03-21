@@ -18,19 +18,40 @@
                 <NotificationPopup />
 
                 <q-btn
-                    class="q-mx-sm"
-                    v-if="userInfo === null"
-                    flat
-                    dense
                     round
-                    @click="login"
-                    icon="eva-google-outline"
-                />
-
-                <q-btn round v-if="userInfo !== null" class="q-mx-sm">
-                    <q-avatar size="32px">
+                    class="q-mx-sm"
+                    :icon="userInfo === null ? 'eva-google-outline' : undefined">
+                    <q-avatar size="32px" v-if="userInfo !== null">
                         <img :src="userInfo.photo">
                     </q-avatar>
+                    <q-menu>
+                        <div class="row no-wrap q-pa-md">
+                            <div class="column items-center" style="width: 200px" v-if="userInfo !== null">
+                                <q-avatar size="72px">
+                                    <img :src="userInfo.photo">
+                                </q-avatar>
+
+                                <div class="text-subtitle1 q-mt-md q-mb-xs">{{ userInfo.name }}</div>
+
+                                <q-btn
+                                    @click="logout"
+                                    color="primary"
+                                    label="Logout"
+                                    size="sm"
+                                    v-close-popup
+                                />
+                            </div>
+                            <div class="column items-center" v-if="userInfo === null">
+                                <q-btn
+                                    @click="login"
+                                    color="primary"
+                                    label="Login com Google"
+                                    size="sm"
+                                    v-close-popup
+                                />
+                            </div>
+                        </div>
+                    </q-menu>
                 </q-btn>
 
             </q-toolbar>
@@ -109,20 +130,48 @@ export default {
     },
     methods: {
         login() {
+            if (this.userInfo !== null) return;
             ipcRenderer.send('google-drive/login');
+        },
+        logout() {
+            ipcRenderer.send('google-drive/logout');
         }
     },
     mounted() {
         ipcRenderer.on('notification/login-success', (event, response) => {
-            console.log(response);
             if (response.status === 'success') {
-                console.log('oi');
                 this.userInfo = response.data;
             } else {
                 this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.error.message}` });
                 console.error(response.error);
             }
         });
+
+        ipcRenderer.on('google-drive/login', (event, response) => {
+            if (response.status === 'error') {
+                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.error.message}` });
+                console.error(response.error);
+            }
+        });
+
+        ipcRenderer.on('google-drive/auto-login', (event, response) => {
+            if (response.status === 'error') {
+                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.error.message}` });
+                console.error(response.error);
+            }
+        });
+
+        ipcRenderer.on('google-drive/logout', (event, response) => {
+            if (response.status === 'success') {
+                this.userInfo = null;
+                this.$q.notify({ type: 'positive', message: `Logout realizado com sucesso` });
+            } else {
+                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.error.message}` });
+                console.error(response.error);
+            }
+        });
+
+        ipcRenderer.send('google-drive/auto-login');
     }
 };
 </script>
