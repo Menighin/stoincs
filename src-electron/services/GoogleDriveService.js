@@ -1,14 +1,14 @@
 import fs from 'fs';
-import readline from 'readline';
 import { google } from 'googleapis';
 import GoogleCredentials from '../resources/GoogleCredentials';
 import opn from 'open';
 import express from 'express';
 import FileSystemUtils from '../utils/FileSystemUtils';
 import NotificationService from './NotificationService';
+import { StockHistoryFiles } from './StockHistoryService';
 
 const SCOPES = [
-    'https://www.googleapis.com/auth/drive.metadata.readonly',
+    'https://www.googleapis.com/auth/drive.appdata',
     'https://www.googleapis.com/auth/userinfo.profile'
 ];
 const TOKEN_FILE = 'token.json';
@@ -20,7 +20,6 @@ class GoogleDriveService {
         const path = `${await FileSystemUtils.getDataPath()}/${TOKEN_FILE}`;
         const { clientSecret, clientId, redirectUris } = GoogleCredentials.installed;
         const oAuth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUris[1]);
-
         const tokenStr = (await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString();
         if (tokenStr.length > 0) {
             oAuth2Client.credentials = JSON.parse(tokenStr);
@@ -34,6 +33,7 @@ class GoogleDriveService {
         if (oAuth2Client === null) return null;
         const picture = await this.getPicture(oAuth2Client);
         notificationService.notifyLoginSuccess(picture);
+        await this.downloadFiles();
     }
 
     async login() {
@@ -79,26 +79,6 @@ class GoogleDriveService {
         await fs.promises.unlink(path);
     }
 
-    async listFiles(auth) {
-        console.log('LISTING FILES');
-        const drive = google.drive({ version: 'v3', auth });
-        drive.files.list({
-            pageSize: 10,
-            fields: 'nextPageToken, files(id, name)'
-        }, (err, res) => {
-            if (err) return console.log('The API returned an error: ' + err);
-            const files = res.data.files;
-            if (files.length) {
-                console.log('Files:');
-                files.map((file) => {
-                    console.log(`${file.name} (${file.id})`);
-                });
-            } else {
-                console.log('No files found.');
-            }
-        });
-    }
-
     async getPicture(auth) {
         const people = google.people({ version: 'v1', auth });
         try {
@@ -115,6 +95,79 @@ class GoogleDriveService {
             console.log(e);
         }
         return null;
+    }
+
+    async uploadFiles() {
+        console.log('Uploading files...');
+        const oAuth2Client = await this.getOAuth2ClientFromDisk();
+        if (oAuth2Client === null) return;
+
+        const drive = google.drive({
+            version: 'v3',
+            auth: oAuth2Client
+        });
+
+        const rootPath = await FileSystemUtils.getDataPath();
+
+        for (const file of Object.values(StockHistoryFiles)) {
+            console.log(`Uploading ${file}...`);
+
+            try {
+                const fileMetadata = {
+                    'name': file,
+                    'parents': ['appDataFolder']
+                };
+                const media = {
+                    mimeType: 'application/json',
+                    body: fs.createReadStream(`${rootPath}/${file}`)
+                };
+
+                drive.files.create({
+                    resource: fileMetadata,
+                    media: media,
+                    fields: 'id'
+                }, (err, file) => {
+                    if (err) {
+                        // Handle error
+                        console.error(err);
+                    }
+                });
+            } catch (e) {
+                console.log(e.message);
+                console.log(e);
+            }
+        }
+    }
+
+    async downloadFiles() {
+        console.log('Download files...');
+        const oAuth2Client = await this.getOAuth2ClientFromDisk();
+        if (oAuth2Client === null) return;
+
+        const drive = google.drive({
+            version: 'v3',
+            auth: oAuth2Client
+        });
+
+        try {
+            drive.files.list({
+                spaces: 'appDataFolder',
+                fields: 'nextPageToken, files(id, name)',
+                pageSize: 100
+            }, (err, res) => {
+                if (err) {
+                    // Handle error
+                    console.error(err);
+                } else {
+                    res.data.files.forEach((file) => {
+                        console.log('Found file:', file.name, file.id);
+                    });
+                }
+            });
+        } catch (e) {
+            console.log(e.message);
+            console.log(e);
+        }
     }
 
 }

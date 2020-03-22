@@ -196,3 +196,4 @@ class StockHistoryService {
 }
 
 export default StockHistoryService;
+export { FILES as StockHistoryFiles };
