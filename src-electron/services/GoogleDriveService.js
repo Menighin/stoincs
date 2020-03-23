@@ -6,6 +6,7 @@ import express from 'express';
 import FileSystemUtils from '../utils/FileSystemUtils';
 import NotificationService from './NotificationService';
 import { StockHistoryFiles } from './StockHistoryService';
+import { WalletFiles } from './WalletService';
 
 const SCOPES = [
     'https://www.googleapis.com/auth/drive.appdata',
@@ -98,7 +99,7 @@ class GoogleDriveService {
     }
 
     async uploadFiles() {
-        console.log('Uploading files...');
+        const existingFiles = await this.listFiles();
         const oAuth2Client = await this.getOAuth2ClientFromDisk();
         if (oAuth2Client === null) return;
 
@@ -109,9 +110,9 @@ class GoogleDriveService {
 
         const rootPath = await FileSystemUtils.getDataPath();
 
-        for (const file of Object.values(StockHistoryFiles)) {
-            console.log(`Uploading ${file}...`);
+        const files = [Object.values(StockHistoryFiles), Object.values(WalletFiles)];
 
+        for (const file of files) {
             try {
                 const fileMetadata = {
                     'name': file,
@@ -122,25 +123,36 @@ class GoogleDriveService {
                     body: fs.createReadStream(`${rootPath}/${file}`)
                 };
 
-                drive.files.create({
-                    resource: fileMetadata,
-                    media: media,
-                    fields: 'id'
-                }, (err, file) => {
+                const callback = (err, file) => {
                     if (err) {
-                        // Handle error
-                        console.error(err);
+                        console.log(err);
                     }
-                });
+                };
+
+                const existingFile = existingFiles.filter(o => o.name === file)[0] || null;
+                if (existingFile !== null) {
+                    console.log(`Updating ${file}...`);
+                    drive.files.update({
+                        fileId: existingFile.id,
+                        media: media,
+                        fields: 'id'
+                    }, callback);
+                } else {
+                    console.log(`Uploading ${file}...`);
+                    drive.files.create({
+                        resource: fileMetadata,
+                        media: media,
+                        fields: 'id'
+                    }, callback);
+                }
             } catch (e) {
-                console.log(e.message);
                 console.log(e);
             }
         }
     }
 
-    async downloadFiles() {
-        console.log('Download files...');
+    async listFiles() {
+        console.log('Listing files...');
         const oAuth2Client = await this.getOAuth2ClientFromDisk();
         if (oAuth2Client === null) return;
 
@@ -149,23 +161,67 @@ class GoogleDriveService {
             auth: oAuth2Client
         });
 
+        return new Promise((resolve, reject) => {
+            try {
+                drive.files.list({
+                    spaces: 'appDataFolder',
+                    fields: 'nextPageToken, files(id, name)',
+                    pageSize: 100
+                }, (err, res) => {
+                    if (err) {
+                        console.error(err);
+                        reject(err);
+                    } else {
+                        resolve(res.data.files);
+                    }
+                });
+            } catch (e) {
+                console.log(e);
+                reject(e);
+            }
+        });
+    }
+
+    async downloadFiles() {
+        const oAuth2Client = await this.getOAuth2ClientFromDisk();
+        if (oAuth2Client === null) return;
+
+        const drive = google.drive({
+            version: 'v3',
+            auth: oAuth2Client
+        });
+
+        const files = await this.listFiles();
+
+        for (const file of files) {
+            console.log(`Downloading ${file.name}`);
+
+            await this.downloadFile(drive, file);
+        }
+    }
+
+    async downloadFile(drive, file) {
+        const rootPath = await FileSystemUtils.getDataPath();
+        const dest = fs.createWriteStream(`${rootPath}/${file.name}`);
+
         try {
-            drive.files.list({
-                spaces: 'appDataFolder',
-                fields: 'nextPageToken, files(id, name)',
-                pageSize: 100
-            }, (err, res) => {
-                if (err) {
-                    // Handle error
-                    console.error(err);
-                } else {
-                    res.data.files.forEach((file) => {
-                        console.log('Found file:', file.name, file.id);
-                    });
-                }
-            });
+            drive.files.get({ fileId: file.id, alt: 'media' },
+                { responseType: 'stream' },
+                (err, res) => {
+                    if (err) {
+                        console.log(err);
+                        return;
+                    }
+                    res.data
+                        .on('end', () => {
+                            console.log(`Done ${file.name}`);
+                        })
+                        .on('error', err => {
+                            console.log('Error', err);
+                        })
+                        .pipe(dest);
+                });
         } catch (e) {
-            console.log(e.message);
             console.log(e);
         }
     }

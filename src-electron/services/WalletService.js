@@ -109,3 +109,4 @@ class WalletService {
 }
 
 export default WalletService;
+export { FILES as WalletFiles };
