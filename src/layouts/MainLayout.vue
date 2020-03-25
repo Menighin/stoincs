@@ -27,6 +27,19 @@
                     <q-menu>
                         <div class="row no-wrap q-pa-md">
                             <div class="column items-center" style="width: 200px" v-if="userInfo !== null">
+
+                                <div style="text-align: right; width: 100%">
+                                    <q-btn
+                                        dense
+                                        flat
+                                        color="primary"
+                                        size="10px"
+                                        icon="eva-sync-outline"
+                                        :disable="isUploadingToGoogle"
+                                        @click="uploadToGoogle"
+                                    ></q-btn>
+                                </div>
+
                                 <q-avatar size="72px">
                                     <img :src="userInfo.photo">
                                 </q-avatar>
@@ -40,6 +53,10 @@
                                     size="sm"
                                     v-close-popup
                                 />
+
+                                <div style="font-size: 10px; color: #888;" class="q-mt-sm" v-if="lastGoogleUpload !== null">
+                                    Última sincronização: {{ lastGoogleUpload }}
+                                </div>
                             </div>
                             <div class="column items-center" v-if="userInfo === null">
                                 <q-btn
@@ -114,6 +131,7 @@
 <script>
 import NotificationPopup from '../components/NotificationPopup';
 import { ipcRenderer } from 'electron';
+import DateUtils from '../../src-electron/utils/DateUtils';
 
 export default {
     name: 'MainLayout',
@@ -125,7 +143,10 @@ export default {
             leftDrawerOpen: false,
             miniState: true,
             notificationOpen: false,
-            userInfo: null
+            userInfo: null,
+            isUploadingToGoogle: false,
+            lastGoogleUpload: null,
+            googleUploadInterval: null
         };
     },
     methods: {
@@ -135,6 +156,10 @@ export default {
         },
         logout() {
             ipcRenderer.send('google-drive/logout');
+        },
+        uploadToGoogle() {
+            this.isUploadingToGoogle = true;
+            ipcRenderer.send('google-drive/upload');
         }
     },
     mounted() {
@@ -142,22 +167,19 @@ export default {
             if (response.status === 'success') {
                 this.userInfo = response.data;
             } else {
-                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.error.message}` });
-                console.error(response.error);
+                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.message}` });
             }
         });
 
         ipcRenderer.on('google-drive/login', (event, response) => {
             if (response.status === 'error') {
-                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.error.message}` });
-                console.error(response.error);
+                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.message}` });
             }
         });
 
         ipcRenderer.on('google-drive/auto-login', (event, response) => {
             if (response.status === 'error') {
-                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.error.message}` });
-                console.error(response.error);
+                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.message}` });
             }
         });
 
@@ -166,8 +188,17 @@ export default {
                 this.userInfo = null;
                 this.$q.notify({ type: 'positive', message: `Logout realizado com sucesso` });
             } else {
-                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.error.message}` });
-                console.error(response.error);
+                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.message}` });
+            }
+        });
+
+        this.googleUploadInterval = setInterval(this.uploadToGoogle, 1000 * 60 * 5);
+
+        ipcRenderer.on('google-drive/upload', (event, response) => {
+            this.isUploadingToGoogle = false;
+            this.lastGoogleUpload = DateUtils.toString(new Date());
+            if (response.status === 'error') {
+                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.message}` });
             }
         });
 

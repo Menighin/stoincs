@@ -110,17 +110,20 @@ class GoogleDriveService {
 
         const rootPath = await FileSystemUtils.getDataPath();
 
-        const files = [Object.values(StockHistoryFiles), Object.values(WalletFiles)];
+        const files = [...Object.values(StockHistoryFiles), ...Object.values(WalletFiles)];
 
         for (const file of files) {
             try {
+                const fullPath = `${rootPath}/${file}`;
+                if (!fs.existsSync(fullPath)) continue;
+
                 const fileMetadata = {
                     'name': file,
                     'parents': ['appDataFolder']
                 };
                 const media = {
                     mimeType: 'application/json',
-                    body: fs.createReadStream(`${rootPath}/${file}`)
+                    body: fs.createReadStream(fullPath)
                 };
 
                 const callback = (err, file) => {

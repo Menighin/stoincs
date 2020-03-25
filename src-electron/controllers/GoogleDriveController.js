@@ -6,7 +6,8 @@ const googleDriveService = new GoogleDriveService();
 const METHODS = {
     LOGIN: 'google-drive/login',
     AUTO_LOGIN: 'google-drive/auto-login',
-    LOGOUT: 'google-drive/logout'
+    LOGOUT: 'google-drive/logout',
+    UPLOAD: 'google-drive/upload'
 };
 
 ipcMain.on(METHODS.LOGIN, async (event, arg) => {
@@ -32,6 +33,15 @@ ipcMain.on(METHODS.LOGOUT, async (event, arg) => {
         event.reply(METHODS.LOGOUT, { status: 'success' });
     } catch (e) {
         event.reply(METHODS.LOGOUT, { status: 'error', message: e.message });
+    }
+});
+
+ipcMain.on(METHODS.UPLOAD, async (event, arg) => {
+    try {
+        await googleDriveService.uploadFiles();
+        event.reply(METHODS.UPLOAD, { status: 'success' });
+    } catch (e) {
+        event.reply(METHODS.UPLOAD, { status: 'error', message: e.message });
     }
 });
 

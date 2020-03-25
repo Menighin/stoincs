@@ -32,3 +32,6 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
+
+# Google Drive
+src-electron\resources\GoogleCredentials.js
