@@ -34,4 +34,4 @@ yarn-error.log*
 *.sln
 
 # Google Drive
-src-electron\resources\GoogleCredentials.js
+/src-electron/resources/GoogleCredentials.js
