@@ -386,8 +386,6 @@ export default {
         });
 
         ipcRenderer.on('wallet/update-last-value', (event, response) => {
-            console.log(response.data);
-
             for (const r of response.data.stocks)
                 delete this.loadingStocks[r.code];
 

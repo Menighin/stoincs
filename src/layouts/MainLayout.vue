@@ -86,16 +86,8 @@
             :breakpoint="500"
             content-class="bg-grey-2"
         >
-            <q-list>
-                <q-item clickable to="/">
-                    <q-item-section avatar>
-                        <q-icon name="eva-home-outline" />
-                    </q-item-section>
-                    <q-item-section>
-                        <q-item-label>Inicio</q-item-label>
-                    </q-item-section>
-                </q-item>
-                <q-item clickable to="/wallet">
+            <q-list id="menu-list">
+                <q-item clickable @click="navigate('/wallet', $event)">
                     <q-item-section avatar>
                         <q-icon name="eva-bar-chart" />
                     </q-item-section>
@@ -103,7 +95,7 @@
                         <q-item-label>Carteira</q-item-label>
                     </q-item-section>
                 </q-item>
-                <q-item clickable to="/stock-history">
+                <q-item clickable @click="navigate('/stock-history', $event)">
                     <q-item-section avatar>
                         <q-icon name="eva-book-open-outline" />
                     </q-item-section>
@@ -111,7 +103,7 @@
                         <q-item-label>Negociações</q-item-label>
                     </q-item-section>
                 </q-item>
-                <q-item clickable to="/configurations">
+                <q-item clickable @click="navigate('/configurations', $event)">
                     <q-item-section avatar>
                         <q-icon name="eva-settings-2-outline" />
                     </q-item-section>
@@ -160,6 +152,24 @@ export default {
         uploadToGoogle() {
             this.isUploadingToGoogle = true;
             ipcRenderer.send('google-drive/upload');
+        },
+        navigate(path, event) {
+            const element = event.currentTarget;
+            const list = element.parentElement.children;
+
+            for (const item of list)
+                item.classList.remove('q-router-link--active');
+
+            element.classList.add('q-router-link--active');
+
+            const currentPath = this.$router.currentRoute.path;
+
+            if (currentPath === '/') {
+                setTimeout(() => this.$router.push(path), 700);
+                document.getElementById('pig-snout-svg').classList.add('bounce-out');
+            } else {
+                this.$router.push(path);
+            }
         }
     },
     mounted() {

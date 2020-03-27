@@ -22,7 +22,17 @@ export default {
 </script>
 
 <style lang="scss">
-    #pig-snout-svg {
-        transition: transform .5s;
+    .bounce-out {
+        animation: bounce-out .7s ease-in forwards;
     }
+
+    @keyframes bounce-out {
+        20% {
+            transform: scale(3);
+        }
+
+        100% {
+            transform: scale(0);
+        }
+      }
 </style>
