@@ -1,9 +1,11 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
+import SnoutLoaderPlugin from '../plugins/SnoutLoaderPlugin';
 
 import routes from './routes';
 
 Vue.use(VueRouter);
+Vue.use(SnoutLoaderPlugin);
 
 /*
  * If not building with SSR mode, you can

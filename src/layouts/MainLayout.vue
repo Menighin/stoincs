@@ -116,6 +116,8 @@
 
         <q-page-container>
             <router-view />
+            <snout-loader></snout-loader>
+            <q-btn @click="snoutStart">OIOI</q-btn>
         </q-page-container>
     </q-layout>
 </template>
@@ -124,11 +126,13 @@
 import NotificationPopup from '../components/NotificationPopup';
 import { ipcRenderer } from 'electron';
 import DateUtils from '../../src-electron/utils/DateUtils';
+import SnoutLoader from '../components/SnoutLoader';
 
 export default {
     name: 'MainLayout',
     components: {
-        NotificationPopup
+        NotificationPopup,
+        SnoutLoader
     },
     data() {
         return {
@@ -142,6 +146,9 @@ export default {
         };
     },
     methods: {
+        snoutStart() {
+            this.$snout.start('TESTE');
+        },
         login() {
             if (this.userInfo !== null) return;
             ipcRenderer.send('google-drive/login');
