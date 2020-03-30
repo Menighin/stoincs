@@ -4,6 +4,7 @@
         <inline-svg
             src="img/snout.svg"
             fill="black"
+            id="logo-svg"
             style="transform: scale(2)"
             aria-label="Porquinho Digital Logo"
         ></inline-svg>
@@ -28,7 +29,11 @@ export default {
 
     @keyframes bounce-out {
         20% {
-            transform: scale(3);
+            transform: scale(2.5);
+        }
+
+        50% {
+            transform: scale(0);
         }
 
         100% {

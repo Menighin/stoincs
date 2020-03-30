@@ -103,7 +103,7 @@
                         <q-item-label>Negociações</q-item-label>
                     </q-item-section>
                 </q-item>
-                <q-item clickable @click="navigate('/configurations', $event)">
+                <q-item clickable @click="navigate('/', $event)">
                     <q-item-section avatar>
                         <q-icon name="eva-settings-2-outline" />
                     </q-item-section>
@@ -116,9 +116,8 @@
 
         <q-page-container>
             <router-view />
-            <snout-loader></snout-loader>
-            <q-btn @click="snoutStart">OIOI</q-btn>
         </q-page-container>
+        <snout-loader class="snout-loader"></snout-loader>
     </q-layout>
 </template>
 
@@ -127,6 +126,7 @@ import NotificationPopup from '../components/NotificationPopup';
 import { ipcRenderer } from 'electron';
 import DateUtils from '../../src-electron/utils/DateUtils';
 import SnoutLoader from '../components/SnoutLoader';
+import EventBus from '../components/EventBus';
 
 export default {
     name: 'MainLayout',
@@ -173,7 +173,8 @@ export default {
 
             if (currentPath === '/') {
                 setTimeout(() => this.$router.push(path), 700);
-                document.getElementById('pig-snout-svg').classList.add('bounce-out');
+                setTimeout(() => EventBus.$emit('snout-loader-show'), 700);
+                document.getElementById('logo-svg').classList.add('bounce-out');
             } else {
                 this.$router.push(path);
             }
@@ -223,3 +224,11 @@ export default {
     }
 };
 </script>
+
+<style lang="scss" scoped>
+    .snout-loader {
+        position: absolute;
+        bottom: 8px;
+        right: 16px;
+    }
+</style>
