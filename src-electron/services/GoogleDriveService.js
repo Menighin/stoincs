@@ -75,9 +75,13 @@ class GoogleDriveService {
         }
     }
 
-    async logout() {
+    async logout(clearData) {
         const path = `${await FileSystemUtils.getDataPath()}/${TOKEN_FILE}`;
         await fs.promises.unlink(path);
+
+        if (clearData) {
+            
+        }
     }
 
     async getPicture(auth) {

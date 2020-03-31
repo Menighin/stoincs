@@ -24,17 +24,23 @@ export default {
     },
     data() {
         return {
-            loading: ['SNOUT-LOADER']
+            loading: []
         };
     },
     mounted() {
         const self = this;
-        EventBus.$on('snout-loader-start', (evtCode) => {
-            self.loading.push(evtCode);
+        EventBus.$on('snout-loader-start', (evt) => {
+            self.loading.push(evt);
+            self.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-2")';
+            self.$refs.snoutLoader.$el.classList.add('loading');
         });
 
         EventBus.$on('snout-loader-finish', (evtCode) => {
-            self.loading.push(evtCode);
+            self.loading = self.loading.filter(e => e.code !== evtCode);
+            if (self.loading.length === 0) {
+                self.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-1")';
+                self.$refs.snoutLoader.$el.classList.remove('loading');
+            }
         });
 
         EventBus.$on('snout-loader-show', () => {

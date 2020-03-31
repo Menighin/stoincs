@@ -3,10 +3,10 @@
         <q-badge color="red" floating>4</q-badge>
         <q-menu>
             <q-list style="min-width: 100px">
-                <q-item clickable v-close-popup>
+                <q-item clickable v-close-popup @click="addItemLoading">
                     <q-item-section>New tab</q-item-section>
                 </q-item>
-                <q-item clickable v-close-popup>
+                <q-item clickable v-close-popup @click="removeItemLoading">
                     <q-item-section>New incognito tab</q-item-section>
                 </q-item>
                 <q-separator />
@@ -33,8 +33,17 @@
 </template>
 
 <script>
+import EventBus from './EventBus';
 export default {
-    name: 'NotificationPopup'
+    name: 'NotificationPopup',
+    methods: {
+        addItemLoading() {
+            EventBus.$emit('snout-loader-start', { code: 'test', message: 'loading test' });
+        },
+        removeItemLoading() {
+            EventBus.$emit('snout-loader-finish', 'test');
+        }
+    }
 };
 </script>
 
