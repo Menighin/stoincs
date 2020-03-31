@@ -29,7 +29,7 @@ ipcMain.on(METHODS.AUTO_LOGIN, async (event, arg) => {
 
 ipcMain.on(METHODS.LOGOUT, async (event, arg) => {
     try {
-        await googleDriveService.logout();
+        await googleDriveService.logout(arg.clearData);
         event.reply(METHODS.LOGOUT, { status: 'success' });
     } catch (e) {
         event.reply(METHODS.LOGOUT, { status: 'error', message: e.message });

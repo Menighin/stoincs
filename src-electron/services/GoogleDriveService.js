@@ -80,7 +80,7 @@ class GoogleDriveService {
         await fs.promises.unlink(path);
 
         if (clearData) {
-            
+            await this.deleteFiles();
         }
     }
 
@@ -230,6 +230,27 @@ class GoogleDriveService {
                 });
         } catch (e) {
             console.log(e);
+        }
+    }
+
+    async deleteFiles() {
+        const files = await this.listFiles();
+        const oAuth2Client = await this.getOAuth2ClientFromDisk();
+        if (oAuth2Client === null) return;
+
+        const drive = google.drive({
+            version: 'v3',
+            auth: oAuth2Client
+        });
+        for (const file of files) {
+            console.log(`Deleting ${file.name}`);
+            drive.files.delete({ fileId: file.id }, {}, (err, res) => {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+                console.log('Delete successfully!');
+            });
         }
     }
 

@@ -154,7 +154,21 @@ export default {
             ipcRenderer.send('google-drive/login');
         },
         logout() {
-            ipcRenderer.send('google-drive/logout');
+            this.$q.dialog({
+                title: 'Confirmação',
+                message: 'Tem certeza que deseja fazer logout?',
+                options: {
+                    type: 'checkbox',
+                    model: [],
+                    items: [
+                        { label: 'Apagar arquivos da nuvem', value: 'clearData' }
+                    ]
+                },
+                cancel: true,
+                persistent: false
+            }).onOk(data => {
+                ipcRenderer.send('google-drive/logout', { clearData: data.length > 0 });
+            });
         },
         uploadToGoogle() {
             this.isUploadingToGoogle = true;
