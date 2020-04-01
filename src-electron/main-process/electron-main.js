@@ -2,7 +2,6 @@ import { app, BrowserWindow, nativeTheme } from 'electron';
 import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
 import StockHistoryService from '../services/StockHistoryService';
 import Controllers from '../controllers/main';
-import GoogleDriveService from '../services/GoogleDriveService';
 
 try {
     if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {

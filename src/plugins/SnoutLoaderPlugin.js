@@ -7,7 +7,7 @@ export default {
                 EventBus.$emit('snout-loader-start', evtCode);
             },
             finish(evtCode) {
-                EventBus.$emit('snout-loader-end', evtCode);
+                EventBus.$emit('snout-loader-finish', evtCode);
             }
         };
     }

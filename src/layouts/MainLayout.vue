@@ -195,6 +195,24 @@ export default {
         }
     },
     mounted() {
+        ipcRenderer.on('notification/start-loading', (event, response) => {
+            console.log('STARTING LOADER');
+            this.$snout.start(response.data);
+        });
+
+        ipcRenderer.on('notification/finish-loading', (event, response) => {
+            console.log('FINISH LOADER');
+            this.$snout.finish(response.data);
+        });
+
+        ipcRenderer.on('notification/login-success', (event, response) => {
+            if (response.status === 'success') {
+                this.userInfo = response.data;
+            } else {
+                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.message}` });
+            }
+        });
+
         ipcRenderer.on('notification/login-success', (event, response) => {
             if (response.status === 'success') {
                 this.userInfo = response.data;

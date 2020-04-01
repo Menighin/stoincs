@@ -2,12 +2,12 @@ import { BrowserWindow } from 'electron';
 
 class NotificationService {
 
-    notifyStartJob() {
-        BrowserWindow.getAllWindows()[0].webContents.send('notification/start-job');
+    notifyLoadingStart(evt) {
+        BrowserWindow.getAllWindows()[0].webContents.send('notification/start-loading', { data: evt });
     }
 
-    notifyEndJob() {
-        BrowserWindow.getAllWindows()[0].webContents.send('notification/end-job');
+    notifyLoadingFinish(evtCode) {
+        BrowserWindow.getAllWindows()[0].webContents.send('notification/finish-loading', { data: evtCode });
     }
 
     notifyLoginSuccess(data) {
