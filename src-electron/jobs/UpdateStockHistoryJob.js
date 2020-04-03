@@ -33,53 +33,59 @@ class UpdateStockHistoryJob {
         console.log('Running stock history job...');
         const evtCode = 'STOCK_HISTORY_JOB';
         this._notificationService.notifyLoadingStart({ code: evtCode, message: 'Crawling negociações do CEI' });
-        const user = await this._browserWindow.webContents.executeJavaScript('localStorage.getItem("configuration/username");', true);
-        const password = await this._browserWindow.webContents.executeJavaScript('localStorage.getItem("configuration/password");', true);
 
-        const jobMetadata = await this._stockHistoryService.getStockHistoryJobMetadata();
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        const ceiCrawler = new CeiCrawler(user, password, { puppeteerLaunch: { headless: true }, capStartDate: true, capEndDate: true });
+        try {
+            const user = await this._browserWindow.webContents.executeJavaScript('localStorage.getItem("configuration/username");', true);
+            const password = await this._browserWindow.webContents.executeJavaScript('localStorage.getItem("configuration/password");', true);
 
-        console.log('Executing CEI Crawler...');
-        let stocksByAccount = null;
-        if (jobMetadata === null) {
-            stocksByAccount = await ceiCrawler.getStockHistory();
-        } else {
-            const lastRun = jobMetadata.lastRun;
-            if (!DateUtils.isSameDate(yesterday, lastRun)) {
-                stocksByAccount = await ceiCrawler.getStockHistory(lastRun, yesterday);
+            const jobMetadata = await this._stockHistoryService.getStockHistoryJobMetadata();
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const ceiCrawler = new CeiCrawler(user, password, { puppeteerLaunch: { headless: true }, capStartDate: true, capEndDate: true });
+
+            console.log('Executing CEI Crawler...');
+            let stocksByAccount = null;
+            if (jobMetadata === null) {
+                stocksByAccount = await ceiCrawler.getStockHistory();
             } else {
-                return;
-            }
-        }
-
-        console.log('Processing stock history from CEI');
-
-        // Setting CEI as source and ID for stock Histories
-        stocksByAccount.forEach(i => {
-            i.stockHistory.forEach(s => {
-                s.source = 'CEI';
-                s.id = StockUtils.generateId(s, i.account);
-            });
-        });
-
-        // Merging duplicates
-        stocksByAccount.forEach(acc => {
-            const stockOperationById = {};
-            acc.stockHistory.forEach(s => {
-                if (s.id in stockOperationById) {
-                    stockOperationById[s.id].totalValue += s.totalValue;
-                    stockOperationById[s.id].quantity += s.quantity;
+                const lastRun = jobMetadata.lastRun;
+                if (!DateUtils.isSameDate(yesterday, lastRun)) {
+                    stocksByAccount = await ceiCrawler.getStockHistory(lastRun, yesterday);
                 } else {
-                    stockOperationById[s.id] = s;
+                    return;
                 }
-            });
-            acc.stockHistory = Object.values(stockOperationById);
-        });
+            }
 
-        await this._stockHistoryService.saveStockHistory(stocksByAccount);
-        await this._stockHistoryService.updateStockHistoryJobMetadata();
+            console.log('Processing stock history from CEI');
+
+            // Setting CEI as source and ID for stock Histories
+            stocksByAccount.forEach(i => {
+                i.stockHistory.forEach(s => {
+                    s.source = 'CEI';
+                    s.id = StockUtils.generateId(s, i.account);
+                });
+            });
+
+            // Merging duplicates
+            stocksByAccount.forEach(acc => {
+                const stockOperationById = {};
+                acc.stockHistory.forEach(s => {
+                    if (s.id in stockOperationById) {
+                        stockOperationById[s.id].totalValue += s.totalValue;
+                        stockOperationById[s.id].quantity += s.quantity;
+                    } else {
+                        stockOperationById[s.id] = s;
+                    }
+                });
+                acc.stockHistory = Object.values(stockOperationById);
+            });
+
+            await this._stockHistoryService.saveStockHistory(stocksByAccount);
+            await this._stockHistoryService.updateStockHistoryJobMetadata();
+        } catch (e) {
+            console.log('Erro StockHistory crawler');
+            console.log(e);
+        }
         this._notificationService.notifyLoadingFinish(evtCode);
     }
 

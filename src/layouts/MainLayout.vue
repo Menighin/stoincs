@@ -195,13 +195,15 @@ export default {
         }
     },
     mounted() {
+        ipcRenderer.on('notification/message', (event, response) => {
+            this.$snout.start(response.data);
+        });
+
         ipcRenderer.on('notification/start-loading', (event, response) => {
-            console.log('STARTING LOADER');
             this.$snout.start(response.data);
         });
 
         ipcRenderer.on('notification/finish-loading', (event, response) => {
-            console.log('FINISH LOADER');
             this.$snout.finish(response.data);
         });
 

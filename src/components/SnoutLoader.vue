@@ -51,12 +51,12 @@ export default {
         });
 
         EventBus.$on('snout-loader-finish', (evtCode) => {
-            debugger;
             self.loading = self.loading.filter(e => e.code !== evtCode);
             if (self.loading.length === 0) {
                 self.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-1")';
                 self.$refs.snoutLoader.$el.classList.remove('loading');
                 this.item = null;
+                this.$refs.message.style.width = `10px`;
             } else {
                 this.item %= this.loading.length;
             }
@@ -91,7 +91,7 @@ export default {
             }, 200);
 
             if (this.loading.length > 1)
-                this.$refs.message.style.width = `0px`;
+                this.$refs.message.style.width = `10px`;
 
             document.body.removeChild(fakeDiv);
         }, 2000);
@@ -114,12 +114,13 @@ export default {
             border-radius: 6px;
             transition: all .2s linear;
             white-space: nowrap;
-            width: 0px;
+            width: 10px;
             overflow: hidden;
             text-align: center;
             text-transform: uppercase;
             font-size: 11px;
             margin-bottom: 4px;
+            min-height: 15px;
         }
 
         .svg {

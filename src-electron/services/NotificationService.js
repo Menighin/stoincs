@@ -14,6 +14,10 @@ class NotificationService {
         BrowserWindow.getAllWindows()[0].webContents.send('notification/login-success', { status: 'success', data: data });
     }
 
+    notifyMessage(message) {
+        BrowserWindow.getAllWindows()[0].webContents.send('notification/message', { data: message });
+    }
+
 }
 
 export default NotificationService;
