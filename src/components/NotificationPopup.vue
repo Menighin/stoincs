@@ -1,9 +1,9 @@
 <template>
     <q-btn color="white" icon="eva-bell-outline" flat round>
         <q-badge color="red" floating v-show="unreadCount > 0">{{ unreadCount }}</q-badge>
-        <q-menu @blur="markRead">
-            <q-list style="min-width: 100px" class="list">
-                <template v-for="(d, i) in data">
+        <q-menu @blur="markRead" ref="menu">
+            <q-list style="min-width: 200px; max-width: 300px" class="list">
+                <template v-for="(d, i) in data.slice().reverse()">
                     <q-item :key="`item-${i}`" :class="{ read: d.read }">
                         <q-item-section>
                             <q-item-label class="title">{{ d.title }}</q-item-label>
@@ -12,14 +12,23 @@
 
                         <q-item-section side top>
                             <q-item-label caption>{{ d.time || 0 }}m</q-item-label>
-                            <q-icon class="icon" v-if="d.type === 'success'" name="eva-checkmark-square-outline" color="green" />
+                            <q-icon class="icon" :name="d.icon" color="primary" />
+                            <!-- <q-icon class="icon" v-if="d.type === 'success'" name="eva-checkmark-square-outline" color="green" />
                             <q-icon class="icon" v-if="d.type === 'warning'" name="eva-alert-triangle-outline" color="yellow" />
-                            <q-icon class="icon" v-if="d.type === 'error'"   name="eva-alert-circle-outline" color="red" />
+                            <q-icon class="icon" v-if="d.type === 'error'"   name="eva-alert-circle-outline" color="red" /> -->
                         </q-item-section>
                     </q-item>
 
-                    <q-separator :key="`separator-${i}`" v-if="i !== data.length - 1" />
+                    <q-separator :key="`separator-${i}`" />
                 </template>
+
+                <q-item class="flex flex-center" v-if="data.length === 0">
+                    <q-item-label style="color: #aaa">Não há notificações</q-item-label>
+                </q-item>
+
+                <q-item class="flex flex-center">
+                    <q-btn label="LIMPAR" color="primary" dense flat class="q-px-lg" @click="clear" :disable="data.length === 0" />
+                </q-item>
             </q-list>
         </q-menu>
     </q-btn>
@@ -32,18 +41,7 @@ export default {
     props: {
         data: {
             type: Array,
-            default: () => [
-                {
-                    title: 'Notificação teste',
-                    message: 'Essa é uma notificação de teste',
-                    type: 'success'
-                },
-                {
-                    title: 'Notificação teste 2',
-                    message: 'Essa é outra notificação de teste',
-                    type: 'error'
-                }
-            ]
+            default: () => []
         }
     },
     data() {
@@ -56,6 +54,10 @@ export default {
             this.data.forEach(d => {
                 this.$set(d, 'read', true);
             });
+        },
+        clear() {
+            this.$emit('update:data', []);
+            this.$refs.menu.hide();
         }
     },
     computed: {

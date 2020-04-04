@@ -15,7 +15,7 @@
                     Porquinho Digital
                 </q-toolbar-title>
 
-                <NotificationPopup />
+                <NotificationPopup :data.sync="notifications" />
 
                 <q-btn
                     round
@@ -103,7 +103,7 @@
                         <q-item-label>Negociações</q-item-label>
                     </q-item-section>
                 </q-item>
-                <q-item clickable @click="navigate('/', $event)">
+                <q-item clickable @click="navigate('/configurations', $event)">
                     <q-item-section avatar>
                         <q-icon name="eva-settings-2-outline" />
                     </q-item-section>
@@ -142,7 +142,8 @@ export default {
             userInfo: null,
             isUploadingToGoogle: false,
             lastGoogleUpload: null,
-            googleUploadInterval: null
+            googleUploadInterval: null,
+            notifications: []
         };
     },
     methods: {
@@ -196,7 +197,7 @@ export default {
     },
     mounted() {
         ipcRenderer.on('notification/message', (event, response) => {
-            this.$snout.start(response.data);
+            this.notifications.push(response.data);
         });
 
         ipcRenderer.on('notification/start-loading', (event, response) => {

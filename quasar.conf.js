@@ -167,7 +167,10 @@ module.exports = function(ctx) {
             builder: {
                 // https://www.electron.build/configuration/configuration
 
-                appId: 'porquinho-digital'
+                appId: 'porquinho-digital',
+                win: {
+                    icon: 'src-electron/icons/icon.png'
+                }
             },
 
             // keep in sync with /src-electron/main-process/electron-main

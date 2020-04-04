@@ -1,6 +1,6 @@
 <template>
     <div class="snout-loader">
-        <div class="message" ref="message">{{ message }}</div>
+        <div class="message" ref="message" v-show="item !== null">{{ message }}</div>
         <div class="svg">
             <inline-svg
                 src="img/snout.svg"
@@ -9,7 +9,6 @@
                 viewBox="0 0 128 128"
                 width="32"
                 height="32"
-                class="bounce-in"
                 id="snout-loader"
                 ref="snoutLoader"
                 aria-label="Porquinho Digital Logo"

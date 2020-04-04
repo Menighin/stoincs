@@ -5,6 +5,11 @@ import DateUtils from '../utils/DateUtils';
 import StockUtils from '../utils/StockUtils';
 import NotificationService from '../services/NotificationService';
 
+const NOTIFICATION = {
+    TITLE: 'Negociações',
+    ICON: 'eva-book-open-outline'
+};
+
 class UpdateStockHistoryJob {
 
     /** @type {BrowserWindow} */
@@ -25,7 +30,7 @@ class UpdateStockHistoryJob {
         this._stockHistoryService = stockHistoryService;
         this._browserWindow = browserWindow;
         this._notificationService = new NotificationService();
-        setTimeout(() => this.run(), 10000);
+        setTimeout(() => this.run(), 30000);
         // setInterval(this.run, 1000 * 3);
     }
 
@@ -52,17 +57,20 @@ class UpdateStockHistoryJob {
                 if (!DateUtils.isSameDate(yesterday, lastRun)) {
                     stocksByAccount = await ceiCrawler.getStockHistory(lastRun, yesterday);
                 } else {
+                    this._notificationService.notifyMessage(NOTIFICATION.TITLE, `Negociações já estão atualizadas com o CEI`, NOTIFICATION.ICON);
                     return;
                 }
             }
 
             console.log('Processing stock history from CEI');
+            let newNegotiations = 0;
 
             // Setting CEI as source and ID for stock Histories
             stocksByAccount.forEach(i => {
                 i.stockHistory.forEach(s => {
                     s.source = 'CEI';
                     s.id = StockUtils.generateId(s, i.account);
+                    newNegotiations++;
                 });
             });
 
@@ -82,9 +90,12 @@ class UpdateStockHistoryJob {
 
             await this._stockHistoryService.saveStockHistory(stocksByAccount);
             await this._stockHistoryService.updateStockHistoryJobMetadata();
+
+            this._notificationService.notifyMessage(NOTIFICATION.TITLE, `${newNegotiations} novas negociações adicionadas`, NOTIFICATION.ICON);
         } catch (e) {
             console.log('Erro StockHistory crawler');
             console.log(e);
+            this._notificationService.notifyMessage(NOTIFICATION.TITLE, `Erro ao buscar no CEI: ${e.message}`, NOTIFICATION.ICON);
         }
         this._notificationService.notifyLoadingFinish(evtCode);
     }
