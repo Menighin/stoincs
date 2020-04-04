@@ -87,14 +87,16 @@
             content-class="bg-grey-2"
         >
             <q-list id="menu-list">
-                <q-item clickable @click="navigate('/wallet', $event)">
-                    <q-item-section avatar>
-                        <q-icon name="eva-bar-chart" />
-                    </q-item-section>
-                    <q-item-section>
-                        <q-item-label>Carteira</q-item-label>
-                    </q-item-section>
-                </q-item>
+                <q-expansion-item
+                    expand-separator
+                    label="Carteira"
+                    icon="eva-bar-chart"
+                    :content-inset-level="1">
+                    <q-list>
+                        <q-item clickable @click="navigate('/wallet', $event)">Tabelas</q-item>
+                        <q-item clickable @click="navigate('/wallet-chart', $event)">Gráficos</q-item>
+                    </q-list>
+                </q-expansion-item>
                 <q-item clickable @click="navigate('/stock-history', $event)">
                     <q-item-section avatar>
                         <q-icon name="eva-book-open-outline" />
