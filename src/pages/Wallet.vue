@@ -64,9 +64,39 @@
             </q-td>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
-                <q-btn flat icon="eva-sync-outline" @click="syncRow(props.row)" color="primary" />
+                <q-btn flat icon="eva-sync-outline" @click="syncRow(props.row)" title="Atualizar" color="primary" />
+                <q-btn flat icon="eva-pricetags-outline" @click="editLabelDialog = true; editLabelCode = props.row.code" title="Editar label" color="primary" />
             </q-td>
         </q-table>
+
+        <q-dialog v-model="editLabelDialog">
+            <q-card style="min-width: 550px">
+                <q-card-section class="row q-ma-sm justify-between items-center">
+                    <div class="text-h6">Editar label para {{ editLabelCode }}</div>
+                </q-card-section>
+                <q-separator />
+                <q-card-section style="max-height: 80vh" class="scroll">
+
+                    <q-item-label header>Label do ativo</q-item-label>
+                    <q-select
+                        filled
+                        v-model="editLabel"
+                        use-input
+                        input-debounce="0"
+                        @new-value="createLabelOption"
+                        :options="filteredLabelOptions"
+                        @filter="filterLabelFn"
+                    />
+
+                </q-card-section>
+                <q-separator />
+                <q-card-actions align="right">
+                    <q-btn flat label="Cancelar" color="primary" v-close-popup />
+                    <q-btn flat label="Salvar" color="primary" @click="saveLabel" />
+                </q-card-actions>
+
+            </q-card>
+        </q-dialog>
 
         <q-dialog v-model="configDialog">
             <q-card class="q-pb-lg" style="min-width: 550px">
@@ -142,10 +172,14 @@ export default {
             tableLoading: false,
             showCreateForm: false,
             configDialog: false,
+            editLabelDialog: false,
+            editLabelCode: '',
+            editLabel: '',
+            filteredLabelOptions: [],
             pagination: {
                 rowsPerPage: 50
             },
-            visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'valueSold', 'lastUpdated', 'price', 'totalValue' ],
+            visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'valueSold', 'lastUpdated', 'price', 'totalValue', 'label' ],
             columns: [
                 {
                     name: 'code',
@@ -213,6 +247,13 @@ export default {
                     field: 'totalValue',
                     sortable: true,
                     format: val => NumberUtils.formatCurrency(val)
+                },
+                {
+                    name: 'label',
+                    align: 'center',
+                    label: 'Label',
+                    field: 'label',
+                    sortable: true
                 },
                 {
                     name: 'source',
@@ -307,6 +348,28 @@ export default {
             } else {
                 this.shouldUpdateInterval = true;
             }
+        },
+        filterLabelFn(val, update) {
+            update(() => {
+                if (val === '') {
+                    this.filteredLabelOptions = this.labelOptions;
+                } else {
+                    const needle = val.toLowerCase();
+                    this.filteredLabelOptions = this.labelOptions.filter(
+                        v => v.toLowerCase().indexOf(needle) > -1
+                    );
+                }
+            });
+        },
+        createLabelOption(val, done) {
+            if (val.length > 0) {
+                done(val, 'toggle');
+            }
+        },
+        saveLabel() {
+            ipcRenderer.send('wallet/update-label', { stock: this.editLabelCode, label: this.editLabel });
+            this.editLabel = '';
+            this.editLabelDialog = false;
         }
     },
     computed: {
@@ -327,7 +390,8 @@ export default {
                         lastTradingDay: d.lastTradingDay,
                         lastUpdated: d.lastUpdated,
                         totalValue: d.valueSold + quantityBalance * d.price - d.valueBought,
-                        source: d.source
+                        source: d.source,
+                        label: d.label
                     };
                 })
                 .sort((a, b) => a.code < b.code ? -1 : (a.code > b.code ? 1 : 0));
@@ -358,6 +422,9 @@ export default {
             msgs.push(`Serão <strong>${updatesPerHour}</strong> atualizações por hora, totalizando <strong>${updatesPerHour * 24}</strong> atualizações por dia.`);
 
             return msgs;
+        },
+        labelOptions() {
+            return [...new Set(this.dataTable.map(o => o.label).filter(o => o && o.length > 0))].sort();
         }
     },
     mounted() {
@@ -381,6 +448,15 @@ export default {
                 this.$q.notify({ type: 'positive', message: `Sua carteira foi atualizada!` });
             } else {
                 this.$q.notify({ type: 'negative', message: `Error pegar carteira do seu histórico: ${response.error.message}` });
+                console.error(response.error);
+            }
+        });
+
+        ipcRenderer.on('wallet/update-label', (event, response) => {
+            if (response.status === 'success') {
+                this.init();
+            } else {
+                this.$q.notify({ type: 'negative', message: `Error ao ler sua carteira: ${response.error.message}` });
                 console.error(response.error);
             }
         });

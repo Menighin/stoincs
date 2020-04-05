@@ -46,6 +46,7 @@ class WalletService {
                         changePercent: 0,
                         lastTradingDay: null,
                         lastUpdated: null,
+                        label: '',
                         source: 'CEI'
                     };
                 }
@@ -104,6 +105,14 @@ class WalletService {
         await this.saveWallet(wallet, true);
 
         return results;
+    }
+
+    async updateLabel(stock, label) {
+        const wallet = await this.getWallet();
+
+        wallet.filter(o => o.code === stock)[0].label = label;
+
+        await this.saveWallet(wallet, true);
     }
 
 }

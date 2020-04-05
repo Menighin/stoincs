@@ -6,7 +6,8 @@ const walletService = new WalletService();
 const METHODS = {
     GET_WALLET: 'wallet/get',
     REFRESH_FROM_HISTORY: 'wallet/refresh-from-history',
-    UPDATE_LAST_VALUE: 'wallet/update-last-value'
+    UPDATE_LAST_VALUE: 'wallet/update-last-value',
+    UPDATE_LABEL: 'wallet/update-label'
 };
 
 ipcMain.on(METHODS.GET_WALLET, async (event, arg) => {
@@ -34,6 +35,15 @@ ipcMain.on(METHODS.UPDATE_LAST_VALUE, async (event, arg) => {
         event.reply(METHODS.UPDATE_LAST_VALUE, { status: 'success', data: { stocks: lastValues, type: arg.type } });
     } catch (e) {
         event.reply(METHODS.UPDATE_LAST_VALUE, { status: 'error', message: e.message });
+    }
+});
+
+ipcMain.on(METHODS.UPDATE_LABEL, async (event, arg) => {
+    try {
+        await walletService.updateLabel(arg.stock, arg.label);
+        event.reply(METHODS.UPDATE_LABEL, { status: 'success' });
+    } catch (e) {
+        event.reply(METHODS.UPDATE_LABEL, { status: 'error', message: e.message });
     }
 });
 
