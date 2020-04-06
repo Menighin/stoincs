@@ -94,7 +94,7 @@
                     :content-inset-level="1">
                     <q-list>
                         <q-item clickable @click="navigate('/wallet', $event)">Tabelas</q-item>
-                        <q-item clickable @click="navigate('/wallet-chart', $event)">Gráficos</q-item>
+                        <q-item clickable @click="navigate('/wallet-charts', $event)">Gráficos</q-item>
                     </q-list>
                 </q-expansion-item>
                 <q-item clickable @click="navigate('/stock-history', $event)">
