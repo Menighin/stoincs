@@ -65,7 +65,7 @@
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
                 <q-btn flat icon="eva-sync-outline" @click="syncRow(props.row)" title="Atualizar" color="primary" />
-                <q-btn flat icon="eva-pricetags-outline" @click="editLabelDialog = true; editLabelCode = props.row.code" title="Editar label" color="primary" />
+                <q-btn flat icon="eva-pricetags-outline" @click="editLabelDialog = true; editLabelCode = props.row.code; editLabel = props.row.label;" title="Editar label" color="primary" />
             </q-td>
         </q-table>
 

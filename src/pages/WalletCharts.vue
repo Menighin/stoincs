@@ -1,6 +1,22 @@
 <template>
-    <q-page class='flex flex-center' ref="chartPage">
-        <highcharts ref="treemapChart" class="chart" :options='chartOptions' />
+    <q-page class="chart-page" ref="chartPage">
+
+        <q-tabs v-model="tab" class="text-secondary" active-color="accent">
+            <q-tab name="treemap" label="Treemap" />
+            <q-tab name="bars" label="Barras" />
+        </q-tabs>
+
+        <q-tab-panels v-model="tab" animated class="chart-panel" ref="chartPanel">
+            <q-tab-panel name="treemap">
+                <highcharts ref="treemapChart" class="chart" :options='treemapOptions' />
+            </q-tab-panel>
+
+            <q-tab-panel name="bars">
+                <div class="text-h6">Alarms</div>
+                Lorem ipsum dolor sit amet consectetur adipisicing elit.
+            </q-tab-panel>
+        </q-tab-panels>
+
     </q-page>
 </template>
 
@@ -23,36 +39,13 @@ export default {
     data() {
         return {
             data: [],
-            chartOptions2: {
-                series: [{
-                    type: 'treemap',
-                    layoutAlgorithm: 'stripes',
-                    alternateStartingDirection: true,
-                    levels: [{
-                        level: 1,
-                        layoutAlgorithm: 'sliceAndDice',
-                        dataLabels: {
-                            enabled: true,
-                            align: 'left',
-                            verticalAlign: 'top',
-                            style: {
-                                fontSize: '15px',
-                                fontWeight: 'bold'
-                            }
-                        }
-                    }],
-                    data: []
-                }],
-                title: {
-                    text: 'Fruit consumption'
-                }
-            }
+            tab: 'treemap'
         };
     },
     methods: {
     },
     computed: {
-        chartOptions() {
+        treemapOptions() {
             const rawData = this.data.filter(o => o.quantityBought - o.quantitySold > 0);
 
             const totalValue = rawData.reduce((prev, curr) => {
@@ -116,7 +109,7 @@ export default {
                     }
                 }],
                 title: {
-                    text: 'Ações'
+                    text: null
                 },
                 tooltip: {
                     useHTML: true,
@@ -147,13 +140,25 @@ export default {
         });
 
         ipcRenderer.send('wallet/get');
+
+        this.$refs.chartPanel.$el.style.height = `${this.$refs.chartPage.$el.clientHeight - 100}px`;
+        this.$refs.treemapChart.chart.reflow();
     }
 };
 </script>
 
 <style lang="scss" scoped>
-    .chart {
-        width: 90%;
-        min-height: 600px;
+    .chart-page {
+        padding: 10px 20px;
+
+        .chart-panel {
+            text-align: center;
+            .chart {
+                margin: 0 auto;
+                width: 100%;
+                min-height: 600px;
+                height: 100%;
+            }
+        }
     }
 </style>
