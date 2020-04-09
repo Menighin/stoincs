@@ -8,12 +8,11 @@
 
         <q-tab-panels v-model="tab" animated class="chart-panel" ref="chartPanel">
             <q-tab-panel name="treemap">
-                <highcharts ref="treemapChart" class="chart" :options='treemapOptions' />
+                <highcharts ref="treemapChart" class="chart" :options="treemapOptions" />
             </q-tab-panel>
 
             <q-tab-panel name="bars">
-                <div class="text-h6">Alarms</div>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit.
+                <highcharts ref="barChart" class="chart" :options="barOptions" />
             </q-tab-panel>
         </q-tab-panels>
 
@@ -26,7 +25,7 @@ import { Chart } from 'highcharts-vue';
 import Highcharts from 'highcharts';
 import treemapInit from 'highcharts/modules/treemap';
 import { ipcRenderer } from 'electron';
-import { SeriesColors } from '../utils/HighchartColors';
+import { SeriesColors } from '../utils/HighchartUtils';
 import NumberUtils from '../../src-electron/utils/NumberUtils';
 
 treemapInit(Highcharts);
@@ -114,7 +113,7 @@ export default {
                 tooltip: {
                     useHTML: true,
                     pointFormatter: function() {
-                        let content = '<ul style="margin-left: -15px; padding-right: 10px;">';
+                        let content = `${this.name}<ul style="margin-left: -15px; padding-right: 10px;">`;
                         content += `<li><strong>Porcentagem:</strong> ${NumberUtils.formatPercentage(this.percentage * 100, false)}</li>`;
                         content += `<li><strong>Valor:</strong> ${NumberUtils.formatCurrency(this.value)}</li>`;
                         content += `<li><strong>Quantidade:</strong> ${this.quantity}</li>`;
@@ -126,6 +125,67 @@ export default {
                         return content;
                     }
                 }
+            };
+        },
+        barOptions() {
+            const rawData = this.data.filter(o => o.quantityBought - o.quantitySold > 0);
+
+            console.log(rawData);
+            const categories = [];
+            const seriesBoughtValue = [];
+            const seriesActualValue = [];
+
+            for (const d of rawData) {
+                categories.push(d.code);
+                seriesBoughtValue.push(d.valueBought);
+                seriesActualValue.push(d.valueSold + Math.max(d.quantityBought - d.quantitySold, 0) * d.price);
+            }
+
+            return {
+                chart: {
+                    type: 'column'
+                },
+                title: {
+                    text: null
+                },
+                xAxis: {
+                    categories: categories
+                },
+                yAxis: [{
+                    min: 0,
+                    title: {
+                        text: 'Valor'
+                    }
+                }],
+                tooltip: {
+                    shared: true,
+                    formatter: function() {
+                        return 'PASTEEEEEL';
+                    }
+                },
+                plotOptions: {
+                    column: {
+                        grouping: false,
+                        borderWidth: 0
+                    }
+                },
+                series: [{
+                    name: 'Compra',
+                    color: SeriesColors[0],
+                    data: seriesBoughtValue,
+                    tooltip: {
+                        valuePrefix: 'R$'
+                    },
+                    pointPadding: 0
+                }, {
+                    name: 'Valor Atual',
+                    color: SeriesColors[1],
+                    data: seriesActualValue,
+                    tooltip: {
+                        valuePrefix: 'R$'
+                    },
+                    pointPadding: 0.25
+                }]
             };
         }
     },

@@ -7,4 +7,8 @@ const seriesColors = [
     '#d37043'
 ];
 
+class HighchartUtils {
+}
+
 export { seriesColors as SeriesColors };
+export default HighchartUtils;
