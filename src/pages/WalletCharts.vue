@@ -12,7 +12,11 @@
             </q-tab-panel>
 
             <q-tab-panel name="bars">
-                <highcharts ref="barChart" class="chart" :options="barOptions" />
+                <q-checkbox label="Somente ações na carteira" v-model="barChartInWallet" />
+                <q-checkbox label="Mostrar coluna de total" v-model="barChartShowTotal" />
+                <div style="height: 90%">
+                    <highcharts ref="barChart" class="chart" :options="barOptions" />
+                </div>
             </q-tab-panel>
         </q-tab-panels>
 
@@ -25,7 +29,7 @@ import { Chart } from 'highcharts-vue';
 import Highcharts from 'highcharts';
 import treemapInit from 'highcharts/modules/treemap';
 import { ipcRenderer } from 'electron';
-import { SeriesColors } from '../utils/HighchartUtils';
+import HighchartUtils, { SeriesColors } from '../utils/HighchartUtils';
 import NumberUtils from '../../src-electron/utils/NumberUtils';
 
 treemapInit(Highcharts);
@@ -38,7 +42,9 @@ export default {
     data() {
         return {
             data: [],
-            tab: 'treemap'
+            tab: null,
+            barChartInWallet: true,
+            barChartShowTotal: false
         };
     },
     methods: {
@@ -113,32 +119,53 @@ export default {
                 tooltip: {
                     useHTML: true,
                     pointFormatter: function() {
-                        let content = `${this.name}<ul style="margin-left: -15px; padding-right: 10px;">`;
-                        content += `<li><strong>Porcentagem:</strong> ${NumberUtils.formatPercentage(this.percentage * 100, false)}</li>`;
-                        content += `<li><strong>Valor:</strong> ${NumberUtils.formatCurrency(this.value)}</li>`;
-                        content += `<li><strong>Quantidade:</strong> ${this.quantity}</li>`;
+                        const items = [
+                            {
+                                name: 'Porcentagem',
+                                value: NumberUtils.formatPercentage(this.percentage * 100, false),
+                                color: SeriesColors[0 % SeriesColors.length]
+                            },
+                            {
+                                name: 'Valor',
+                                value: NumberUtils.formatCurrency(this.value),
+                                color: SeriesColors[1 % SeriesColors.length]
+                            },
+                            {
+                                name: 'Quantidade',
+                                value: this.quantity,
+                                color: SeriesColors[2 % SeriesColors.length]
+                            }
+                        ];
 
                         if (this.leaf)
-                            content += `<li><strong>Preço atual:</strong> ${NumberUtils.formatCurrency(this.price)}</li>`;
+                            items.push({
+                                name: 'Preço atual',
+                                value: NumberUtils.formatCurrency(this.price),
+                                color: SeriesColors[3 % SeriesColors.length]
+                            });
 
-                        content += '</ul>';
-                        return content;
+                        return HighchartUtils.getTooltipContent(this.name, items);
                     }
                 }
             };
         },
         barOptions() {
-            const rawData = this.data.filter(o => o.quantityBought - o.quantitySold > 0);
+            const rawData = this.data.filter(o => o.quantityBought - o.quantitySold > 0 || !this.barChartInWallet);
 
-            console.log(rawData);
-            const categories = [];
-            const seriesBoughtValue = [];
-            const seriesActualValue = [];
+            let categories = [];
+            let seriesBoughtValue = [];
+            let seriesActualValue = [];
 
             for (const d of rawData) {
                 categories.push(d.code);
                 seriesBoughtValue.push(d.valueBought);
                 seriesActualValue.push(d.valueSold + Math.max(d.quantityBought - d.quantitySold, 0) * d.price);
+            }
+
+            if (this.barChartShowTotal) {
+                categories = ['Total', ...categories];
+                seriesBoughtValue = [seriesBoughtValue.reduce((p, c) => p + c), ...seriesBoughtValue];
+                seriesActualValue = [seriesActualValue.reduce((p, c) => p + c), ...seriesActualValue];
             }
 
             return {
@@ -160,7 +187,20 @@ export default {
                 tooltip: {
                     shared: true,
                     formatter: function() {
-                        return 'PASTEEEEEL';
+                        const items = this.points.map(p => ({
+                            name: p.series.name,
+                            value: NumberUtils.formatCurrency(p.y),
+                            color: p.color
+                        }));
+
+                        // The result
+                        items.push({
+                            name: 'Balanço',
+                            value: NumberUtils.formatCurrency(this.points[1].y - this.points[0].y, true),
+                            color: SeriesColors[3]
+                        });
+
+                        return HighchartUtils.getTooltipContent(this.x, items);
                     }
                 },
                 plotOptions: {
@@ -201,8 +241,11 @@ export default {
 
         ipcRenderer.send('wallet/get');
 
-        this.$refs.chartPanel.$el.style.height = `${this.$refs.chartPage.$el.clientHeight - 100}px`;
-        this.$refs.treemapChart.chart.reflow();
+        setTimeout(() => {
+            this.tab = 'treemap';
+            this.$refs.chartPanel.$el.style.height = `${this.$refs.chartPage.$el.clientHeight - 100}px`;
+            this.$refs.treemapChart.chart.reflow();
+        }, 200);
     }
 };
 </script>
