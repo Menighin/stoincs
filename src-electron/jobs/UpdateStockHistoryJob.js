@@ -18,9 +18,6 @@ class UpdateStockHistoryJob {
     /** @type {StockHistoryService} */
     _stockHistoryService;
 
-    /** @type {NotificationService} */
-    _notificationService;
-
     /**
      * Setup the job to run from time to time
      * @param {StockHistoryService} stockHistoryService - Service to handle the stock history
@@ -29,7 +26,6 @@ class UpdateStockHistoryJob {
     setup(stockHistoryService, browserWindow) {
         this._stockHistoryService = stockHistoryService;
         this._browserWindow = browserWindow;
-        this._notificationService = new NotificationService();
         setTimeout(() => this.run(), 30000);
         // setInterval(this.run, 1000 * 3);
     }
@@ -37,7 +33,7 @@ class UpdateStockHistoryJob {
     async run() {
         console.log('Running stock history job...');
         const evtCode = 'STOCK_HISTORY_JOB';
-        this._notificationService.notifyLoadingStart({ code: evtCode, message: 'Crawling negociações do CEI' });
+        NotificationService.notifyLoadingStart(evtCode, 'Crawling negociações do CEI');
 
         try {
             const user = await this._browserWindow.webContents.executeJavaScript('localStorage.getItem("configuration/username");', true);
@@ -57,7 +53,8 @@ class UpdateStockHistoryJob {
                 if (!DateUtils.isSameDate(yesterday, lastRun)) {
                     stocksByAccount = await ceiCrawler.getStockHistory(lastRun, yesterday);
                 } else {
-                    this._notificationService.notifyMessage(NOTIFICATION.TITLE, `Negociações já estão atualizadas com o CEI`, NOTIFICATION.ICON);
+                    NotificationService.notifyMessage(NOTIFICATION.TITLE, `Negociações já estão atualizadas com o CEI`, NOTIFICATION.ICON);
+                    NotificationService.notifyLoadingFinish(evtCode);
                     return;
                 }
             }
@@ -91,15 +88,16 @@ class UpdateStockHistoryJob {
             await this._stockHistoryService.saveStockHistory(stocksByAccount);
             await this._stockHistoryService.updateStockHistoryJobMetadata();
 
-            this._notificationService.notifyMessage(NOTIFICATION.TITLE, `${newNegotiations} novas negociações adicionadas`, NOTIFICATION.ICON);
+            NotificationService.notifyMessage(NOTIFICATION.TITLE, `${newNegotiations} novas negociações adicionadas`, NOTIFICATION.ICON);
         } catch (e) {
             console.log('Erro StockHistory crawler');
             console.log(e);
-            this._notificationService.notifyMessage(NOTIFICATION.TITLE, `Erro ao buscar no CEI: ${e.message}`, NOTIFICATION.ICON);
+            NotificationService.notifyMessage(NOTIFICATION.TITLE, `Erro ao buscar no CEI: ${e.message}`, NOTIFICATION.ICON);
+            NotificationService.notifyLoadingFinish(evtCode);
         }
-        this._notificationService.notifyLoadingFinish(evtCode);
+        NotificationService.notifyLoadingFinish(evtCode);
     }
 
 }
 
-export default UpdateStockHistoryJob;
+export default new UpdateStockHistoryJob();

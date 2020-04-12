@@ -1,6 +1,8 @@
 import { app, BrowserWindow, nativeTheme } from 'electron';
 import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
+import UpdatePricesJob from '../jobs/UpdatePricesJob';
 import StockHistoryService from '../services/StockHistoryService';
+import NotificationService from '../services/NotificationService';
 import Controllers from '../controllers/main';
 
 try {
@@ -18,7 +20,6 @@ if (process.env.PROD) {
 }
 
 let mainWindow;
-let updateStockHistoryJob;
 
 function createWindow() {
     /**
@@ -39,16 +40,19 @@ function createWindow() {
     });
 
     mainWindow.loadURL(process.env.APP_URL);
+    mainWindow.removeMenu();
 
     mainWindow.on('closed', () => {
         mainWindow = null;
     });
+
+    NotificationService.setup(mainWindow);
+    UpdateStockHistoryJob.setup(new StockHistoryService(), mainWindow);
+    UpdatePricesJob.setup(mainWindow);
 }
 
 app.on('ready', () => {
     createWindow();
-    updateStockHistoryJob = new UpdateStockHistoryJob();
-    updateStockHistoryJob.setup(new StockHistoryService(), mainWindow);
 });
 
 app.on('window-all-closed', () => {

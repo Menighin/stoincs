@@ -14,7 +14,7 @@ class AlphaVantageService {
 
     async getKey() {
         if (this.apiKey === null)
-            this.apiKey = await BrowserWindow.getFocusedWindow().webContents.executeJavaScript('localStorage.getItem("configuration/alpha-vantage-key");', true);
+            this.apiKey = await BrowserWindow.getAllWindows()[0].webContents.executeJavaScript('localStorage.getItem("configuration/alpha-vantage-key");', true);
         return this.apiKey;
     }
 

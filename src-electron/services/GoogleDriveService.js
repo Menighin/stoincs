@@ -13,7 +13,6 @@ const SCOPES = [
     'https://www.googleapis.com/auth/userinfo.profile'
 ];
 const TOKEN_FILE = 'token.json';
-const notificationService = new NotificationService();
 
 class GoogleDriveService {
 
@@ -33,7 +32,7 @@ class GoogleDriveService {
         const oAuth2Client = await this.getOAuth2ClientFromDisk();
         if (oAuth2Client === null) return null;
         const picture = await this.getPicture(oAuth2Client);
-        notificationService.notifyLoginSuccess(picture);
+        NotificationService.notifyLoginSuccess(picture);
         await this.downloadFiles();
     }
 
@@ -41,7 +40,7 @@ class GoogleDriveService {
         let oAuth2Client = await this.getOAuth2ClientFromDisk();
         if (oAuth2Client !== null) {
             const picture = await this.getPicture(oAuth2Client);
-            notificationService.notifyLoginSuccess(picture);
+            NotificationService.notifyLoginSuccess(picture);
         } else {
             const path = `${await FileSystemUtils.getDataPath()}/${TOKEN_FILE}`;
             const { clientSecret, clientId, redirectUris } = GoogleCredentials.installed;
@@ -65,7 +64,7 @@ class GoogleDriveService {
                     server.close();
 
                     const picture = await this.getPicture(oAuth2Client);
-                    notificationService.notifyLoginSuccess(picture);
+                    NotificationService.notifyLoginSuccess(picture);
                 });
             });
             const server = app.listen(3000, () => {

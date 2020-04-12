@@ -4,6 +4,7 @@
         <q-tabs v-model="tab" class="text-secondary" active-color="accent">
             <q-tab name="treemap" label="Treemap" />
             <q-tab name="bars" label="Barras" />
+            <q-tab name="waterfall" label="Waterfall" />
         </q-tabs>
 
         <q-tab-panels v-model="tab" animated class="chart-panel" ref="chartPanel">
@@ -18,6 +19,12 @@
                     <highcharts ref="barChart" class="chart" :options="barOptions" />
                 </div>
             </q-tab-panel>
+            <q-tab-panel name="waterfall">
+                <q-select :options="waterfallOptions" v-model="waterfallSelected" filled dense style="width: 200px; margin: 0 0 0 auto;" />
+                <div style="height: 90%">
+                    <highcharts ref="waterfallChart" class="chart" :options="waterfallChartOptions" />
+                </div>
+            </q-tab-panel>
         </q-tab-panels>
 
     </q-page>
@@ -28,11 +35,13 @@
 import { Chart } from 'highcharts-vue';
 import Highcharts from 'highcharts';
 import treemapInit from 'highcharts/modules/treemap';
+import waterfallInit from 'highcharts/highcharts-more';
 import { ipcRenderer } from 'electron';
 import HighchartUtils, { SeriesColors } from '../utils/HighchartUtils';
 import NumberUtils from '../../src-electron/utils/NumberUtils';
 
 treemapInit(Highcharts);
+waterfallInit(Highcharts);
 
 export default {
     name: 'PageWalletCharts',
@@ -44,7 +53,9 @@ export default {
             data: [],
             tab: null,
             barChartInWallet: true,
-            barChartShowTotal: false
+            barChartShowTotal: false,
+            waterfallSelected: null,
+            waterfallOptions: []
         };
     },
     methods: {
@@ -227,12 +238,76 @@ export default {
                     pointPadding: 0.25
                 }]
             };
+        },
+        waterfallChartOptions() {
+            const data = this.data.filter(o => o.code === this.waterfallSelected)[0];
+
+            if (!data)
+                return;
+
+            return {
+                chart: {
+                    type: 'waterfall'
+                },
+                title: {
+                    text: null
+                },
+                xAxis: {
+                    type: 'category'
+                },
+                yAxis: {
+                    title: {
+                        text: 'R$'
+                    },
+                    plotLines: [{
+                        value: 0,
+                        color: '#000000',
+                        width: 3,
+                        zIndex: 1
+                    }]
+                },
+                legend: {
+                    enabled: false
+                },
+
+                tooltip: {
+                    pointFormat: '<b>R$ {point.y:,.2f}</b>'
+                },
+
+                series: [{
+                    upColor: SeriesColors[1],
+                    color: SeriesColors[0],
+                    data: [{
+                        name: 'Compra',
+                        y: -data.valueBought
+                    }, {
+                        name: 'Vendido',
+                        y: data.valueSold
+                    }, {
+                        name: 'Ativo',
+                        y: (data.quantityBought - data.quantitySold) * data.price
+                    }, {
+                        name: 'Balanço',
+                        isSum: true,
+                        color: SeriesColors[2]
+                    }],
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function() {
+                            return `R$ ${Highcharts.numberFormat(this.y, 2, ',')}`;
+                        }
+                    },
+                    pointPadding: 0
+                }]
+            };
         }
     },
     mounted() {
         ipcRenderer.on('wallet/get', (event, response) => {
             if (response.status === 'success') {
                 this.data = response.data;
+                this.waterfallOptions = this.data.map(o => o.code).sort();
+                this.waterfallSelected = this.waterfallOptions[0];
             } else {
                 this.$q.notify({ type: 'negative', message: `Error ao ler sua carteira: ${response.error.message}` });
                 console.error(response.error);
@@ -244,7 +319,8 @@ export default {
         setTimeout(() => {
             this.tab = 'treemap';
             this.$refs.chartPanel.$el.style.height = `${this.$refs.chartPage.$el.clientHeight - 100}px`;
-            this.$refs.treemapChart.chart.reflow();
+
+            setTimeout(() => { this.$refs.treemapChart.chart.reflow() }, 200);
         }, 200);
     }
 };

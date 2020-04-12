@@ -42,8 +42,6 @@
                     style="min-width: 150px"
                     class="q-ma-sm"
                 />
-
-                {{ nextTick }}
             </template>
 
             <q-td auto-width slot="body-cell-price" slot-scope="props" :props="props">
@@ -277,8 +275,6 @@ export default {
             shouldUpdateInterval: false,
             updateSlice: [],
             withBalanceOnly: true,
-            firstLoad: false,
-            nextTick: 0,
             tickInterval: null
         };
     },
@@ -305,49 +301,8 @@ export default {
                 this.configuration = JSON.parse(config);
         },
         syncRow(row) {
-            this.loadingStocks[row.code] = 1;
+            this.$set(this.loadingStocks, row.code, 1);
             ipcRenderer.send('wallet/update-last-value', { stocks: [row.code], type: 'manual' });
-        },
-        refreshAutoUpdate(force = false) {
-            if (!(force || this.shouldUpdateInterval)) return;
-
-            if (this.updatePricesInterval !== null)
-                clearInterval(this.updatePricesInterval);
-
-            if (this.configuration.which === 'none') return;
-
-            if (Object.keys(this.loadingStocks).length === 0) {
-                const intervalFunction = () => {
-                    this.loadingStocks = {};
-
-                    const stocksToUpdate = this.configuration.which === 'all'
-                        ? this.dataTable
-                        : this.dataTable.filter(o => o.quantityBalance > 0);
-
-                    const totalToUpdate = stocksToUpdate.length;
-
-                    if (this.updateSlice.length === 0 || this.updateSlice[1] === totalToUpdate) {
-                        this.updateSlice = [0, this.configuration.many];
-                    } else {
-                        this.updateSlice[0] = this.updateSlice[1];
-                        this.updateSlice[1] = Math.min(this.updateSlice[1] + this.configuration.many, totalToUpdate);
-                    }
-
-                    const stocks = stocksToUpdate.slice(this.updateSlice[0], this.updateSlice[1]).map(o => o.code);
-
-                    for (const s of stocks) {
-                        this.loadingStocks[s] = 1;
-                    }
-
-                    ipcRenderer.send('wallet/update-last-value', { stocks: stocks, type: 'auto' });
-                };
-
-                intervalFunction();
-                this.updatePricesInterval = setInterval(intervalFunction, this.configuration.when * 1000 * 60);
-                this.shouldUpdateInterval = false;
-            } else {
-                this.shouldUpdateInterval = true;
-            }
         },
         filterLabelFn(val, update) {
             update(() => {
@@ -435,11 +390,6 @@ export default {
                 this.$q.notify({ type: 'negative', message: `Error ao ler sua carteira: ${response.error.message}` });
                 console.error(response.error);
             }
-
-            if (!this.firstLoad)
-                this.refreshAutoUpdate(true);
-
-            this.firstLoad = true;
         });
 
         ipcRenderer.on('wallet/refresh-from-history', (event, response) => {
@@ -461,12 +411,17 @@ export default {
             }
         });
 
+        ipcRenderer.on('wallet/updating', (event, response) => {
+            for (const stock of response.data)
+                this.loadingStocks[stock] = 1;
+        });
+
         ipcRenderer.on('wallet/update-last-value', (event, response) => {
-            for (const r of response.data.stocks)
-                delete this.loadingStocks[r.code];
+            for (const s of response.data)
+                delete this.loadingStocks[s.code];
 
             // Update successfull updates
-            for (const r of response.data.stocks.filter(o => o.status === 'success')) {
+            for (const r of response.data.filter(o => o.status === 'success')) {
                 for (const d of this.data) {
                     if (r.code === d.code) {
                         d.price = r.price;
@@ -480,21 +435,10 @@ export default {
             }
 
             // Prompt errors
-            for (const r of response.data.stocks.filter(o => o.status === 'error')) {
+            for (const r of response.data.filter(o => o.status === 'error')) {
                 this.$q.notify({ type: 'negative', message: `${r.code}: ${r.errorMessage}` });
             }
-
-            // Updating tick countdown
-            if (this.configuration.which !== 'none' && response.data.type === 'auto')
-                this.nextTick = this.configuration.when * 60;
-
-            this.refreshAutoUpdate();
         });
-
-        this.tickInterval = setInterval(() => {
-            if (this.nextTick > 0)
-                this.nextTick--;
-        }, 1000);
 
         this.init();
     },

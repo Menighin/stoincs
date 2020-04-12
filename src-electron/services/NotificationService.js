@@ -2,20 +2,31 @@ import { BrowserWindow } from 'electron';
 
 class NotificationService {
 
-    notifyLoadingStart(evt) {
-        BrowserWindow.getAllWindows()[0].webContents.send('notification/start-loading', { data: evt });
+    /** @type {BrowserWindow} */
+    _browserWindow;
+
+    /**
+     * Setup the Notification Service
+     * @param {BrowserWindow} browserWindow Browser window to be notified
+     */
+    setup(browserWindow) {
+        this._browserWindow = browserWindow;
+    }
+
+    notifyLoadingStart(code, message) {
+        this._browserWindow.webContents.send('notification/start-loading', { data: { code: code, message: message } });
     }
 
     notifyLoadingFinish(evtCode) {
-        BrowserWindow.getAllWindows()[0].webContents.send('notification/finish-loading', { data: evtCode });
+        this._browserWindow.webContents.send('notification/finish-loading', { data: evtCode });
     }
 
     notifyLoginSuccess(data) {
-        BrowserWindow.getAllWindows()[0].webContents.send('notification/login-success', { status: 'success', data: data });
+        this._browserWindow.webContents.send('notification/login-success', { status: 'success', data: data });
     }
 
     notifyMessage(title, message, icon) {
-        BrowserWindow.getAllWindows()[0].webContents.send('notification/message', { data: {
+        this._browserWindow.webContents.send('notification/message', { data: {
             title: title,
             message: message,
             icon: icon
@@ -24,4 +35,4 @@ class NotificationService {
 
 }
 
-export default NotificationService;
+export default new NotificationService();
