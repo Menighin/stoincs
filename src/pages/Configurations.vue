@@ -101,7 +101,7 @@ export default {
             localStorage.setItem(STORAGE_KEY.PASSWORD, this.password);
             localStorage.setItem(STORAGE_KEY.ALPHA_VANTAGE, this.alphaVantageKey);
             localStorage.setItem(STORAGE_KEY.PRICE_UPDATE, JSON.stringify(this.priceUpdate));
-            this.$q.notify({ type: 'positive', message: 'Configurações salvas com sucesso!' });
+            ipcRenderer.send('configuration/update');
         }
     },
     computed: {
@@ -155,6 +155,15 @@ export default {
                 this.wallet = response.data;
             } else {
                 this.$q.notify({ type: 'negative', message: `Error ao ler sua carteira: ${response.error.message}` });
+                console.error(response.error);
+            }
+        });
+
+        ipcRenderer.on('configuration/update', (event, response) => {
+            if (response.status === 'success') {
+                this.$q.notify({ type: 'positive', message: 'Configurações salvas com sucesso!' });
+            } else {
+                this.$q.notify({ type: 'negative', message: `Error ao salvar configurações: ${response.error.message}` });
                 console.error(response.error);
             }
         });

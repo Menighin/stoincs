@@ -30,9 +30,9 @@ class UpdatePricesJob {
 
         this._configuration = JSON.parse(await this._browserWindow.webContents.executeJavaScript('localStorage.getItem("configuration/price-update");', true));
 
-        // if (this._configuration && this._configuration.when > 0) {
-        this._interval = setInterval(() => { this.run() }, 1000 * 2000);
-        // }
+        if (this._configuration && this._configuration.when > 0) {
+            this._interval = setInterval(() => { this.run() }, this._configuration.when * 1000 * 60);
+        }
     }
 
     async run() {
@@ -46,7 +46,9 @@ class UpdatePricesJob {
 
         const totalToUpdate = stocksToUpdate.length;
 
-        if (this._updateSlice.length === 0 || this._updateSlice[1] === totalToUpdate) {
+        if (stocksToUpdate.length === 0) return;
+
+        if (this._updateSlice.length === 0 || this._updateSlice[1] >= totalToUpdate) {
             this._updateSlice = [0, this._configuration.many];
         } else {
             this._updateSlice[0] = this._updateSlice[1];
@@ -62,7 +64,14 @@ class UpdatePricesJob {
 
         NotificationService.notifyMessage('Preços atualizados', stocks.join(', '), 'eva-bar-chart');
         NotificationService.notifyLoadingFinish('updating-prince');
+    }
 
+    async updateConfig() {
+        clearInterval(this._interval);
+        this._configuration = JSON.parse(await this._browserWindow.webContents.executeJavaScript('localStorage.getItem("configuration/price-update");', true));
+
+        console.log(`Updating prices job to run every ${this._configuration.when} minute(s)`);
+        this._interval = setInterval(() => { this.run() }, this._configuration.when * 1000 * 60);
     }
 
 }

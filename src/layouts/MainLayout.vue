@@ -118,6 +118,7 @@
 
         <q-page-container>
             <router-view />
+            <!-- <q-btn color="secondary" @click="notify">Notify</q-btn> -->
         </q-page-container>
         <snout-loader class="snout-loader"></snout-loader>
     </q-layout>
@@ -129,6 +130,8 @@ import { ipcRenderer } from 'electron';
 import DateUtils from '../../src-electron/utils/DateUtils';
 import SnoutLoader from '../components/SnoutLoader';
 import EventBus from '../components/EventBus';
+
+let notifyId = 0;
 
 export default {
     name: 'MainLayout',
@@ -149,8 +152,18 @@ export default {
         };
     },
     methods: {
-        snoutStart() {
-            this.$snout.start('TESTE');
+        notify() {
+            let evt = {
+                code: `evt-${notifyId}`,
+                message: `Testing ${notifyId}`
+            };
+            EventBus.$emit('snout-loader-start', evt);
+            setTimeout(() => {
+                ((id) => {
+                    EventBus.$emit('snout-loader-finish', id);
+                })(evt.code);
+            }, 6000);
+            notifyId++;
         },
         login() {
             if (this.userInfo !== null) return;

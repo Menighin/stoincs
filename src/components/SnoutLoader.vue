@@ -1,6 +1,6 @@
 <template>
     <div class="snout-loader">
-        <div class="message" ref="message" v-show="item !== null">{{ message }}</div>
+        <div class="message" ref="message">{{ message }}</div>
         <div class="svg">
             <inline-svg
                 src="img/snout.svg"
@@ -28,7 +28,8 @@ export default {
     data() {
         return {
             loading: [],
-            item: null
+            item: null,
+            interval: null
         };
     },
     computed: {
@@ -38,40 +39,8 @@ export default {
             return this.loading[this.item].message;
         }
     },
-    mounted() {
-        const self = this;
-        EventBus.$on('snout-loader-start', (evt) => {
-            self.loading.push(evt);
-            self.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-2")';
-            self.$refs.snoutLoader.$el.classList.add('loading');
-
-            if (this.item === null)
-                this.item = 0;
-        });
-
-        EventBus.$on('snout-loader-finish', (evtCode) => {
-            self.loading = self.loading.filter(e => e.code !== evtCode);
-            if (self.loading.length === 0) {
-                self.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-1")';
-                self.$refs.snoutLoader.$el.classList.remove('loading');
-                this.item = null;
-                this.$refs.message.style.width = `10px`;
-            } else {
-                this.item %= this.loading.length;
-            }
-        });
-
-        EventBus.$on('snout-loader-show', () => {
-            self.$refs.snoutLoader.$el.classList.remove('bounce-out');
-            self.$refs.snoutLoader.$el.classList.add('bounce-in');
-        });
-
-        EventBus.$on('snout-loader-hide', () => {
-            self.$refs.snoutLoader.$el.classList.remove('bounce-in');
-            self.$refs.snoutLoader.$el.classList.add('bounce-out');
-        });
-
-        setInterval(() => {
+    methods: {
+        tickMessage() {
             if (this.item === null) return;
             this.item = (this.item + 1) % this.loading.length;
 
@@ -90,10 +59,49 @@ export default {
             }, 200);
 
             if (this.loading.length > 1)
-                this.$refs.message.style.width = `10px`;
+                this.$refs.message.style.width = `0px`;
 
             document.body.removeChild(fakeDiv);
-        }, 2000);
+        }
+    },
+    mounted() {
+        const self = this;
+        EventBus.$on('snout-loader-start', (evt) => {
+            self.loading.push(evt);
+            self.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-2")';
+            self.$refs.snoutLoader.$el.classList.add('loading');
+
+            if (this.item === null) {
+                this.item = 0;
+                this.tickMessage();
+                this.interval = setInterval(() => { this.tickMessage() }, 2000);
+            }
+        });
+
+        EventBus.$on('snout-loader-finish', (evtCode) => {
+            self.loading = self.loading.filter(e => e.code !== evtCode);
+            if (self.loading.length === 0) {
+                clearInterval(this.interval);
+                setTimeout(() => {
+                    self.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-1")';
+                    self.$refs.snoutLoader.$el.classList.remove('loading');
+                    this.item = null;
+                    this.$refs.message.style.width = `0px`;
+                }, 600);
+            } else {
+                this.item %= this.loading.length;
+            }
+        });
+
+        EventBus.$on('snout-loader-show', () => {
+            self.$refs.snoutLoader.$el.classList.remove('bounce-out');
+            self.$refs.snoutLoader.$el.classList.add('bounce-in');
+        });
+
+        EventBus.$on('snout-loader-hide', () => {
+            self.$refs.snoutLoader.$el.classList.remove('bounce-in');
+            self.$refs.snoutLoader.$el.classList.add('bounce-out');
+        });
     }
 };
 </script>
@@ -102,18 +110,19 @@ export default {
     .snout-loader {
         text-align: right;
         .message {
-            background: white;
+            color: white;
+            background: $primary;
             display: inline-block;
             padding: 2px 0px;
             margin-right: 5px;
             font-family: 'Courier New', Courier, monospace;
             font-weight: bold;
             vertical-align: middle;
-            border: 1px solid #ddd;
+            // border: 1px solid #ddd;
             border-radius: 6px;
             transition: all .2s linear;
             white-space: nowrap;
-            width: 10px;
+            width: 0px;
             overflow: hidden;
             text-align: center;
             text-transform: uppercase;

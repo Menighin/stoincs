@@ -100,47 +100,17 @@
             <q-card class="q-pb-lg" style="min-width: 550px">
                 <q-card-section class="row q-ma-sm justify-between items-center">
                     <div class="text-h6">Configurações</div>
-                    <q-icon name="help" class="cursor-pointer" size="24px" color="info">
-                        <q-menu anchor="top right" self="bottom right" content-class="q-pa-sm">
-                            A API grátis da Alpha Vantage é limitada a 5 requisições por minuto e 500 requisições diárias.<br />
-                            Caso esteja usando uma chave grátis da API, tenha cuidado para não ficar sem requisições. <br />
-                            O quadro de resumo te auxilia a encontrar os melhores parametros para utilizar a atualização automatica dos valores.
-                        </q-menu>
-                    </q-icon>
                 </q-card-section>
 
                 <q-separator />
 
                 <q-card-section style="max-height: 80vh" class="scroll">
-
                     <q-card-section>
                         <div class="text-h6">Visualização</div>
                         <q-item-label header>Como devem ser exibidas as variações de valor?</q-item-label>
-                        <q-radio @input="saveConfig(false)" v-model="configuration.variation" val="price" label="Reais" />
-                        <q-radio @input="saveConfig(false)" v-model="configuration.variation" val="percentage" label="Porcentagem" />
+                        <q-radio @input="saveConfig" v-model="configuration.variation" val="price" label="Reais" />
+                        <q-radio @input="saveConfig" v-model="configuration.variation" val="percentage" label="Porcentagem" />
                     </q-card-section>
-
-                    <q-separator />
-
-                    <q-card-section>
-                        <div class="text-h6">Atualização de preços</div>
-
-                        <q-item-label header>Quais ações devem ter o valor atualizado?</q-item-label>
-                        <q-radio @input="saveConfig(true)" v-model="configuration.which" val="all" label="Todas" />
-                        <q-radio @input="saveConfig(true)" v-model="configuration.which" val="balance" label="As que possuem saldo" />
-                        <q-radio @input="saveConfig(true)" v-model="configuration.which" val="none" label="Nenhuma" />
-
-                        <q-item-label header>Quantas ações devem ser atualizadas por tick?</q-item-label>
-                        <q-input @change="saveConfig(true)" v-model="configuration.many" type="number" filled/>
-
-                        <q-item-label header>Qual o intervalo, em minutos, entre cada tick?</q-item-label>
-                        <q-input @change="saveConfig(true)" v-model="configuration.when" type="number" filled/>
-
-                        <q-item-label header>Resumo</q-item-label>
-                        <p v-for="(p, i) in configSummary" :key="`p-${i}`" v-html="p" />
-
-                    </q-card-section>
-
                 </q-card-section>
 
             </q-card>
@@ -162,9 +132,6 @@ export default {
             now: new Date(),
             loadingStocks: {},
             configuration: {
-                which: 'all',
-                many: 5,
-                when: 15,
                 variation: 'percentage'
             },
             tableLoading: false,
@@ -289,10 +256,8 @@ export default {
                 ipcRenderer.send('wallet/refresh-from-history');
             });
         },
-        saveConfig(refreshInterval = false) {
+        saveConfig() {
             localStorage.setItem('wallet/config', JSON.stringify(this.configuration));
-            if (refreshInterval)
-                this.refreshAutoUpdate(true);
         },
         init() {
             ipcRenderer.send('wallet/get');
