@@ -24,7 +24,10 @@ class WalletService {
 
     async refreshWalletFromHistory() {
         const stockHistory = await this.stockHistoryService.getStockHistory();
-        let wallet = (await this.getWallet()).filter(o => o.source !== 'CEI');
+        let walletByCode = (await this.getWallet()).reduce((p, c) => {
+            p[c.code] = c;
+            return p;
+        }, {});
 
         const dataByStock = {};
         for (const acc of stockHistory) {
@@ -61,7 +64,18 @@ class WalletService {
             }
         }
 
-        wallet = [...wallet, ...Object.values(dataByStock)];
+        const wallet = Object.values(dataByStock);
+
+        // Keep price info
+        for (const w of wallet) {
+            if (w.code in walletByCode) {
+                w.price = walletByCode[w.code].price;
+                w.changePrice = walletByCode[w.code].changePrice;
+                w.changePercent = walletByCode[w.code].changePercent;
+                w.lastTradingDay = walletByCode[w.code].lastTradingDay;
+                w.lastUpdated = walletByCode[w.code].lastUpdated;
+            }
+        }
 
         await this.saveWallet(wallet, true);
     }

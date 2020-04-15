@@ -4,6 +4,7 @@ import StockHistoryService from '../services/StockHistoryService';
 import DateUtils from '../utils/DateUtils';
 import StockUtils from '../utils/StockUtils';
 import NotificationService from '../services/NotificationService';
+import WalletService from '../services/WalletService';
 
 const NOTIFICATION = {
     TITLE: 'Negociações',
@@ -18,6 +19,9 @@ class UpdateStockHistoryJob {
     /** @type {StockHistoryService} */
     _stockHistoryService;
 
+    /** @type {WalletService} */
+    _walletService;
+
     /**
      * Setup the job to run from time to time
      * @param {StockHistoryService} stockHistoryService - Service to handle the stock history
@@ -26,8 +30,9 @@ class UpdateStockHistoryJob {
     setup(stockHistoryService, browserWindow) {
         this._stockHistoryService = stockHistoryService;
         this._browserWindow = browserWindow;
-        setTimeout(() => this.run(), 30000);
-        // setInterval(this.run, 1000 * 3);
+        this._walletService = new WalletService();
+        setTimeout(() => this.run(), 60000);
+        setInterval(() => this.run(), 1000 * 60 * 60 * 12);
     }
 
     async run() {
@@ -87,6 +92,9 @@ class UpdateStockHistoryJob {
 
             await this._stockHistoryService.saveStockHistory(stocksByAccount);
             await this._stockHistoryService.updateStockHistoryJobMetadata();
+
+            // Update wallet
+            await this._walletService.refreshWalletFromHistory();
 
             NotificationService.notifyMessage(NOTIFICATION.TITLE, `${newNegotiations} novas negociações adicionadas`, NOTIFICATION.ICON);
         } catch (e) {

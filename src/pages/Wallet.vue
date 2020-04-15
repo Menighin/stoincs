@@ -249,7 +249,7 @@ export default {
         downloadFromHistory() {
             this.$q.dialog({
                 title: 'Confirmação',
-                message: 'Essa ação irá limpar sua carteira com origem "CEI" e irá gerar uma nova carteira a partir do seu histórico de negociações. Tem certeza que deseja continuar?',
+                message: 'Tem certeza que deseja continuar?',
                 cancel: true,
                 persistent: true
             }).onOk(() => {
