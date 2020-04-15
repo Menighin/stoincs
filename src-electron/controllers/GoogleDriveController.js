@@ -7,12 +7,13 @@ const METHODS = {
     LOGIN: 'google-drive/login',
     AUTO_LOGIN: 'google-drive/auto-login',
     LOGOUT: 'google-drive/logout',
-    UPLOAD: 'google-drive/upload'
+    UPLOAD: 'google-drive/upload',
+    DOWNLOAD: 'google-drive/download'
 };
 
 ipcMain.on(METHODS.LOGIN, async (event, arg) => {
     try {
-        await googleDriveService.login();
+        await googleDriveService.login(event);
         event.reply(METHODS.LOGIN, { status: 'success' });
     } catch (e) {
         event.reply(METHODS.LOGIN, { status: 'error', message: e.message });
@@ -42,6 +43,15 @@ ipcMain.on(METHODS.UPLOAD, async (event, arg) => {
         event.reply(METHODS.UPLOAD, { status: 'success' });
     } catch (e) {
         event.reply(METHODS.UPLOAD, { status: 'error', message: e.message });
+    }
+});
+
+ipcMain.on(METHODS.DOWNLOAD, async (event, arg) => {
+    try {
+        await googleDriveService.downloadFiles();
+        event.reply(METHODS.DOWNLOAD, { status: 'success' });
+    } catch (e) {
+        event.reply(METHODS.DOWNLOAD, { status: 'error', message: e.message });
     }
 });
 

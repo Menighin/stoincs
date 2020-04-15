@@ -1,9 +1,11 @@
 import { app, BrowserWindow, nativeTheme } from 'electron';
 import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
 import UpdatePricesJob from '../jobs/UpdatePricesJob';
+import SyncGoogleDriveJob from '../jobs/SyncGoogleDriveJob';
 import StockHistoryService from '../services/StockHistoryService';
 import NotificationService from '../services/NotificationService';
 import Controllers from '../controllers/main';
+import GoogleDriveService from '../services/GoogleDriveService';
 
 try {
     if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
@@ -20,6 +22,7 @@ if (process.env.PROD) {
 }
 
 let mainWindow;
+let forceQuit = false;
 
 function createWindow() {
     /**
@@ -49,16 +52,36 @@ function createWindow() {
     NotificationService.setup(mainWindow);
     UpdateStockHistoryJob.setup(new StockHistoryService(), mainWindow);
     UpdatePricesJob.setup(mainWindow);
+    SyncGoogleDriveJob.setup(mainWindow);
 }
 
 app.on('ready', () => {
     createWindow();
+    const selfWindow = mainWindow;
+    mainWindow.on('close', async (e) => {
+        if (forceQuit) return;
+        e.preventDefault();
+        const googleDriveService = new GoogleDriveService();
+        if (!forceQuit && (await googleDriveService.isLogged())) {
+            console.log('CLOSE EVENT 1');
+            selfWindow.webContents.send('app/quiting');
+            await googleDriveService.uploadFiles();
+            forceQuit = true;
+            setTimeout(() => {
+                app.quit();
+            }, 2000);
+        } else {
+            forceQuit = true;
+            app.quit();
+        }
+    });
 });
 
-app.on('window-all-closed', () => {
+app.on('window-all-closed', async () => {
     if (process.platform !== 'darwin') {
         app.quit();
     }
+    console.log('window-all-closed');
 });
 
 app.on('activate', () => {

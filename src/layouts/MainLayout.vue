@@ -147,7 +147,6 @@ export default {
             userInfo: null,
             isUploadingToGoogle: false,
             lastGoogleUpload: null,
-            googleUploadInterval: null,
             notifications: []
         };
     },
@@ -260,14 +259,29 @@ export default {
             }
         });
 
-        this.googleUploadInterval = setInterval(this.uploadToGoogle, 1000 * 60 * 5);
-
         ipcRenderer.on('google-drive/upload', (event, response) => {
             this.isUploadingToGoogle = false;
             this.lastGoogleUpload = DateUtils.toString(new Date());
             if (response.status === 'error') {
-                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.message}` });
+                this.$q.notify({ type: 'negative', message: `Error ao sincronizar dados com Google Drive: ${response.message}` });
             }
+        });
+
+        ipcRenderer.on('google-drive/ask-download', (event, response) => {
+            this.$q.dialog({
+                title: 'Baixar do Google Drive?',
+                message: 'Existem arquivos no Google Drive. Deseja substituir seus arquivos locais pelos que estão na nuvem? CUIDADO! Caso você opte por não baixar os arquivos da nuvem, estes podem ser apagados quando sincronizados automaticamente',
+                cancel: true,
+                persistent: true
+            }).onOk(() => {
+                ipcRenderer.send('google-drive/download');
+            });
+        });
+
+        ipcRenderer.on('app/quiting', (event, response) => {
+            this.$q.loading.show({
+                message: 'Atualizando <b>Google Drive</b>...'
+            });
         });
 
         ipcRenderer.send('google-drive/auto-login');

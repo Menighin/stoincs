@@ -7,6 +7,7 @@ import FileSystemUtils from '../utils/FileSystemUtils';
 import NotificationService from './NotificationService';
 import { StockHistoryFiles } from './StockHistoryService';
 import { WalletFiles } from './WalletService';
+import SyncGoogleDriveJob from '../jobs/SyncGoogleDriveJob';
 
 const SCOPES = [
     'https://www.googleapis.com/auth/drive.appdata',
@@ -28,15 +29,20 @@ class GoogleDriveService {
         return null;
     }
 
+    async isLogged() {
+        return (await this.getOAuth2ClientFromDisk()) !== null;
+    }
+
     async autoLogin() {
         const oAuth2Client = await this.getOAuth2ClientFromDisk();
         if (oAuth2Client === null) return null;
         const picture = await this.getPicture(oAuth2Client);
         NotificationService.notifyLoginSuccess(picture);
         await this.downloadFiles();
+        SyncGoogleDriveJob.startJob();
     }
 
-    async login() {
+    async login(event) {
         let oAuth2Client = await this.getOAuth2ClientFromDisk();
         if (oAuth2Client !== null) {
             const picture = await this.getPicture(oAuth2Client);
@@ -60,11 +66,18 @@ class GoogleDriveService {
                     }
                     oAuth2Client.credentials = tokens;
                     await fs.promises.writeFile(path, JSON.stringify(tokens));
-                    res.send('Authentication successful! Please return to the console.');
+                    res.type('html');
+                    res.send('<h2>Login relizado com sucesso! Feche esta página e retorne ao app! 🐽 </h2>');
                     server.close();
 
                     const picture = await this.getPicture(oAuth2Client);
                     NotificationService.notifyLoginSuccess(picture);
+
+                    const files = await this.listFiles();
+                    if (files.length > 0)
+                        event.reply('google-drive/ask-download');
+
+                    await SyncGoogleDriveJob.startJob();
                 });
             });
             const server = app.listen(3000, () => {
@@ -75,12 +88,14 @@ class GoogleDriveService {
     }
 
     async logout(clearData) {
-        const path = `${await FileSystemUtils.getDataPath()}/${TOKEN_FILE}`;
-        await fs.promises.unlink(path);
-
         if (clearData) {
+            console.log('Deleting files on cloud...');
             await this.deleteFiles();
         }
+
+        const path = `${await FileSystemUtils.getDataPath()}/${TOKEN_FILE}`;
+        await fs.promises.unlink(path);
+        await SyncGoogleDriveJob.stopJob();
     }
 
     async getPicture(auth) {
@@ -104,7 +119,7 @@ class GoogleDriveService {
     async uploadFiles() {
         const existingFiles = await this.listFiles();
         const oAuth2Client = await this.getOAuth2ClientFromDisk();
-        if (oAuth2Client === null) return;
+        if (oAuth2Client === null) throw new Error('Not logged in GOogle Drive');
 
         const drive = google.drive({
             version: 'v3',
