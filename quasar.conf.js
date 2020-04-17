@@ -149,7 +149,7 @@ module.exports = function(ctx) {
 
         // Full list of options: https://quasar.dev/quasar-cli/developing-electron-apps/configuring-electron
         electron: {
-            bundler: 'packager', // 'packager' or 'builder'
+            bundler: 'builder', // 'packager' or 'builder'
 
             packager: {
                 // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
@@ -169,7 +169,8 @@ module.exports = function(ctx) {
 
                 appId: 'porquinho-digital',
                 win: {
-                    icon: 'src-electron/icons/icon.png'
+                    icon: 'src-electron/icons/icon.png',
+                    target: 'nsis'
                 }
             },
 

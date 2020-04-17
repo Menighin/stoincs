@@ -75,6 +75,9 @@ app.on('ready', () => {
             app.quit();
         }
     });
+
+    mainWindow.openDevTools();
+
 });
 
 app.on('window-all-closed', async () => {

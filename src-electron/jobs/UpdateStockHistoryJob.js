@@ -101,6 +101,7 @@ class UpdateStockHistoryJob {
             console.log('Erro StockHistory crawler');
             console.log(e);
             NotificationService.notifyMessage(NOTIFICATION.TITLE, `Erro ao buscar no CEI: ${e.message}`, NOTIFICATION.ICON);
+            NotificationService.notifyMessage(NOTIFICATION.TITLE, `Erro ao buscar no CEI: ${e.stack}`, NOTIFICATION.ICON);
             NotificationService.notifyLoadingFinish(evtCode);
         }
         NotificationService.notifyLoadingFinish(evtCode);

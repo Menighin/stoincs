@@ -212,6 +212,7 @@ export default {
     mounted() {
         ipcRenderer.on('notification/message', (event, response) => {
             this.notifications.push(response.data);
+            console.log(response);
         });
 
         ipcRenderer.on('notification/start-loading', (event, response) => {
@@ -227,26 +228,21 @@ export default {
                 this.userInfo = response.data;
             } else {
                 this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.message}` });
-            }
-        });
-
-        ipcRenderer.on('notification/login-success', (event, response) => {
-            if (response.status === 'success') {
-                this.userInfo = response.data;
-            } else {
-                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.message}` });
+                console.log(response);
             }
         });
 
         ipcRenderer.on('google-drive/login', (event, response) => {
             if (response.status === 'error') {
                 this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.message}` });
+                console.log(response);
             }
         });
 
         ipcRenderer.on('google-drive/auto-login', (event, response) => {
             if (response.status === 'error') {
                 this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.message}` });
+                console.log(response);
             }
         });
 
@@ -255,7 +251,7 @@ export default {
                 this.userInfo = null;
                 this.$q.notify({ type: 'positive', message: `Logout realizado com sucesso` });
             } else {
-                this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.message}` });
+                this.$q.notify({ type: 'negative', message: `Error ao tentar deslogar: ${response.message}` });
             }
         });
 

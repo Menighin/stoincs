@@ -16,7 +16,7 @@ ipcMain.on(METHODS.LOGIN, async (event, arg) => {
         await googleDriveService.login(event);
         event.reply(METHODS.LOGIN, { status: 'success' });
     } catch (e) {
-        event.reply(METHODS.LOGIN, { status: 'error', message: e.message });
+        event.reply(METHODS.LOGIN, { status: 'error', message: e.message, stack: e.stack });
     }
 });
 
@@ -24,7 +24,7 @@ ipcMain.on(METHODS.AUTO_LOGIN, async (event, arg) => {
     try {
         await googleDriveService.autoLogin();
     } catch (e) {
-        event.reply(METHODS.LOGIN, { status: 'error', message: e.message });
+        event.reply(METHODS.AUTO_LOGIN, { status: 'error', message: e.message, stack: e.stack });
     }
 });
 
@@ -33,7 +33,7 @@ ipcMain.on(METHODS.LOGOUT, async (event, arg) => {
         await googleDriveService.logout(arg.clearData);
         event.reply(METHODS.LOGOUT, { status: 'success' });
     } catch (e) {
-        event.reply(METHODS.LOGOUT, { status: 'error', message: e.message });
+        event.reply(METHODS.LOGOUT, { status: 'error', message: e.message, stack: e.stack });
     }
 });
 
