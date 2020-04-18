@@ -171,7 +171,9 @@ module.exports = function(ctx) {
                 win: {
                     icon: 'src-electron/icons/icon.png',
                     target: 'nsis'
-                }
+                },
+                asar: true,
+                asarUnpack: 'node_modules/puppeteer/.local-chromium/**/*'
             },
 
             // keep in sync with /src-electron/main-process/electron-main

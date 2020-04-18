@@ -5,6 +5,7 @@ import DateUtils from '../utils/DateUtils';
 import StockUtils from '../utils/StockUtils';
 import NotificationService from '../services/NotificationService';
 import WalletService from '../services/WalletService';
+import puppeteer from 'puppeteer';
 
 const NOTIFICATION = {
     TITLE: 'Negociações',
@@ -47,7 +48,8 @@ class UpdateStockHistoryJob {
             const jobMetadata = await this._stockHistoryService.getStockHistoryJobMetadata();
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
-            const ceiCrawler = new CeiCrawler(user, password, { puppeteerLaunch: { headless: true }, capStartDate: true, capEndDate: true });
+            const chromiumPath = puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked/node_modules/puppeteer');
+            const ceiCrawler = new CeiCrawler(user, password, { puppeteerLaunch: { headless: true, executablePath: chromiumPath }, capStartDate: true, capEndDate: true });
 
             console.log('Executing CEI Crawler...');
             let stocksByAccount = null;
