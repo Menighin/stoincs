@@ -119,7 +119,7 @@ class GoogleDriveService {
     async uploadFiles() {
         const existingFiles = await this.listFiles();
         const oAuth2Client = await this.getOAuth2ClientFromDisk();
-        if (oAuth2Client === null) throw new Error('Not logged in GOogle Drive');
+        if (oAuth2Client === null) throw new Error('Not logged in Google Drive');
 
         const drive = google.drive({
             version: 'v3',

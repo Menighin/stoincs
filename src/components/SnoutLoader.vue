@@ -34,7 +34,7 @@ export default {
     },
     computed: {
         message() {
-            if (this.item === null)
+            if (this.item === null || !this.loading[this.item])
                 return '';
             return this.loading[this.item].message;
         }
