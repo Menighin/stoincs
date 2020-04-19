@@ -153,24 +153,23 @@ module.exports = function(ctx) {
 
             packager: {
                 // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
-
-                // OS X / Mac App Store
-                // appBundleId: '',
-                // appCategoryType: '',
-                // osxSign: '',
-                // protocol: 'myapp://path',
-
-                // Windows only
-                // win32metadata: { ... }
             },
 
             builder: {
                 // https://www.electron.build/configuration/configuration
 
                 appId: 'porquinho-digital',
+                copyright: 'Copyright © 2020 Porquinho Digital',
+                productName: 'Porquinho Digital',
                 win: {
                     icon: 'src-electron/icons/icon.png',
                     target: 'nsis'
+                },
+                linux: {
+                    target: [
+                        'AppImage',
+                        'deb'
+                    ]
                 },
                 asar: true,
                 asarUnpack: 'node_modules/puppeteer/.local-chromium/**/*'

@@ -42,7 +42,10 @@ ipcMain.on(METHODS.UPLOAD, async (event, arg) => {
         await googleDriveService.uploadFiles();
         event.reply(METHODS.UPLOAD, { status: 'success' });
     } catch (e) {
-        event.reply(METHODS.UPLOAD, { status: 'error', message: e.message });
+        if (e.message !== 'Not logged in Google Drive')
+            event.reply(METHODS.UPLOAD, { status: 'error', message: e.message });
+        else
+            event.reply(METHODS.UPLOAD, { status: 'success' });
     }
 });
 
