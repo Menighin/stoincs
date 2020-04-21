@@ -63,7 +63,7 @@
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
                 <q-btn flat icon="eva-sync-outline" @click="syncRow(props.row)" title="Atualizar" color="primary" />
-                <q-btn flat icon="eva-pricetags-outline" @click="editLabelDialog = true; editLabelCode = props.row.code; editLabel = props.row.label;" title="Editar label" color="primary" />
+                <q-btn flat icon="eva-pricetags-outline" @click="editLabelDialog = true; editLabelCode = props.row.code; editLabel = props.row.label; partialEditLabel = ''" title="Editar label" color="primary" />
             </q-td>
         </q-table>
 
@@ -80,10 +80,12 @@
                         filled
                         v-model="editLabel"
                         use-input
-                        input-debounce="0"
+                        clearable
                         @new-value="createLabelOption"
                         :options="filteredLabelOptions"
                         @filter="filterLabelFn"
+                        @input-value="partialCreateLabelOption"
+                        @blur="createLabelOption(partialEditLabel)"
                     />
 
                 </q-card-section>
@@ -140,6 +142,7 @@ export default {
             editLabelDialog: false,
             editLabelCode: '',
             editLabel: '',
+            partialEditLabel: null,
             filteredLabelOptions: [],
             pagination: {
                 rowsPerPage: 50
@@ -283,8 +286,14 @@ export default {
         },
         createLabelOption(val, done) {
             if (val.length > 0) {
-                done(val, 'toggle');
+                if (done)
+                    done(val, 'toggle');
+                else
+                    this.editLabel = val;
             }
+        },
+        partialCreateLabelOption(val) {
+            this.partialEditLabel = val;
         },
         saveLabel() {
             ipcRenderer.send('wallet/update-label', { stock: this.editLabelCode, label: this.editLabel });

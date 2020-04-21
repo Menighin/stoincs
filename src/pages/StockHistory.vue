@@ -82,6 +82,37 @@
                     <q-card-section class="row items-center">
                         <div class="q-gutter-md q-ma-md" style="width: 400px; max-width: 500px">
                             <div class="text-h5">{{isEdit ? 'Editar Operação' : 'Nova Operação'}}</div>
+
+                            <q-select
+                                filled
+                                v-model="newOperation.institution"
+                                label="Instituição"
+                                use-input
+                                clearable
+                                new-value-mode="add-unique"
+                                :options="filteredInstitutions"
+                                @filter="filterInstitutionFn"
+                                @input-value="(v) => newOperation.partialInstitution = v"
+                                @blur="() => newOperation.institution = newOperation.partialInstitution"
+                                lazy-rules
+                                :rules="[ val => val && val.length > 0 || '']"
+                            />
+
+                            <q-select
+                                filled
+                                v-model="newOperation.account"
+                                label="Conta"
+                                use-input
+                                clearable
+                                new-value-mode="add-unique"
+                                :options="filteredAccounts"
+                                @filter="filterAccountFn"
+                                @input-value="(v) => newOperation.partialAccount = v"
+                                @blur="() => newOperation.account = newOperation.partialAccount"
+                                lazy-rules
+                                :rules="[ val => val && val.length > 0 || '']"
+                            />
+
                             <q-input :disable="isEdit" class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.institution" label="Instituição" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
                             <q-input :disable="isEdit" class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.account" label="Conta" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
                             <q-input :disable="isEdit" class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.code" label="Ativo" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
@@ -247,7 +278,9 @@ export default {
                 }
             ],
             newOperation: {},
-            split: {}
+            split: {},
+            filteredInstitutions: [],
+            filteredAccounts: []
         };
     },
     methods: {
@@ -313,6 +346,30 @@ export default {
             }).onOk(() => {
                 ipcRenderer.send('stockHistory/refresh');
             });
+        },
+        filterInstitutionFn(val, update) {
+            update(() => {
+                if (val === '') {
+                    this.filteredInstitutions = this.institutionOptions;
+                } else {
+                    const needle = val.toLowerCase();
+                    this.filteredInstitutions = this.institutionOptions.filter(
+                        v => v.toLowerCase().indexOf(needle) > -1
+                    );
+                }
+            });
+        },
+        filterAccountFn(val, update) {
+            update(() => {
+                if (val === '') {
+                    this.filteredAccounts = this.accountsOptions;
+                } else {
+                    const needle = val.toLowerCase();
+                    this.filteredAccounts = this.accountsOptions.filter(
+                        v => v.toLowerCase().indexOf(needle) > -1
+                    );
+                }
+            });
         }
     },
     computed: {
@@ -366,6 +423,16 @@ export default {
                 stocks[stock.code] = 1;
             }
             return Object.keys(stocks).sort();
+        },
+        institutionOptions() {
+            return [...new Set(this.dataTable.map(o => o.institution).sort())];
+        },
+        accountOptions() {
+            const data = this.dataTable
+                .filter(o => !this.newOperation.institution || this.newOperation.institution === o.institution)
+                .map(o => o.account)
+                .sort();
+            return [...new Set(data)];
         }
     },
     mounted() {

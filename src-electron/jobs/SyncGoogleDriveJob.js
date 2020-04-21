@@ -43,7 +43,8 @@ class SyncGoogleDriveJob {
             await this._googleDriveService.uploadFiles();
             this._browserWindow.webContents.send('google-drive/upload', { status: 'success' });
         } catch (e) {
-            this._browserWindow.webContents.send('google-drive/upload', { status: 'error', message: e.message });
+            if (e.message !== 'Not logged in Google Drive')
+                this._browserWindow.webContents.send('google-drive/upload', { status: 'error', message: e.message });
         }
     }
 
