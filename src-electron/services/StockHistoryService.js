@@ -133,9 +133,10 @@ class StockHistoryService {
                         throw new Error('Operação já existente');
                 }
 
-                delete stockOperation.account;
-                delete stockOperation.institution;
-                account.stockHistory.push(stockOperation);
+                const copyStockOperation = { ...stockOperation };
+                delete copyStockOperation.account;
+                delete copyStockOperation.copyStockOperation;
+                account.stockHistory.push(copyStockOperation);
                 found = true;
             }
         }

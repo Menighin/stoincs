@@ -85,6 +85,7 @@
 
                             <q-select
                                 filled
+                                :disable="isEdit"
                                 v-model="newOperation.institution"
                                 label="Instituição"
                                 use-input
@@ -93,13 +94,15 @@
                                 :options="filteredInstitutions"
                                 @filter="filterInstitutionFn"
                                 @input-value="(v) => newOperation.partialInstitution = v"
-                                @blur="() => newOperation.institution = newOperation.partialInstitution"
+                                @blur="blurSelect('institution')"
                                 lazy-rules
+                                class="q-ma-sm" style="padding-bottom: 0"
                                 :rules="[ val => val && val.length > 0 || '']"
                             />
 
                             <q-select
                                 filled
+                                :disable="isEdit"
                                 v-model="newOperation.account"
                                 label="Conta"
                                 use-input
@@ -108,13 +111,12 @@
                                 :options="filteredAccounts"
                                 @filter="filterAccountFn"
                                 @input-value="(v) => newOperation.partialAccount = v"
-                                @blur="() => newOperation.account = newOperation.partialAccount"
+                                @blur="blurSelect('account')"
                                 lazy-rules
+                                class="q-ma-sm" style="padding-bottom: 0"
                                 :rules="[ val => val && val.length > 0 || '']"
                             />
 
-                            <q-input :disable="isEdit" class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.institution" label="Instituição" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
-                            <q-input :disable="isEdit" class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.account" label="Conta" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
                             <q-input :disable="isEdit" class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.code" label="Ativo" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
                             <q-select :disable="isEdit" :options="['C', 'V']" style="padding-bottom: 0" class="q-ma-sm" filled v-model="newOperation.operation" label="Operação" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
                             <q-input :disable="isEdit" class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.date" mask="##/##/####" label="Data"  lazy-rules :rules="[ val => val && val.length > 0 || '']">
@@ -127,7 +129,7 @@
                                 </template>
                             </q-input>
                             <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.quantity" label="Quantidade" lazy-rules :rules="[ val => val && val != null ]" />
-                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.price" label="Preço" mask="R$ #,##" reverse-fill-mask lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.price" label="Preço" fill-mask="0" mask="R$ #,##" reverse-fill-mask lazy-rules :rules="[ val => val && val.length > 0 || '']" />
                             <q-input class="q-ma-sm" style="padding-bottom: 0" filled :value="totalNewOperation" label="Total" disable />
                         </div>
                     </q-card-section>
@@ -321,6 +323,9 @@ export default {
                 quantity: parseInt(this.newOperation.quantity)
             };
 
+            delete payload.partialAccount;
+            delete payload.partialInstitution;
+
             if (!this.isEdit)
                 ipcRenderer.send('stockHistory/create', payload);
             else
@@ -362,14 +367,23 @@ export default {
         filterAccountFn(val, update) {
             update(() => {
                 if (val === '') {
-                    this.filteredAccounts = this.accountsOptions;
+                    this.filteredAccounts = this.accountOptions;
                 } else {
                     const needle = val.toLowerCase();
-                    this.filteredAccounts = this.accountsOptions.filter(
+                    this.filteredAccounts = this.accountOptions.filter(
                         v => v.toLowerCase().indexOf(needle) > -1
                     );
                 }
             });
+        },
+        blurSelect(field) {
+            if (field === 'institution') {
+                if (this.newOperation.partialInstitution && this.newOperation.partialInstitution.length > 0)
+                    this.newOperation.institution = this.newOperation.partialInstitution;
+            } else if (field === 'account') {
+                if (this.newOperation.partialAccount && this.newOperation.partialAccount.length > 0)
+                    this.newOperation.account = this.newOperation.partialAccount;
+            }
         }
     },
     computed: {
