@@ -9,7 +9,7 @@ const METHODS = {
 ipcMain.on(METHODS.UPDATE_CONFIGURATION, async (event, arg) => {
     try {
         await UpdatePricesJob.updateConfig();
-        await UpdateStockHistoryJob.run();
+        UpdateStockHistoryJob.run();
         event.reply(METHODS.UPDATE_CONFIGURATION, { status: 'success' });
     } catch (e) {
         event.reply(METHODS.UPDATE_CONFIGURATION, { status: 'error', message: e.message });
