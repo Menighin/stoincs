@@ -387,7 +387,7 @@ export default {
 
         ipcRenderer.on('wallet/updating', (event, response) => {
             for (const stock of response.data)
-                this.loadingStocks[stock] = 1;
+                this.$set(this.loadingStocks, stock, 1);
         });
 
         ipcRenderer.on('wallet/update-last-value', (event, response) => {

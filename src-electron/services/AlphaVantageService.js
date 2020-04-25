@@ -24,7 +24,7 @@ class AlphaVantageService {
         const res = await axios.get('https://www.alphavantage.co/query', {
             params: {
                 function: ALPHA_VANTAGE_FUNCTIONS.GLOBAL_QUOTE,
-                symbol: `${code}.SAO`,
+                symbol: `${code}.SA`,
                 apikey: key
             }
         });
