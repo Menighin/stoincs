@@ -79,16 +79,18 @@ export default {
         });
 
         EventBus.$on('snout-loader-finish', (evtCode) => {
-            self.loading = self.loading.filter(e => e.code !== evtCode);
-            if (self.loading.length === 0) {
+            const copyLoading = [ ...self.loading.filter(e => e.code !== evtCode) ];
+            if (copyLoading.length === 0) {
                 clearInterval(this.interval);
                 setTimeout(() => {
+                    self.loading = self.loading.filter(e => e.code !== evtCode);
                     self.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-1")';
                     self.$refs.snoutLoader.$el.classList.remove('loading');
                     this.item = null;
                     this.$refs.message.style.width = `0px`;
                 }, 600);
             } else {
+                self.loading = self.loading.filter(e => e.code !== evtCode);
                 this.item %= this.loading.length;
             }
         });
