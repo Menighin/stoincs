@@ -58,6 +58,28 @@
                         <q-item-label header>Qual o intervalo, em minutos, entre cada tick?</q-item-label>
                         <q-input v-model="priceUpdate.when" type="number" filled/>
 
+                        <q-item-label header>Entre quais horas do dia os preços devem ser atualizados?</q-item-label>
+                        <div class="row">
+                            <q-input class="q-pr-sm" filled v-model="priceUpdate.startTime" mask="time" :rules="['time']" label="Início">
+                                <template v-slot:append>
+                                    <q-icon name="access_time" class="cursor-pointer">
+                                        <q-popup-proxy transition-show="scale" transition-hide="scale">
+                                            <q-time format24h v-model="priceUpdate.startTime" />
+                                        </q-popup-proxy>
+                                    </q-icon>
+                                </template>
+                            </q-input>
+                            <q-input class="q-pl-sm" filled v-model="priceUpdate.endTime" mask="time" :rules="['time']" label="Fim">
+                                <template v-slot:append>
+                                    <q-icon name="access_time" class="cursor-pointer">
+                                        <q-popup-proxy transition-show="scale" transition-hide="scale">
+                                            <q-time format24h v-model="priceUpdate.endTime" />
+                                        </q-popup-proxy>
+                                    </q-icon>
+                                </template>
+                            </q-input>
+                        </div>
+
                         <q-item-label header>Resumo</q-item-label>
                         <p v-for="(p, i) in configSummary" :key="`p-${i}`" v-html="p" />
 
@@ -115,14 +137,16 @@ export default {
                 many = this.wallet.filter(d => d.quantityBought - d.quantitySold > 0).length;
             }
 
+            const hoursBetween = Math.ceil(DateUtils.minutesBetweenTimes(this.priceUpdate.startTime, this.priceUpdate.endTime) / 60);
+
             const interval = (Math.max(1, many / this.priceUpdate.many) * this.priceUpdate.when).toFixed(2);
             const ticksPerHour = 60 / this.priceUpdate.when;
             const updatesPerHour = parseInt(Math.ceil(ticksPerHour * Math.min(this.priceUpdate.many, many)));
 
-            const msgs = [`<strong>${many}</strong> ações serão atualizadas.`];
+            const msgs = [`<strong>${many}</strong> ações serão atualizadas entre ${this.priceUpdate.startTime}h e ${this.priceUpdate.endTime}h.`];
             msgs.push(`A cada <strong>${DateUtils.getFormatedHoursFromSeconds(this.priceUpdate.when * 60, true, true, false)}</strong>, <strong>${this.priceUpdate.many}</strong> ações serão atualizadas.`);
             msgs.push(`Isso significa que uma mesma ação será atualizada a cada <strong>${DateUtils.getFormatedHoursFromSeconds(interval * 60, true, true, false)}</strong>.`);
-            msgs.push(`Serão <strong>${updatesPerHour}</strong> atualizações por hora, totalizando <strong>${updatesPerHour * 24}</strong> atualizações por dia.`);
+            msgs.push(`Serão <strong>${updatesPerHour}</strong> atualizações por hora, totalizando <strong>${updatesPerHour * hoursBetween}</strong> atualizações por dia, dado os horários de atualizacao.`);
 
             return msgs;
         }
@@ -146,7 +170,9 @@ export default {
             this.priceUpdate = {
                 which: 'none',
                 many: 0,
-                when: 0
+                when: 0,
+                startTime: '00:00',
+                endTime: '00:00'
             };
         }
 

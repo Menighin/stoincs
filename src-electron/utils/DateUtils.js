@@ -64,6 +64,30 @@ class DateUtils {
         return res;
     }
 
+    /**
+     * Calculats, how many minutes are between t1 and t2. If t2 is lower than t1, t2 is considered to be on the next day
+     * @param {String} t1 String representing the start hour
+     * @param {String} t2 String representing the end hour
+     */
+    static minutesBetweenTimes(t1, t2) {
+        if (t1 === t2) return 60 * 24;
+
+        const [h1, m1] = t1.split(':').map(o => parseInt(o));
+        const [h2, m2] = t2.split(':').map(o => parseInt(o));
+
+        const d1 = new Date();
+        d1.setHours(h1);
+        d1.setMinutes(m1);
+
+        const d2 = new Date();
+        if (h2 < h1 || (h2 === h1 && m2 < m1))
+            d2.setTime(d2.getTime() + 1000 * 60 * 60 * 24);
+        d2.setHours(h2);
+        d2.setMinutes(m2);
+
+        return parseInt((d2.getTime() - d1.getTime()) / (1000 * 60));
+    }
+
 }
 
 export default DateUtils;
