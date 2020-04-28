@@ -1,16 +1,7 @@
 <template>
     <q-page class="">
         <div class="filter">
-            <q-btn outline color="primary" :label="selectedMonth" class="q-my-lg" icon="eva-calendar-outline">
-                <q-menu fit>
-                    <q-list style="min-width: 100px">
-                        <q-item @click="selectedMonth = month" clickable v-close-popup v-for="(month, i) in months" :key="`month-${i}`">
-                            <q-item-section>{{ month }}</q-item-section>
-                        </q-item>
-                    </q-list>
-                </q-menu>
-            </q-btn>
-            <q-btn outline color="primary" label="Refresh" class="q-mx-sm" icon="eva-refresh" @click="refreshHistory"/>
+            <q-btn outline color="primary" label="Refresh" class="q-mx-sm q-my-lg" icon="eva-refresh" @click="refreshHistory"/>
         </div>
 
         <div class="row q-ma-sm justify-between items-center">
@@ -49,6 +40,26 @@
                 <h5 style="margin: 0">Histórico</h5>
 
                 <q-space />
+
+                <q-input
+                    v-model="filterStock"
+                    dense
+                    outlined
+                    label="Ações"
+                    class="q-ma-sm"
+                    style="min-width: 150px"
+                />
+
+                <q-select
+                    v-model="selectedMonth"
+                    outlined
+                    dense
+                    options-dense
+                    label="Meses"
+                    :options="months"
+                    class="q-ma-sm"
+                    style="min-width: 150px"
+                />
 
                 <q-select
                     v-model="visibleColumns"
@@ -194,6 +205,7 @@ export default {
             dataTable: [],
             months: ['Todos', '08/2018', '09/2018'],
             selectedMonth: 'Todos',
+            filterStock: '',
             tableLoading: false,
             showCreateForm: false,
             showSplitDialog: false,
@@ -388,14 +400,21 @@ export default {
     },
     computed: {
         filteredDataTable() {
-            if (this.selectedMonth === 'Todos') {
-                return this.dataTable;
-            } else {
+            let filteredData = this.dataTable;
+            if (this.selectedMonth !== 'Todos') {
                 const [month, year] = this.selectedMonth.split('/').map(s => parseInt(s));
-                return this.dataTable.filter(d => {
+                filteredData = filteredData.filter(d => {
                     return d.date.getMonth() + 1 === month && d.date.getFullYear() === year;
                 });
             }
+
+            if (this.filterStock !== '') {
+                filteredData = filteredData.filter(d => {
+                    return d.code.startsWith(this.filterStock);
+                });
+            }
+
+            return filteredData;
         },
         kpis() {
             const bought = this.filteredDataTable
