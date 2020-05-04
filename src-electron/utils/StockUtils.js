@@ -1,10 +1,8 @@
-import typedefs from 'cei-crawler/src/lib/typedefs';
-
 class StockUtils {
 
     /**
      * Generate an unique ID for the given stock history item
-     * @param {typedefs.StockOperation} stockOperation - The stock operation to generate the ID
+     * @param {*} stockOperation - The stock operation to generate the ID
      * @param {String} accountNumber - The account number
      * @returns {String} - The ID representing the stock operation
      */
