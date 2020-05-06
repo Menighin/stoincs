@@ -1,4 +1,4 @@
-import { app, BrowserWindow, nativeTheme } from 'electron';
+import { app, BrowserWindow, nativeTheme, globalShortcut } from 'electron';
 import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
 import UpdatePricesJob from '../jobs/UpdatePricesJob';
 import SyncGoogleDriveJob from '../jobs/SyncGoogleDriveJob';
@@ -23,6 +23,7 @@ if (process.env.PROD) {
 
 let mainWindow;
 let forceQuit = false;
+let devToolsOpen = false;
 
 function createWindow() {
     /**
@@ -63,7 +64,6 @@ app.on('ready', () => {
         e.preventDefault();
         const googleDriveService = new GoogleDriveService();
         if (!forceQuit && (await googleDriveService.isLogged())) {
-            console.log('CLOSE EVENT 1');
             selfWindow.webContents.send('app/quiting');
             await googleDriveService.uploadFiles();
             forceQuit = true;
@@ -76,8 +76,14 @@ app.on('ready', () => {
         }
     });
 
-    mainWindow.openDevTools();
+    globalShortcut.register('CommandOrControl+Shift+I', () => {
+        if (!devToolsOpen)
+            mainWindow.openDevTools();
+        else
+            mainWindow.closeDevTools();
 
+        devToolsOpen = !devToolsOpen;
+    });
 });
 
 app.on('window-all-closed', async () => {
