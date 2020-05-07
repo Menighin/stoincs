@@ -59,6 +59,7 @@
 
             <q-td auto-width slot="body-cell-totalValue" slot-scope="props" :props="props" :class="{ 'value-up': props.row.totalValue > 0, 'value-down': props.row.totalValue < 0 }">
                 {{ NumberUtils.formatCurrency(props.row.totalValue) }}
+                <div class="variation">{{ NumberUtils.formatPercentage(props.row.totalValuePercentage) }}</div>
             </q-td>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
@@ -329,7 +330,7 @@ export default {
                         lastTradingDay: d.lastTradingDay,
                         lastUpdated: d.lastUpdated,
                         totalValue: totalValue,
-                        totalValuePercentage: 0,
+                        totalValuePercentage: totalValue / d.valueBought,
                         source: d.source,
                         label: d.label
                     };
