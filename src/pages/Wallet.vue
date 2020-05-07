@@ -147,7 +147,7 @@ export default {
             pagination: {
                 rowsPerPage: 50
             },
-            visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'valueSold', 'lastUpdated', 'price', 'totalValue', 'label' ],
+            visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'averageBuyPrice', 'valueSold', 'lastUpdated', 'price', 'totalValue', 'label' ],
             columns: [
                 {
                     name: 'code',
@@ -182,6 +182,14 @@ export default {
                     align: 'right',
                     label: 'Valor Investido',
                     field: 'valueBought',
+                    sortable: true,
+                    format: val => NumberUtils.formatCurrency(val)
+                },
+                {
+                    name: 'averageBuyPrice',
+                    align: 'right',
+                    label: 'Pç. Médio Compra',
+                    field: 'averageBuyPrice',
                     sortable: true,
                     format: val => NumberUtils.formatCurrency(val)
                 },
@@ -306,19 +314,22 @@ export default {
             return this.data
                 .map(d => {
                     const quantityBalance = Math.max(d.quantityBought - d.quantitySold, 0);
+                    const totalValue = d.valueSold + quantityBalance * d.price - d.valueBought;
                     return {
                         code: d.code,
                         quantityBought: d.quantityBought,
                         quantitySold: d.quantitySold,
                         quantityBalance: quantityBalance,
                         valueBought: d.valueBought,
+                        averageBuyPrice: d.valueBought / d.quantityBought,
                         valueSold: d.valueSold,
                         price: d.price,
                         changePrice: d.changePrice,
                         changePercent: d.changePercent,
                         lastTradingDay: d.lastTradingDay,
                         lastUpdated: d.lastUpdated,
-                        totalValue: d.valueSold + quantityBalance * d.price - d.valueBought,
+                        totalValue: totalValue,
+                        totalValuePercentage: 0,
                         source: d.source,
                         label: d.label
                     };
