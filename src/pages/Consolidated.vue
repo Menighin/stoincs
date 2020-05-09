@@ -4,6 +4,23 @@
             <q-btn outline color="primary" label="Refresh" class="q-mx-sm q-my-lg" icon="eva-refresh" @click="refreshHistory"/>
         </div>
 
+        <div class="row q-ma-sm justify-between items-center">
+            <q-card class="kpis-card q-px-lg q-py-md" flat bordered>
+                <q-card-section horizontal>
+                    <template v-for="(kpi, i) in kpis">
+
+                        <q-card-section :key="`kpi-${i}`">
+                            <div class="label">{{kpi.label}}</div>
+                            <div class="value" :style="{color: kpi.color}">{{kpi.value}}</div>
+                        </q-card-section>
+
+                        <q-separator vertical :key="`separator-${i}`" v-if="i !== kpis.length - 1" />
+
+                    </template>
+                </q-card-section>
+            </q-card>
+        </div>
+
         <q-table
             class="table-container q-mx-lg"
             table-class="stock-table"
@@ -20,7 +37,7 @@
             :loading="tableLoading"
         >
             <template v-slot:top>
-                <h5 style="margin: 0">Extrato</h5>
+                <h5 style="margin: 0">Histórico</h5>
 
                 <q-space />
 
@@ -182,7 +199,7 @@ import NumberUtils from '../../src-electron/utils/NumberUtils';
 import DateUtils from '../../src-electron/utils/DateUtils';
 
 export default {
-    name: 'PageStockHistory',
+    name: 'PageConsolidated',
     data() {
         return {
             dataTable: [],
@@ -398,6 +415,35 @@ export default {
             }
 
             return filteredData;
+        },
+        kpis() {
+            const bought = this.filteredDataTable
+                .filter(o => o.operation === 'C')
+                .reduce((p, c) => p + c.totalValue, 0);
+
+            const sold = this.filteredDataTable
+                .filter(o => o.operation === 'V')
+                .reduce((p, c) => p + c.totalValue, 0);
+
+            const total = sold - bought;
+
+            return [
+                {
+                    label: 'Compra',
+                    value: NumberUtils.formatCurrency(bought),
+                    color: '#C10015'
+                },
+                {
+                    label: 'Venda',
+                    value: NumberUtils.formatCurrency(sold),
+                    color: '#21BA45'
+                },
+                {
+                    label: 'Total',
+                    value: NumberUtils.formatCurrency(total),
+                    color: total > 0 ? '#21BA45' : '#C10015'
+                }
+            ];
         },
         totalNewOperation() {
             const price = this.newOperation.price ? NumberUtils.getNumberFromCurrency(this.newOperation.price) : 0;

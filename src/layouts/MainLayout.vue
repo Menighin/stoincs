@@ -97,14 +97,16 @@
                         <q-item clickable @click="navigate('/wallet-charts', $event)">Gráficos</q-item>
                     </q-list>
                 </q-expansion-item>
-                <q-item clickable @click="navigate('/stock-history', $event)">
-                    <q-item-section avatar>
-                        <q-icon name="eva-book-open-outline" />
-                    </q-item-section>
-                    <q-item-section>
-                        <q-item-label>Negociações</q-item-label>
-                    </q-item-section>
-                </q-item>
+                <q-expansion-item
+                    expand-separator
+                    label="Negociações"
+                    icon="eva-book-open-outline"
+                    :content-inset-level="1">
+                    <q-list>
+                        <q-item clickable @click="navigate('/stock-history', $event)">Extrato</q-item>
+                        <q-item clickable @click="navigate('/consolidated', $event)">Consolidado</q-item>
+                    </q-list>
+                </q-expansion-item>
                 <q-item clickable @click="navigate('/configurations', $event)">
                     <q-item-section avatar>
                         <q-icon name="eva-settings-2-outline" />
