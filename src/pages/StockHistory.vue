@@ -1,6 +1,6 @@
 <template>
     <q-page class="">
-        <div class="filter">
+        <div class="actions">
             <q-btn outline color="primary" label="Refresh" class="q-mx-sm q-my-lg" icon="eva-refresh" @click="refreshHistory"/>
         </div>
 
@@ -333,7 +333,6 @@ export default {
                 ...this.split,
                 date: DateUtils.fromDateStr(this.split.date)
             };
-            console.log('payload', payload);
             ipcRenderer.send('stockHistory/split', payload);
             this.showSplitDialog = false;
         },
@@ -512,21 +511,8 @@ export default {
 
 <style lang="scss">
 
-    .filter {
+    .actions {
         text-align: right;
-    }
-
-    .kpis-card {
-        margin: 0 auto;
-        .label {
-            color: $label;
-            font-size: 10px;
-        }
-
-        .value {
-            font-size: 32px;
-            font-weight: bold;
-        }
     }
 
     .table-container {

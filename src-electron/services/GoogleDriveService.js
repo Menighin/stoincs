@@ -152,14 +152,12 @@ class GoogleDriveService {
 
                 const existingFile = existingFiles.filter(o => o.name === file)[0] || null;
                 if (existingFile !== null) {
-                    console.log(`Updating ${file}...`);
                     drive.files.update({
                         fileId: existingFile.id,
                         media: media,
                         fields: 'id'
                     }, callback);
                 } else {
-                    console.log(`Uploading ${file}...`);
                     drive.files.create({
                         resource: fileMetadata,
                         media: media,
@@ -173,7 +171,6 @@ class GoogleDriveService {
     }
 
     async listFiles() {
-        console.log('Listing files...');
         const oAuth2Client = await this.getOAuth2ClientFromDisk();
         if (oAuth2Client === null) return;
 
@@ -215,7 +212,6 @@ class GoogleDriveService {
         const files = await this.listFiles();
 
         for (const file of files) {
-            console.log(`Downloading ${file.name}`);
 
             await this.downloadFile(drive, file);
         }

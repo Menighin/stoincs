@@ -214,7 +214,6 @@ export default {
     mounted() {
         ipcRenderer.on('notification/message', (event, response) => {
             this.notifications.push(response.data);
-            console.log(response);
         });
 
         ipcRenderer.on('notification/start-loading', (event, response) => {
@@ -230,7 +229,6 @@ export default {
                 this.userInfo = response.data;
             } else {
                 this.$q.notify({ type: 'negative', message: `Error ao tentar logar: ${response.message}` });
-                console.log(response);
             }
         });
 
