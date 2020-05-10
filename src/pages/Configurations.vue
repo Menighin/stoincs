@@ -53,10 +53,10 @@
                         <q-radio v-model="priceUpdate.which" val="none" label="Nenhuma" />
 
                         <q-item-label header>Quantas ações devem ser atualizadas por tick?</q-item-label>
-                        <q-input v-model="priceUpdate.many" type="number" filled/>
+                        <q-input v-model="priceUpdate.many" @blur="priceUpdate.many = Math.max(1, priceUpdate.many)" type="number" filled/>
 
                         <q-item-label header>Qual o intervalo, em minutos, entre cada tick?</q-item-label>
-                        <q-input v-model="priceUpdate.when" type="number" filled/>
+                        <q-input v-model="priceUpdate.when" @blur="priceUpdate.when = Math.max(1, priceUpdate.when)" type="number" filled/>
 
                         <q-item-label header>Entre quais horas do dia os preços devem ser atualizados?</q-item-label>
                         <div class="row">
@@ -114,6 +114,7 @@ export default {
             alphaVantageKey: '',
             isPwd: true,
             priceUpdate: {},
+            Math: Math,
             wallet: []
         };
     },
@@ -128,7 +129,7 @@ export default {
     },
     computed: {
         configSummary() {
-            if (this.priceUpdate.which === 'none') {
+            if (this.priceUpdate.which === 'none' || this.priceUpdate.many < 1 || this.priceUpdate.when < 1) {
                 return ['Nenhum valor de ação será atualizado automaticamente'];
             }
 
@@ -169,8 +170,8 @@ export default {
         } else {
             this.priceUpdate = {
                 which: 'none',
-                many: 0,
-                when: 0,
+                many: 1,
+                when: 1,
                 startTime: '00:00',
                 endTime: '00:00'
             };

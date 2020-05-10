@@ -90,7 +90,6 @@ app.on('window-all-closed', async () => {
     if (process.platform !== 'darwin') {
         app.quit();
     }
-    console.log('window-all-closed');
 });
 
 app.on('activate', () => {

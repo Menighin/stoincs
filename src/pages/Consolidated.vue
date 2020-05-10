@@ -163,10 +163,13 @@ export default {
         },
         dataTable() {
             const consolidatedByStock = this.filteredRawData.reduce((p, c) => {
-                const key = c.code;
+                let key = c.code;
+                if (key.match(/\dF$/) != null)
+                    key = key.slice(0, -1);
+
                 if (!(key in p)) {
                     p[key] = {
-                        code: c.code,
+                        code: key,
                         quantityBought: 0,
                         quantitySold: 0,
                         valueBought: 0,

@@ -91,6 +91,7 @@
                     expand-separator
                     label="Carteira"
                     icon="eva-bar-chart"
+                    class="expansion-item q-router-link--active"
                     :content-inset-level="1">
                     <q-list>
                         <q-item clickable @click="navigate('/wallet', $event)">Dados</q-item>
@@ -100,6 +101,7 @@
                 <q-expansion-item
                     expand-separator
                     label="Negociações"
+                    class="expansion-item"
                     icon="eva-book-open-outline"
                     :content-inset-level="1">
                     <q-list>
@@ -193,12 +195,14 @@ export default {
         },
         navigate(path, event) {
             const element = event.currentTarget;
-            const list = element.parentElement.children;
+            const allMenus = element.closest('#menu-list').querySelectorAll('.q-item');
+            const parentMenu = element.closest('.expansion-item');
 
-            for (const item of list)
-                item.classList.remove('q-router-link--active');
+            allMenus.forEach(menu => menu.classList.remove('q-router-link--active'));
 
             element.classList.add('q-router-link--active');
+            if (parentMenu !== null)
+                parentMenu.querySelector('.q-item').classList.add('q-router-link--active');
 
             const currentPath = this.$router.currentRoute.path;
 
