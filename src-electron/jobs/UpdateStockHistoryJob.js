@@ -66,6 +66,8 @@ class UpdateStockHistoryJob {
                 }
             }
 
+            await ceiCrawler.close();
+
             console.log('Processing stock history from CEI');
             let newNegotiations = 0;
 
