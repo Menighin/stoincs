@@ -330,7 +330,7 @@ export default {
                         lastTradingDay: d.lastTradingDay,
                         lastUpdated: d.lastUpdated,
                         totalValue: totalValue,
-                        totalValuePercentage: totalValue / d.valueBought,
+                        totalValuePercentage: totalValue / d.valueBought * 100,
                         source: d.source,
                         label: d.label
                     };

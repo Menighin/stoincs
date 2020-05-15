@@ -22,7 +22,7 @@ class NumberUtils {
      * @returns {String} - Formated number
      */
     static formatPercentage(n, showSign = true, locale = 'pt-BR') {
-        const sign = showSign ? (n < 0 ? '-' : '+') : '';
+        const sign = showSign ? (n < 0 ? '' : '+') : '';
         return `${sign}${n.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
     }
 

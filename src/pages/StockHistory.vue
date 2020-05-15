@@ -298,14 +298,15 @@ export default {
         },
         editRow(row) {
             this.isEdit = true;
-            this.newOperation.id = row.id;
-            this.newOperation.institution = row.institution;
-            this.newOperation.account = row.account;
-            this.newOperation.code = row.code;
-            this.newOperation.operation = row.operation;
-            this.newOperation.date = row.date.toJSON();
-            this.newOperation.quantity = row.quantity;
-            this.newOperation.price = `R$ ${row.price.toFixed(2).replace('.', ',')}`;
+
+            this.$set(this.newOperation, 'id', row.id);
+            this.$set(this.newOperation, 'institution', row.institution);
+            this.$set(this.newOperation, 'account', row.account);
+            this.$set(this.newOperation, 'code', row.code);
+            this.$set(this.newOperation, 'operation', row.operation);
+            this.$set(this.newOperation, 'date', row.date.toJSON());
+            this.$set(this.newOperation, 'quantity', row.quantity);
+            this.$set(this.newOperation, 'price', `R$ ${row.price.toFixed(2).replace('.', ',')}`);
 
             this.showCreateForm = true;
         },
@@ -320,6 +321,8 @@ export default {
 
             delete payload.partialAccount;
             delete payload.partialInstitution;
+
+            console.log(payload);
 
             if (!this.isEdit)
                 ipcRenderer.send('stockHistory/create', payload);
@@ -478,6 +481,7 @@ export default {
                     if (o.id === args.operation.id) {
                         this.dataTable[i].quantity = args.operation.quantity;
                         this.dataTable[i].price = args.operation.price;
+                        this.dataTable[i].totalValue = args.operation.totalValue;
                     }
                 });
             } else {
