@@ -95,13 +95,6 @@
 
 <script>
 
-const STORAGE_KEY = {
-    USERNAME: 'configuration/username',
-    PASSWORD: 'configuration/password',
-    ALPHA_VANTAGE: 'configuration/alpha-vantage-key',
-    PRICE_UPDATE: 'configuration/price-update'
-};
-
 import DateUtils from '../../src-electron/utils/DateUtils';
 import { ipcRenderer } from 'electron';
 
@@ -120,11 +113,14 @@ export default {
     },
     methods: {
         save() {
-            localStorage.setItem(STORAGE_KEY.USERNAME, this.username);
-            localStorage.setItem(STORAGE_KEY.PASSWORD, this.password);
-            localStorage.setItem(STORAGE_KEY.ALPHA_VANTAGE, this.alphaVantageKey);
-            localStorage.setItem(STORAGE_KEY.PRICE_UPDATE, JSON.stringify(this.priceUpdate));
-            ipcRenderer.send('configuration/update');
+            const configuration = {
+                username: this.username,
+                password: this.password,
+                alphaVantageKey: this.alphaVantageKey,
+                priceUpdate: this.priceUpdate
+            };
+
+            ipcRenderer.send('configuration/update', configuration);
         }
     },
     computed: {
@@ -153,30 +149,6 @@ export default {
         }
     },
     mounted() {
-        if (localStorage.getItem(STORAGE_KEY.USERNAME)) {
-            this.username = localStorage.getItem(STORAGE_KEY.USERNAME);
-        }
-
-        if (localStorage.getItem(STORAGE_KEY.PASSWORD)) {
-            this.password = localStorage.getItem(STORAGE_KEY.PASSWORD);
-        }
-
-        if (localStorage.getItem(STORAGE_KEY.ALPHA_VANTAGE)) {
-            this.alphaVantageKey = localStorage.getItem(STORAGE_KEY.ALPHA_VANTAGE);
-        }
-
-        if (localStorage.getItem(STORAGE_KEY.PRICE_UPDATE)) {
-            this.priceUpdate = JSON.parse(localStorage.getItem(STORAGE_KEY.PRICE_UPDATE));
-        } else {
-            this.priceUpdate = {
-                which: 'none',
-                many: 1,
-                when: 1,
-                startTime: '00:00',
-                endTime: '00:00'
-            };
-        }
-
         ipcRenderer.on('wallet/get', (event, response) => {
             if (response.status === 'success') {
                 this.wallet = response.data;
@@ -195,7 +167,26 @@ export default {
             }
         });
 
+        ipcRenderer.on('configuration/get', (event, response) => {
+            if (response.status === 'success') {
+                this.username = response.data.username || '';
+                this.password = response.data.password || '';
+                this.alphaVantageKey = response.data.alphaVantageKey || '';
+                this.priceUpdate = response.data.priceUpdate || {
+                    which: 'none',
+                    many: 1,
+                    when: 1,
+                    startTime: '00:00',
+                    endTime: '00:00'
+                };
+            } else {
+                this.$q.notify({ type: 'negative', message: `Error ao ler sua carteira: ${response.error.message}` });
+                console.error(response.error);
+            }
+        });
+
         ipcRenderer.send('wallet/get');
+        ipcRenderer.send('configuration/get');
     }
 };
 </script>

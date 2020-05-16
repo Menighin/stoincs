@@ -1,5 +1,6 @@
 import { BrowserWindow } from 'electron';
 import WalletService from '../services/WalletService';
+import ConfigurationService from '../services/ConfigurationService';
 import NotificationService from '../services/NotificationService';
 
 class UpdatePricesJob {
@@ -28,7 +29,7 @@ class UpdatePricesJob {
     async setup(browserWindow) {
         this._browserWindow = browserWindow;
 
-        this._configuration = JSON.parse(await this._browserWindow.webContents.executeJavaScript('localStorage.getItem("configuration/price-update");', true));
+        this._configuration = (await ConfigurationService.getConfiguration()).priceUpdate || {};
 
         if (this._configuration && this._configuration.when > 0) {
             this._interval = setInterval(() => { this.run() }, this._configuration.when * 1000 * 60);
@@ -71,7 +72,7 @@ class UpdatePricesJob {
 
     async updateConfig() {
         clearInterval(this._interval);
-        this._configuration = JSON.parse(await this._browserWindow.webContents.executeJavaScript('localStorage.getItem("configuration/price-update");', true));
+        this._configuration = (await ConfigurationService.getConfiguration()).priceUpdate || {};
 
         console.log(`Updating prices job to run every ${this._configuration.when} minute(s)`);
         this._interval = setInterval(() => { this.run() }, this._configuration.when * 1000 * 60);

@@ -23,11 +23,7 @@ class SyncGoogleDriveJob {
     async setup(browserWindow) {
         this._browserWindow = browserWindow;
 
-        this._configuration = JSON.parse(await this._browserWindow.webContents.executeJavaScript('localStorage.getItem("configuration/price-update");', true));
-
-        if (this._configuration && this._configuration.when > 0) {
-            this._interval = setInterval(() => { this.run() }, this._configuration.when * 1000 * 60);
-        }
+        this._interval = setInterval(() => { this.run() }, 3 * 1000 * 60);
     }
 
     async startJob() {

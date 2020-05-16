@@ -1,4 +1,5 @@
 import { BrowserWindow } from 'electron';
+import ConfigurationService from '../services/ConfigurationService';
 import axios from 'axios';
 
 const ALPHA_VANTAGE_FUNCTIONS = {
@@ -14,7 +15,7 @@ class AlphaVantageService {
 
     async getKey() {
         if (this.apiKey === null)
-            this.apiKey = await BrowserWindow.getAllWindows()[0].webContents.executeJavaScript('localStorage.getItem("configuration/alpha-vantage-key");', true);
+            this.apiKey = (await ConfigurationService.getConfiguration()).alphaVantageKey || '';
         return this.apiKey;
     }
 

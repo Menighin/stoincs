@@ -5,6 +5,7 @@ import DateUtils from '../utils/DateUtils';
 import StockUtils from '../utils/StockUtils';
 import NotificationService from '../services/NotificationService';
 import WalletService from '../services/WalletService';
+import ConfigurationService from '../services/ConfigurationService';
 import puppeteer from 'puppeteer';
 
 const NOTIFICATION = {
@@ -40,10 +41,11 @@ class UpdateStockHistoryJob {
         console.log('Running stock history job...');
         const evtCode = 'STOCK_HISTORY_JOB';
         NotificationService.notifyLoadingStart(evtCode, 'Crawling negociações do CEI');
+        const configuration = await ConfigurationService.getConfiguration();
 
         try {
-            const user = await this._browserWindow.webContents.executeJavaScript('localStorage.getItem("configuration/username");', true);
-            const password = await this._browserWindow.webContents.executeJavaScript('localStorage.getItem("configuration/password");', true);
+            const user = configuration.username || '';
+            const password = configuration.password || '';
 
             const jobMetadata = await this._stockHistoryService.getStockHistoryJobMetadata();
             const yesterday = new Date();
