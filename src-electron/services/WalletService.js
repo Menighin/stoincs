@@ -66,14 +66,16 @@ class WalletService {
 
         const wallet = Object.values(dataByStock);
 
-        // Keep price info
+        // Keep price info and label
         for (const w of wallet) {
             if (w.code in walletByCode) {
-                w.price = walletByCode[w.code].price;
-                w.changePrice = walletByCode[w.code].changePrice;
-                w.changePercent = walletByCode[w.code].changePercent;
-                w.lastTradingDay = walletByCode[w.code].lastTradingDay;
-                w.lastUpdated = walletByCode[w.code].lastUpdated;
+                const oldItem = walletByCode[w.code];
+                w.price = oldItem.price;
+                w.changePrice = oldItem.changePrice;
+                w.changePercent = oldItem.changePercent;
+                w.lastTradingDay = oldItem.lastTradingDay;
+                w.lastUpdated = oldItem.lastUpdated;
+                w.label = oldItem.label;
             }
         }
 
