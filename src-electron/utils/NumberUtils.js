@@ -9,9 +9,9 @@ class NumberUtils {
      */
     static formatCurrency(n, showSign = false, currency = 'R$', locale = 'pt-BR') {
         if (!showSign)
-            return `${currency} ${n.toLocaleString(locale, { minimumFractionDigits: 2 })}`;
+            return `${currency} ${n.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         const sign = n < 0 ? '' : '+';
-        return `${currency} ${sign}${n.toLocaleString(locale, { minimumFractionDigits: 2 })}`;
+        return `${currency} ${sign}${n.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
     /**

@@ -15,7 +15,7 @@
   "dependencies": {
     "@quasar/extras": "^1.4.0",
     "axios": "^0.19.2",
-    "cei-crawler": "^0.1.11",
+    "cei-crawler": "^0.2.0",
     "express": "^4.17.1",
     "googleapis": "^39.2.0",
     "highcharts": "^8.0.4",

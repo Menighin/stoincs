@@ -1,5 +1,5 @@
 import CeiCrawler from 'cei-crawler';
-import StockHistoryService from '../services/StockHistoryService';
+import TreasuryDirectService from '../services/TreasuryDirectService';
 import DateUtils from '../utils/DateUtils';
 import StockUtils from '../utils/StockUtils';
 import NotificationService from '../services/NotificationService';
@@ -15,18 +15,17 @@ const NOTIFICATION = {
 class UpdateStockHistoryJob {
 
     /** @type {StockHistoryService} */
-    _stockHistoryService;
+    _treasureDirectService;
 
     /** @type {WalletService} */
     _walletService;
 
     /**
      * Setup the job to run from time to time
-     * @param {StockHistoryService} stockHistoryService - Service to handle the stock history
+     * @param {TreasuryDirectService} treasuryDirectService - Service to handle the treasury direct
      */
-    setup(stockHistoryService) {
-        this._stockHistoryService = stockHistoryService;
-        this._walletService = new WalletService();
+    setup(treasuryDirectService) {
+        this._treasureDirectService = treasuryDirectService;
         setTimeout(() => this.run(), 60000);
         setInterval(() => this.run(), 1000 * 60 * 60 * 12);
     }
@@ -41,7 +40,7 @@ class UpdateStockHistoryJob {
             const user = configuration.username || '';
             const password = configuration.password || '';
 
-            const jobMetadata = await this._stockHistoryService.getStockHistoryJobMetadata();
+            const jobMetadata = await this._treasureDirectService.getStockHistoryJobMetadata();
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
             const chromiumPath = puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked/node_modules/puppeteer');
@@ -61,9 +60,6 @@ class UpdateStockHistoryJob {
                     return;
                 }
             }
-
-            console.log('LAST RUN: ' + jobMetadata.lastRun);
-            console.log('STOCKS: ' + JSON.stringify(stocksByAccount));
 
             await ceiCrawler.close();
 
@@ -93,8 +89,8 @@ class UpdateStockHistoryJob {
                 acc.stockHistory = Object.values(stockOperationById);
             });
 
-            await this._stockHistoryService.saveStockHistory(stocksByAccount);
-            await this._stockHistoryService.updateStockHistoryJobMetadata();
+            await this._treasureDirectService.saveStockHistory(stocksByAccount);
+            await this._treasureDirectService.updateStockHistoryJobMetadata();
 
             // Update wallet
             await this._walletService.refreshWalletFromHistory();

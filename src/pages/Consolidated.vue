@@ -96,7 +96,7 @@ export default {
             },
             startDate: null,
             endDate: null,
-            visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'valueSold', 'valueBalance' ],
+            visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'averageBuyPrice', 'valueSold', 'averageSellPrice', 'valueBalance', 'profitLoss' ],
             columns: [
                 {
                     name: 'code',
@@ -135,6 +135,14 @@ export default {
                     format: val => NumberUtils.formatCurrency(val)
                 },
                 {
+                    name: 'averageBuyPrice',
+                    align: 'right',
+                    label: 'Pç. Médio Compra',
+                    field: 'averageBuyPrice',
+                    sortable: true,
+                    format: val => NumberUtils.formatCurrency(val)
+                },
+                {
                     name: 'valueSold',
                     align: 'right',
                     label: 'Valor Vendido',
@@ -143,10 +151,26 @@ export default {
                     format: val => NumberUtils.formatCurrency(val)
                 },
                 {
+                    name: 'averageSellPrice',
+                    align: 'right',
+                    label: 'Pç. Médio Venda',
+                    field: 'averageSellPrice',
+                    sortable: true,
+                    format: val => NumberUtils.formatCurrency(val)
+                },
+                {
                     name: 'valueBalance',
                     align: 'right',
                     label: 'Saldo',
                     field: 'valueBalance',
+                    sortable: true,
+                    format: val => NumberUtils.formatCurrency(val)
+                },
+                {
+                    name: 'profitLoss',
+                    align: 'right',
+                    label: 'Lucro/Prejuízo na venda',
+                    field: 'profitLoss',
                     sortable: true,
                     format: val => NumberUtils.formatCurrency(val)
                 }
@@ -160,6 +184,43 @@ export default {
             const startDate = DateUtils.fromDateStr(this.startDate);
             const endDate = DateUtils.fromDateStr(this.endDate);
             return this.rawData.filter(o => startDate <= o.date && o.date <= endDate);
+        },
+        averagePrices() {
+            if (this.endDate === null) return {};
+
+            const endDate = DateUtils.fromDateStr(this.endDate);
+
+            const totalsByStock = this.rawData
+                .filter(o => o.date <= endDate)
+                .reduce((p, c, i) => {
+                    let key = c.code;
+                    if (key.match(/\dF$/) != null)
+                        key = key.slice(0, -1);
+                    if (!p[key])
+                        p[key] = {
+                            quantityBought: 0,
+                            valueBought: 0,
+                            quantitySold: 0,
+                            valueSold: 0
+                        };
+
+                    if (c.operation === 'C') {
+                        p[key].quantityBought += c.quantity;
+                        p[key].valueBought += c.totalValue;
+                    } else if (c.operation === 'V') {
+                        p[key].quantitySold += c.quantity;
+                        p[key].valueSold += c.totalValue;
+                    }
+                    return p;
+                }, {});
+
+            return Object.keys(totalsByStock).reduce((p, c, i) => {
+                const totals = totalsByStock[c];
+                p[c] = {};
+                p[c].averageBuyPrice = totals.quantityBought > 0 ? totals.valueBought / totals.quantityBought : 0;
+                p[c].averageSellPrice = totals.quantitySold > 0 ? totals.valueSold / totals.quantitySold : 0;
+                return p;
+            }, {});
         },
         dataTable() {
             const consolidatedByStock = this.filteredRawData.reduce((p, c) => {
@@ -186,11 +247,13 @@ export default {
                 }
                 p[key].quantityBalance = p[key].quantityBought - p[key].quantitySold;
                 p[key].valueBalance = p[key].valueSold - p[key].valueBought;
-
+                p[key].averageBuyPrice = this.averagePrices[key].averageBuyPrice;
+                p[key].averageSellPrice = this.averagePrices[key].averageSellPrice;
+                p[key].profitLoss = p[key].quantitySold * p[key].averageSellPrice - p[key].quantitySold * p[key].averageBuyPrice;
                 return p;
             }, {});
 
-            return Object.values(consolidatedByStock);
+            return Object.values(consolidatedByStock).sort((a, b) => (a.code > b.code) ? 1 : ((b.code > a.code) ? -1 : 0));
         },
         kpis() {
             const bought = this.filteredRawData
