@@ -397,12 +397,12 @@ export default {
             }
         });
 
-        ipcRenderer.on('wallet/updating', (event, response) => {
+        ipcRenderer.on('stock-prices/updating', (event, response) => {
             for (const stock of response.data)
                 this.$set(this.loadingStocks, stock, 1);
         });
 
-        ipcRenderer.on('wallet/update-last-value', (event, response) => {
+        ipcRenderer.on('stock-prices/update', (event, response) => {
             for (const s of response.data)
                 delete this.loadingStocks[s.code];
 

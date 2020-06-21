@@ -1,6 +1,5 @@
 import fs from 'fs';
 import StockHistoryService from './StockHistoryService';
-import AlphaVantageService from './AlphaVantageService';
 import FileSystemUtils from '../utils/FileSystemUtils';
 
 const FILES = {
@@ -8,11 +7,6 @@ const FILES = {
 };
 
 class WalletService {
-
-    constructor() {
-        this.stockHistoryService = new StockHistoryService();
-        this.alphaVantageService = new AlphaVantageService();
-    }
 
     async getWallet() {
         const rootPath = await FileSystemUtils.getDataPath();
@@ -23,7 +17,7 @@ class WalletService {
     }
 
     async refreshWalletFromHistory() {
-        const stockHistory = await this.stockHistoryService.getStockHistory();
+        const stockHistory = await StockHistoryService.getStockHistory();
         let walletByCode = (await this.getWallet()).reduce((p, c) => {
             p[c.code] = c;
             return p;
@@ -96,32 +90,32 @@ class WalletService {
         }
     }
 
-    async updateLastValues(stocks) {
-        const promises = stocks.map(s => this.alphaVantageService.getLastValue(s));
+    // async updateLastValues(stocks) {
+    //     const promises = stocks.map(s => this.alphaVantageService.getLastValue(s));
 
-        const results = (await Promise.all(promises)).filter(o => o !== null);
+    //     const results = (await Promise.all(promises)).filter(o => o !== null);
 
-        const wallet = await this.getWallet();
-        const now = new Date();
+    //     const wallet = await this.getWallet();
+    //     const now = new Date();
 
-        for (const r of results) {
-            for (const w of wallet) {
-                if (r.code === w.code && r.status === 'success') {
-                    w.price = r.price;
-                    w.changePrice = r.changePrice;
-                    w.changePercent = r.changePercent;
-                    w.lastTradingDay = r.lastTradingDay;
-                    w.lastUpdated = now;
-                    r.lastUpdated = now;
-                    break;
-                }
-            }
-        }
+    //     for (const r of results) {
+    //         for (const w of wallet) {
+    //             if (r.code === w.code && r.status === 'success') {
+    //                 w.price = r.price;
+    //                 w.changePrice = r.changePrice;
+    //                 w.changePercent = r.changePercent;
+    //                 w.lastTradingDay = r.lastTradingDay;
+    //                 w.lastUpdated = now;
+    //                 r.lastUpdated = now;
+    //                 break;
+    //             }
+    //         }
+    //     }
 
-        await this.saveWallet(wallet, true);
+    //     await this.saveWallet(wallet, true);
 
-        return results;
-    }
+    //     return results;
+    // }
 
     async updateLabel(stock, label) {
         const wallet = await this.getWallet();
@@ -133,5 +127,5 @@ class WalletService {
 
 }
 
-export default WalletService;
+export default new WalletService();
 export { FILES as WalletFiles };

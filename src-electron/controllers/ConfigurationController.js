@@ -5,7 +5,8 @@ import ConfigurationService from '../services/ConfigurationService';
 
 const METHODS = {
     GET_CONFIGURATION: 'configuration/get',
-    UPDATE_CONFIGURATION: 'configuration/update'
+    UPDATE_CONFIGURATION: 'configuration/update',
+    GET_STOCK_OPTIONS: 'configuration/get-stock-options'
 };
 
 ipcMain.on(METHODS.GET_CONFIGURATION, async (event, arg) => {
@@ -26,6 +27,15 @@ ipcMain.on(METHODS.UPDATE_CONFIGURATION, async (event, arg) => {
         event.reply(METHODS.UPDATE_CONFIGURATION, { status: 'success' });
     } catch (e) {
         event.reply(METHODS.UPDATE_CONFIGURATION, { status: 'error', message: e.message });
+    }
+});
+
+ipcMain.on(METHODS.GET_STOCK_OPTIONS, async (event, arg) => {
+    try {
+        const data = await ConfigurationService.getStockOptions();
+        event.reply(METHODS.GET_STOCK_OPTIONS, { status: 'success', data: data });
+    } catch (e) {
+        event.reply(METHODS.GET_STOCK_OPTIONS, { status: 'error', message: e.message });
     }
 });
 

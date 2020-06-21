@@ -8,6 +8,7 @@ class NumberUtils {
      * @returns {String} - Formated number
      */
     static formatCurrency(n, showSign = false, currency = 'R$', locale = 'pt-BR') {
+        if (n === null || n === undefined) return null;
         if (!showSign)
             return `${currency} ${n.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         const sign = n < 0 ? '' : '+';

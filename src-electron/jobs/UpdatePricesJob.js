@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron';
-import WalletService from '../services/WalletService';
+import StockPriceService from '../services/StockPriceService';
 import ConfigurationService from '../services/ConfigurationService';
 import NotificationService from '../services/NotificationService';
 
@@ -8,19 +8,12 @@ class UpdatePricesJob {
     /** @type {BrowserWindow} */
     _browserWindow;
 
-    /** @type {WalletService} */
-    _walletService;
-
     /** @type {which: String, when: Number, many: Number} */
     _configuration;
 
     _interval;
 
     _updateSlice = [];
-
-    constructor() {
-        this._walletService = new WalletService();
-    }
 
     /**
      * Setup the job
@@ -32,7 +25,10 @@ class UpdatePricesJob {
         this._configuration = (await ConfigurationService.getConfiguration()).priceUpdate || {};
 
         if (this._configuration && this._configuration.when > 0) {
-            this._interval = setInterval(() => { this.run() }, this._configuration.when * 1000 * 60);
+            setTimeout(() => {
+                this.run();
+                this._interval = setInterval(() => { this.run() }, this._configuration.when * 1000 * 60);
+            }, 2000);
         }
     }
 
@@ -42,11 +38,7 @@ class UpdatePricesJob {
             return;
         }
 
-        const wallet = (await this._walletService.getWallet()).sort((a, b) => a.code < b.code ? -1 : (a.code > b.code ? 1 : 0));
-
-        const stocksToUpdate = this._configuration.which === 'all'
-            ? wallet
-            : wallet.filter(o => o.quantityBought - o.quantitySold > 0);
+        const stocksToUpdate = this._configuration.stocks || [];
 
         const totalToUpdate = stocksToUpdate.length;
 
@@ -59,12 +51,12 @@ class UpdatePricesJob {
             this._updateSlice[1] = Math.min(this._updateSlice[1] + this._configuration.many, totalToUpdate);
         }
 
-        const stocks = stocksToUpdate.slice(this._updateSlice[0], this._updateSlice[1]).map(o => o.code);
+        const stocks = stocksToUpdate.slice(this._updateSlice[0], this._updateSlice[1]);
 
-        this._browserWindow.webContents.send('wallet/updating', { data: stocks });
+        this._browserWindow.webContents.send('stock-prices/updating', { data: stocks });
         NotificationService.notifyLoadingStart('updating-prince', 'Atualizando preços');
-        const result = await this._walletService.updateLastValues(stocks);
-        this._browserWindow.webContents.send('wallet/update-last-value', { data: result });
+        const result = await StockPriceService.updateStockPrices(stocks);
+        this._browserWindow.webContents.send('stock-prices/update', { data: result });
 
         NotificationService.notifyMessage('Preços atualizados', stocks.join(', '), 'eva-bar-chart');
         NotificationService.notifyLoadingFinish('updating-prince');

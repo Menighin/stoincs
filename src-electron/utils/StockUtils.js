@@ -11,6 +11,17 @@ class StockUtils {
         `${stockOperation.operation}_${stockOperation.code}_${stockOperation.source}`;
     }
 
+    /**
+     * Strips fractional stock codes. E.g.: PETR4F -> PETR4
+     * @param {String} code The code of the stock
+     */
+    static getStockCode(code) {
+        let result = code;
+        if (result.match(/\dF$/))
+            result = result.slice(0, -1);
+        return result;
+    }
+
 }
 
 export default StockUtils;

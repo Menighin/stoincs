@@ -3,7 +3,6 @@ import TreasuryDirectService from '../services/TreasuryDirectService';
 import DateUtils from '../utils/DateUtils';
 import StockUtils from '../utils/StockUtils';
 import NotificationService from '../services/NotificationService';
-import WalletService from '../services/WalletService';
 import ConfigurationService from '../services/ConfigurationService';
 import puppeteer from 'puppeteer';
 
@@ -16,9 +15,6 @@ class UpdateStockHistoryJob {
 
     /** @type {StockHistoryService} */
     _treasureDirectService;
-
-    /** @type {WalletService} */
-    _walletService;
 
     /**
      * Setup the job to run from time to time
@@ -93,7 +89,6 @@ class UpdateStockHistoryJob {
             await this._treasureDirectService.updateStockHistoryJobMetadata();
 
             // Update wallet
-            await this._walletService.refreshWalletFromHistory();
 
             NotificationService.notifyMessage(NOTIFICATION.TITLE, `${newNegotiations} novas negociações adicionadas`, NOTIFICATION.ICON);
         } catch (e) {

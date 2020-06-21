@@ -59,4 +59,4 @@ class AlphaVantageService {
 
 }
 
-export default AlphaVantageService;
+export default new AlphaVantageService();

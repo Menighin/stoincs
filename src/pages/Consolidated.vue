@@ -21,7 +21,7 @@
             class="table-container q-mx-lg"
             table-class="stock-table"
             title="Histórico"
-            :data="dataTable"
+            :data="dataTableNew"
             :columns="columns"
             row-key="row => `${row.code}-${row.id}`"
             flat
@@ -37,20 +37,20 @@
 
                 <q-space />
 
-                <q-input class="q-ma-sm" style="padding-bottom: 0" outlined dense v-model="startDate" mask="##/##/####" label="Data Inicio"  lazy-rules :rules="[ val => val && val.length > 0 || '']">
+                <q-input @input="refreshConsolidate" debounce="1000" class="q-ma-sm" style="padding-bottom: 0" outlined dense v-model="startDate" mask="##/##/####" label="Data Inicio">
                     <template v-slot:append>
                         <q-icon name="event" class="cursor-pointer">
-                            <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
+                            <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale" @hide="refreshConsolidate">
                                 <q-date mask="DD/MM/YYYY" v-model="startDate" @input="() => $refs.qDateProxy.hide()" />
                             </q-popup-proxy>
                         </q-icon>
                     </template>
                 </q-input>
 
-                <q-input class="q-ma-sm" style="padding-bottom: 0" outlined dense v-model="endDate" mask="##/##/####" label="Data Fim"  lazy-rules :rules="[ val => val && val.length > 0 || '']">
+                <q-input @input="refreshConsolidate" debounce="1000" class="q-ma-sm" style="padding-bottom: 0" outlined dense v-model="endDate" mask="##/##/####" label="Data Fim">
                     <template v-slot:append>
                         <q-icon name="event" class="cursor-pointer">
-                            <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
+                            <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale" @hide="refreshConsolidate">
                                 <q-date mask="DD/MM/YYYY" v-model="endDate" @input="() => $refs.qDateProxy.hide()" />
                             </q-popup-proxy>
                         </q-icon>
@@ -73,6 +73,20 @@
                     class="q-ma-sm"
                 />
             </template>
+
+            <q-td auto-width slot="body-cell-averageBuyPrice" slot-scope="props" :props="props">
+                {{ NumberUtils.formatCurrency(averagePricesNew[props.row.code] ? averagePricesNew[props.row.code].averageBuyPrice : 0) }}
+            </q-td>
+
+            <q-td auto-width slot="body-cell-averageSellPrice" slot-scope="props" :props="props">
+                {{ NumberUtils.formatCurrency(averagePricesNew[props.row.code] ? averagePricesNew[props.row.code].averageSellPrice : 0) }}
+            </q-td>
+
+            <q-td auto-width slot="body-cell-profitLoss" slot-scope="props" :props="props">
+                {{ NumberUtils.formatCurrency(averagePricesNew[props.row.code] ?
+                    props.row.quantitySold * averagePricesNew[props.row.code].averageSellPrice - props.row.quantitySold * averagePricesNew[props.row.code].averageBuyPrice :
+                    0) }}
+            </q-td>
         </q-table>
     </q-page>
 </template>
@@ -94,6 +108,8 @@ export default {
             pagination: {
                 rowsPerPage: 25
             },
+            dataTableNew: [],
+            averagePricesNew: {},
             startDate: null,
             endDate: null,
             visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'averageBuyPrice', 'valueSold', 'averageSellPrice', 'valueBalance', 'profitLoss' ],
@@ -139,8 +155,7 @@ export default {
                     align: 'right',
                     label: 'Pç. Médio Compra',
                     field: 'averageBuyPrice',
-                    sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    sortable: true
                 },
                 {
                     name: 'valueSold',
@@ -155,8 +170,7 @@ export default {
                     align: 'right',
                     label: 'Pç. Médio Venda',
                     field: 'averageSellPrice',
-                    sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    sortable: true
                 },
                 {
                     name: 'valueBalance',
@@ -171,11 +185,18 @@ export default {
                     align: 'right',
                     label: 'Lucro/Prejuízo na venda',
                     field: 'profitLoss',
-                    sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    sortable: true
                 }
             ]
         };
+    },
+    methods: {
+        refreshConsolidate() {
+            const startDate = DateUtils.fromDateStr(this.startDate);
+            const endDate = DateUtils.fromDateStr(this.endDate);
+            ipcRenderer.send('stockHistory/consolidated', { startDate: startDate, endDate: endDate });
+            ipcRenderer.send('stockHistory/average-prices', { endDate: endDate });
+        }
     },
     computed: {
         filteredRawData() {
@@ -184,76 +205,6 @@ export default {
             const startDate = DateUtils.fromDateStr(this.startDate);
             const endDate = DateUtils.fromDateStr(this.endDate);
             return this.rawData.filter(o => startDate <= o.date && o.date <= endDate);
-        },
-        averagePrices() {
-            if (this.endDate === null) return {};
-
-            const endDate = DateUtils.fromDateStr(this.endDate);
-
-            const totalsByStock = this.rawData
-                .filter(o => o.date <= endDate)
-                .reduce((p, c, i) => {
-                    let key = c.code;
-                    if (key.match(/\dF$/) != null)
-                        key = key.slice(0, -1);
-                    if (!p[key])
-                        p[key] = {
-                            quantityBought: 0,
-                            valueBought: 0,
-                            quantitySold: 0,
-                            valueSold: 0
-                        };
-
-                    if (c.operation === 'C') {
-                        p[key].quantityBought += c.quantity;
-                        p[key].valueBought += c.totalValue;
-                    } else if (c.operation === 'V') {
-                        p[key].quantitySold += c.quantity;
-                        p[key].valueSold += c.totalValue;
-                    }
-                    return p;
-                }, {});
-
-            return Object.keys(totalsByStock).reduce((p, c, i) => {
-                const totals = totalsByStock[c];
-                p[c] = {};
-                p[c].averageBuyPrice = totals.quantityBought > 0 ? totals.valueBought / totals.quantityBought : 0;
-                p[c].averageSellPrice = totals.quantitySold > 0 ? totals.valueSold / totals.quantitySold : 0;
-                return p;
-            }, {});
-        },
-        dataTable() {
-            const consolidatedByStock = this.filteredRawData.reduce((p, c) => {
-                let key = c.code;
-                if (key.match(/\dF$/) != null)
-                    key = key.slice(0, -1);
-
-                if (!(key in p)) {
-                    p[key] = {
-                        code: key,
-                        quantityBought: 0,
-                        quantitySold: 0,
-                        valueBought: 0,
-                        valueSold: 0
-                    };
-                }
-
-                if (c.operation === 'C') {
-                    p[key].quantityBought += c.quantity;
-                    p[key].valueBought += c.totalValue;
-                } else if (c.operation === 'V') {
-                    p[key].quantitySold += c.quantity;
-                    p[key].valueSold += c.totalValue;
-                }
-                p[key].quantityBalance = p[key].quantityBought - p[key].quantitySold;
-                p[key].valueBalance = p[key].valueSold - p[key].valueBought;
-                p[key].averageBuyPrice = this.averagePrices[key].averageBuyPrice;
-                p[key].averageSellPrice = this.averagePrices[key].averageSellPrice;
-                p[key].profitLoss = p[key].quantitySold * p[key].averageSellPrice - p[key].quantitySold * p[key].averageBuyPrice;
-                return p;
-            }, {});
-
-            return Object.values(consolidatedByStock).sort((a, b) => (a.code > b.code) ? 1 : ((b.code > a.code) ? -1 : 0));
         },
         kpis() {
             const bought = this.filteredRawData
@@ -294,11 +245,28 @@ export default {
                 }))];
                 return p;
             }, []);
-
-            this.startDate = DateUtils.toString(this.rawData.reduce((p, c) => c.date < p ? c.date : p, new Date()), true, false);
-            this.endDate = DateUtils.toString(new Date(), true, false);
         });
         ipcRenderer.send('stockHistory/get');
+
+        ipcRenderer.on('stockHistory/consolidated', (event, arg) => {
+            if (arg.status === 'success')
+                this.dataTableNew = arg.data;
+            else {
+                this.$q.notify({ type: 'negative', message: `Erro ao computar dados consolidados: ${arg.message}` });
+                console.error(arg);
+            }
+        });
+        ipcRenderer.send('stockHistory/consolidated');
+
+        ipcRenderer.on('stockHistory/average-prices', (event, arg) => {
+            if (arg.status === 'success')
+                this.averagePricesNew = arg.data;
+            else {
+                this.$q.notify({ type: 'negative', message: `Erro ao computar preços médios: ${arg.message}` });
+                console.error(arg);
+            }
+        });
+        ipcRenderer.send('stockHistory/average-prices');
     }
 };
 </script>

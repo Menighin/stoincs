@@ -81,6 +81,82 @@ class StockHistoryService {
         return stockHistory;
     }
 
+    async getStockHistoryOperations() {
+        return (await this.getStockHistory())
+            .reduce((p, c) => {
+                p = [...p, ...c.stockHistory.map(s => ({
+                    ...s,
+                    date: new Date(s.date)
+                }))];
+                return p;
+            }, []);
+    }
+
+    async getConsolidatedStockHistory(startDate = null, endDate = null) {
+        const stockHistoryFiltered = (await this.getStockHistoryOperations())
+            .filter(o => (startDate === null || startDate <= o.date) && (endDate === null || o.date <= endDate));
+
+        const consolidatedByStock = stockHistoryFiltered.reduce((p, c) => {
+            const key = StockUtils.getStockCode(c.code);
+            if (!(key in p)) {
+                p[key] = {
+                    code: key,
+                    quantityBought: 0,
+                    quantitySold: 0,
+                    valueBought: 0,
+                    valueSold: 0
+                };
+            }
+
+            if (c.operation === 'C') {
+                p[key].quantityBought += c.quantity;
+                p[key].valueBought += c.totalValue;
+            } else if (c.operation === 'V') {
+                p[key].quantitySold += c.quantity;
+                p[key].valueSold += c.totalValue;
+            }
+            p[key].quantityBalance = p[key].quantityBought - p[key].quantitySold;
+            p[key].valueBalance = p[key].valueSold - p[key].valueBought;
+            return p;
+        }, {});
+
+        return Object.values(consolidatedByStock).sort((a, b) => (a.code > b.code) ? 1 : ((b.code > a.code) ? -1 : 0));
+    }
+
+    async getAveragePrices(endDate = null) {
+        const stockOperations = (await this.getStockHistoryOperations())
+            .filter(o => endDate === null || o.date <= endDate);
+
+        const totalsByStock = stockOperations
+            .reduce((p, c) => {
+                const key = StockUtils.getStockCode(c.code);
+                if (!p[key])
+                    p[key] = {
+                        quantityBought: 0,
+                        valueBought: 0,
+                        quantitySold: 0,
+                        valueSold: 0
+                    };
+
+                if (c.operation === 'C') {
+                    p[key].quantityBought += c.quantity;
+                    p[key].valueBought += c.totalValue;
+                } else if (c.operation === 'V') {
+                    p[key].quantitySold += c.quantity;
+                    p[key].valueSold += c.totalValue;
+                }
+                return p;
+            }, {});
+
+        return Object.keys(totalsByStock).reduce((p, c, i) => {
+            const totals = totalsByStock[c];
+            p[c] = {};
+            p[c].averageBuyPrice = totals.quantityBought > 0 ? totals.valueBought / totals.quantityBought : 0;
+            p[c].averageSellPrice = totals.quantitySold > 0 ? totals.valueSold / totals.quantitySold : 0;
+            return p;
+        }, {});
+    }
+
     async deleteStockOperation(id) {
         const stockHistory = await this.getStockHistory();
 
@@ -196,5 +272,5 @@ class StockHistoryService {
 
 }
 
-export default StockHistoryService;
+export default new StockHistoryService();
 export { FILES as StockHistoryFiles };

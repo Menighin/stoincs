@@ -14,19 +14,7 @@ const NOTIFICATION = {
 
 class UpdateStockHistoryJob {
 
-    /** @type {StockHistoryService} */
-    _stockHistoryService;
-
-    /** @type {WalletService} */
-    _walletService;
-
-    /**
-     * Setup the job to run from time to time
-     * @param {StockHistoryService} stockHistoryService - Service to handle the stock history
-     */
-    setup(stockHistoryService) {
-        this._stockHistoryService = stockHistoryService;
-        this._walletService = new WalletService();
+    setup() {
         setTimeout(() => this.run(), 60000);
         setInterval(() => this.run(), 1000 * 60 * 60 * 12);
     }
@@ -41,7 +29,7 @@ class UpdateStockHistoryJob {
             const user = configuration.username || '';
             const password = configuration.password || '';
 
-            const jobMetadata = await this._stockHistoryService.getStockHistoryJobMetadata();
+            const jobMetadata = await StockHistoryService.getStockHistoryJobMetadata();
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
             const chromiumPath = puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked/node_modules/puppeteer');
@@ -63,7 +51,6 @@ class UpdateStockHistoryJob {
             }
 
             console.log('LAST RUN: ' + jobMetadata.lastRun);
-            console.log('STOCKS: ' + JSON.stringify(stocksByAccount));
 
             await ceiCrawler.close();
 
@@ -93,11 +80,11 @@ class UpdateStockHistoryJob {
                 acc.stockHistory = Object.values(stockOperationById);
             });
 
-            await this._stockHistoryService.saveStockHistory(stocksByAccount);
-            await this._stockHistoryService.updateStockHistoryJobMetadata();
+            await StockHistoryService.saveStockHistory(stocksByAccount);
+            await StockHistoryService.updateStockHistoryJobMetadata();
 
             // Update wallet
-            await this._walletService.refreshWalletFromHistory();
+            await WalletService.refreshWalletFromHistory();
 
             NotificationService.notifyMessage(NOTIFICATION.TITLE, `${newNegotiations} novas negociações adicionadas`, NOTIFICATION.ICON);
         } catch (e) {

@@ -2,7 +2,6 @@ import { app, BrowserWindow, nativeTheme, globalShortcut } from 'electron';
 import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
 import UpdatePricesJob from '../jobs/UpdatePricesJob';
 import SyncGoogleDriveJob from '../jobs/SyncGoogleDriveJob';
-import StockHistoryService from '../services/StockHistoryService';
 import NotificationService from '../services/NotificationService';
 import Controllers from '../controllers/main';
 import GoogleDriveService from '../services/GoogleDriveService';
@@ -51,7 +50,7 @@ function createWindow() {
     });
 
     NotificationService.setup(mainWindow);
-    UpdateStockHistoryJob.setup(new StockHistoryService(), mainWindow);
+    UpdateStockHistoryJob.setup();
     UpdatePricesJob.setup(mainWindow);
     SyncGoogleDriveJob.setup(mainWindow);
 }

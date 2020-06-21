@@ -52,6 +52,18 @@
                         <q-radio v-model="priceUpdate.which" val="balance" label="As que possuem saldo" />
                         <q-radio v-model="priceUpdate.which" val="none" label="Nenhuma" />
 
+                        <q-input v-model="stockToAdd" />
+                        <q-btn @click="addStock" label="Adicionar" />
+                        <q-btn @click="addWalletStocks" label="Adicionar Carteira" />
+                        <q-btn @click="addHistoryStocks" label="Adicionar Historico" />
+                        <q-btn @click="clearStocks" label="Limpar" />
+
+                        <template v-for="(s, i) in this.stocks">
+                            <q-chip :key="`${s}-${i}`" removable @remove="removeStock(s)" color="primary" text-color="white" icon="cake">
+                                {{ s }}
+                            </q-chip>
+                        </template>
+
                         <q-item-label header>Quantas ações devem ser atualizadas por tick?</q-item-label>
                         <q-input v-model="priceUpdate.many" @blur="priceUpdate.many = Math.max(1, priceUpdate.many)" type="number" filled/>
 
@@ -107,6 +119,10 @@ export default {
             alphaVantageKey: '',
             isPwd: true,
             priceUpdate: {},
+            stockToAdd: '',
+            stocks: [],
+            walletStocks: [],
+            historyStocks: [],
             Math: Math,
             wallet: []
         };
@@ -117,10 +133,44 @@ export default {
                 username: this.username,
                 password: this.password,
                 alphaVantageKey: this.alphaVantageKey,
-                priceUpdate: this.priceUpdate
+                priceUpdate: {
+                    ...this.priceUpdate,
+                    stocks: this.stocks
+                }
             };
 
             ipcRenderer.send('configuration/update', configuration);
+        },
+        addStock() {
+            if (!this.stocks)
+                this.stocks = [];
+
+            if (this.stocks.indexOf(this.stockToAdd) === -1)
+                this.stocks.push(this.stockToAdd);
+
+            this.stocks.sort();
+            this.stockToAdd = '';
+        },
+        removeStock(s) {
+            const index = this.stocks.indexOf(s);
+            this.stocks.splice(index, 1);
+        },
+        addWalletStocks() {
+            this.walletStocks.forEach(s => {
+                if (this.stocks.indexOf(s) === -1)
+                    this.stocks.push(s);
+            });
+            this.stocks.sort();
+        },
+        addHistoryStocks() {
+            this.historyStocks.forEach(s => {
+                if (this.stocks.indexOf(s) === -1)
+                    this.stocks.push(s);
+            });
+            this.stocks.sort();
+        },
+        clearStocks() {
+            this.stocks = [];
         }
     },
     computed: {
@@ -149,9 +199,11 @@ export default {
         }
     },
     mounted() {
-        ipcRenderer.on('wallet/get', (event, response) => {
+        ipcRenderer.on('configuration/get-stock-options', (event, response) => {
+            console.log(response);
             if (response.status === 'success') {
-                this.wallet = response.data;
+                this.walletStocks = response.data.wallet;
+                this.historyStocks = response.data.stockHistory;
             } else {
                 this.$q.notify({ type: 'negative', message: `Error ao ler sua carteira: ${response.error.message}` });
                 console.error(response.error);
@@ -177,15 +229,17 @@ export default {
                     many: 1,
                     when: 1,
                     startTime: '00:00',
-                    endTime: '00:00'
+                    endTime: '00:00',
+                    stocks: []
                 };
+                this.stocks = this.priceUpdate.stocks || [];
             } else {
                 this.$q.notify({ type: 'negative', message: `Error ao ler sua carteira: ${response.error.message}` });
                 console.error(response.error);
             }
         });
 
-        ipcRenderer.send('wallet/get');
+        ipcRenderer.send('configuration/get-stock-options');
         ipcRenderer.send('configuration/get');
     }
 };

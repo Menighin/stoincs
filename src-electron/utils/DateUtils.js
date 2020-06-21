@@ -18,6 +18,7 @@ class DateUtils {
      * @returns {Date} - The date object from string
      */
     static fromDateStr(dateStr) {
+        if (!dateStr) return null;
         const [day, month, year] = dateStr.split('/').map(c => parseInt(c));
         return new Date(year, month - 1, day);
     }
