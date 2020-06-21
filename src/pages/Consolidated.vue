@@ -1,5 +1,5 @@
 <template>
-    <q-page class="">
+    <q-page class="stock-history-consolidated">
         <div class="row q-ma-sm justify-between items-center">
             <q-card class="kpis-card q-px-lg q-py-md" flat bordered>
                 <q-card-section horizontal>
@@ -7,7 +7,9 @@
 
                         <q-card-section :key="`kpi-${i}`">
                             <div class="label">{{kpi.label}}</div>
-                            <div class="value" :style="{color: kpi.color}">{{kpi.value}}</div>
+                            <div class="value" :class="{ 'value-up': kpi.value > 0, 'value-down': kpi.value < 0 }">
+                                {{ NumberUtils.formatCurrency(kpi.value) }}
+                            </div>
                         </q-card-section>
 
                         <q-separator vertical :key="`separator-${i}`" v-if="i !== kpis.length - 1" />
@@ -19,9 +21,9 @@
 
         <q-table
             class="table-container q-mx-lg"
-            table-class="stock-table"
+            table-class="consolidated-table"
             title="Histórico"
-            :data="dataTableNew"
+            :data="dataTable"
             :columns="columns"
             row-key="row => `${row.code}-${row.id}`"
             flat
@@ -75,17 +77,15 @@
             </template>
 
             <q-td auto-width slot="body-cell-averageBuyPrice" slot-scope="props" :props="props">
-                {{ NumberUtils.formatCurrency(averagePricesNew[props.row.code] ? averagePricesNew[props.row.code].averageBuyPrice : 0) }}
+                {{ NumberUtils.formatCurrency(averagePrices[props.row.code] ? averagePrices[props.row.code].averageBuyPrice : 0) }}
             </q-td>
 
             <q-td auto-width slot="body-cell-averageSellPrice" slot-scope="props" :props="props">
-                {{ NumberUtils.formatCurrency(averagePricesNew[props.row.code] ? averagePricesNew[props.row.code].averageSellPrice : 0) }}
+                {{ NumberUtils.formatCurrency(averagePrices[props.row.code] ? averagePrices[props.row.code].averageSellPrice : 0) }}
             </q-td>
 
-            <q-td auto-width slot="body-cell-profitLoss" slot-scope="props" :props="props">
-                {{ NumberUtils.formatCurrency(averagePricesNew[props.row.code] ?
-                    props.row.quantitySold * averagePricesNew[props.row.code].averageSellPrice - props.row.quantitySold * averagePricesNew[props.row.code].averageBuyPrice :
-                    0) }}
+            <q-td auto-width slot="body-cell-profitLoss" slot-scope="props" :props="props" :class="{ 'value-up': profitLoss[props.row.code] > 0, 'value-down': profitLoss[props.row.code] < 0 }">
+                {{ NumberUtils.formatCurrency(profitLoss[props.row.code] ? profitLoss[props.row.code] : 0) }}
             </q-td>
         </q-table>
     </q-page>
@@ -108,8 +108,10 @@ export default {
             pagination: {
                 rowsPerPage: 25
             },
-            dataTableNew: [],
-            averagePricesNew: {},
+            dataTable: [],
+            averagePrices: {},
+            profitLoss: {},
+            kpis: {},
             startDate: null,
             endDate: null,
             visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'averageBuyPrice', 'valueSold', 'averageSellPrice', 'valueBalance', 'profitLoss' ],
@@ -196,6 +198,8 @@ export default {
             const endDate = DateUtils.fromDateStr(this.endDate);
             ipcRenderer.send('stockHistory/consolidated', { startDate: startDate, endDate: endDate });
             ipcRenderer.send('stockHistory/average-prices', { endDate: endDate });
+            ipcRenderer.send('stockHistory/profit-loss', { startDate: startDate, endDate: endDate });
+            ipcRenderer.send('stockHistory/kpis', { startDate: startDate, endDate: endDate });
         }
     },
     computed: {
@@ -205,35 +209,6 @@ export default {
             const startDate = DateUtils.fromDateStr(this.startDate);
             const endDate = DateUtils.fromDateStr(this.endDate);
             return this.rawData.filter(o => startDate <= o.date && o.date <= endDate);
-        },
-        kpis() {
-            const bought = this.filteredRawData
-                .filter(o => o.operation === 'C')
-                .reduce((p, c) => p + c.totalValue, 0);
-
-            const sold = this.filteredRawData
-                .filter(o => o.operation === 'V')
-                .reduce((p, c) => p + c.totalValue, 0);
-
-            const total = sold - bought;
-
-            return [
-                {
-                    label: 'Compra',
-                    value: NumberUtils.formatCurrency(bought),
-                    color: '#C10015'
-                },
-                {
-                    label: 'Venda',
-                    value: NumberUtils.formatCurrency(sold),
-                    color: '#21BA45'
-                },
-                {
-                    label: 'Total',
-                    value: NumberUtils.formatCurrency(total),
-                    color: total > 0 ? '#21BA45' : '#C10015'
-                }
-            ];
         }
     },
     mounted() {
@@ -250,72 +225,99 @@ export default {
 
         ipcRenderer.on('stockHistory/consolidated', (event, arg) => {
             if (arg.status === 'success')
-                this.dataTableNew = arg.data;
+                this.dataTable = arg.data;
             else {
                 this.$q.notify({ type: 'negative', message: `Erro ao computar dados consolidados: ${arg.message}` });
                 console.error(arg);
             }
         });
-        ipcRenderer.send('stockHistory/consolidated');
 
         ipcRenderer.on('stockHistory/average-prices', (event, arg) => {
             if (arg.status === 'success')
-                this.averagePricesNew = arg.data;
+                this.averagePrices = arg.data;
             else {
-                this.$q.notify({ type: 'negative', message: `Erro ao computar preços médios: ${arg.message}` });
+                this.$q.notify({ type: 'negative', message: `Erro ao computar preços médios` });
                 console.error(arg);
             }
         });
-        ipcRenderer.send('stockHistory/average-prices');
+
+        ipcRenderer.on('stockHistory/profit-loss', (event, arg) => {
+            if (arg.status === 'success')
+                this.profitLoss = arg.data;
+            else {
+                this.$q.notify({ type: 'negative', message: `Erro ao computar profit/loss` });
+                console.error(arg);
+            }
+        });
+
+        ipcRenderer.on('stockHistory/kpis', (event, arg) => {
+            if (arg.status === 'success')
+                this.kpis = arg.data;
+            else {
+                this.$q.notify({ type: 'negative', message: `Erro ao computar kpis` });
+                console.error(arg);
+            }
+        });
+
+        this.refreshConsolidate();
     }
 };
 </script>
 
 <style lang="scss">
 
-    .filter {
-        text-align: right;
-    }
-
-    .kpis-card {
-        margin: 0 auto;
-        .label {
-            color: $label;
-            font-size: 10px;
+    .stock-history-consolidated {
+        .value-up {
+            color: #21BA45;
         }
 
-        .value {
-            font-size: 32px;
-            font-weight: bold;
-        }
-    }
-
-    .table-container {
-
-        .q-table__middle {
-            max-height: 500px;
+        .value-down {
+            color: #C10015;
         }
 
-        thead tr th {
-            position: sticky;
-            z-index: 1;
+        .filter {
+            text-align: right;
         }
 
-        thead tr:first-child th {
-            top: 0;
-            background: #FFF;
-        }
-
-        .stock-table {
-            table {
-                tbody {
-                    tr:nth-child(odd) {
-                        background: #f7f7f7;
-                    }
-                }
+        .kpis-card {
+            margin: 0 auto;
+            .label {
+                color: $label;
+                font-size: 10px;
             }
 
+            .value {
+                font-size: 32px;
+                font-weight: bold;
+            }
+        }
+
+        .table-container {
+
+            .q-table__middle {
+                max-height: 500px;
+            }
+
+            thead tr th {
+                position: sticky;
+                z-index: 1;
+            }
+
+            thead tr:first-child th {
+                top: 0;
+                background: #FFF;
+            }
+
+            .consolidated-table {
+                table {
+                    tbody {
+                        tr:nth-child(odd) {
+                            background: #f7f7f7;
+                        }
+                    }
+                }
+
+            }
         }
     }
-
 </style>

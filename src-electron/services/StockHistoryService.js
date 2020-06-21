@@ -78,6 +78,11 @@ class StockHistoryService {
         const path = `${rootPath}/${FILES.STOCK_HISTORY}`;
 
         const stockHistory = JSON.parse((await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || '[]');
+        stockHistory.forEach(acc => {
+            acc.stockHistory.forEach(s => {
+                s.date = new Date(s.date);
+            });
+        });
         return stockHistory;
     }
 
@@ -155,6 +160,64 @@ class StockHistoryService {
             p[c].averageSellPrice = totals.quantitySold > 0 ? totals.valueSold / totals.quantitySold : 0;
             return p;
         }, {});
+    }
+
+    async getProfitLoss(startDate = null, endDate = null) {
+        const stockHistoryByAccount = await this.getStockHistory();
+
+        const sortStockOperations = (a, b) => {
+            if (a.date.getTime() === b.date.getTime())
+                return a.operation === 'C' ? -1 : b.operation === 'C' ? 1 : 0;
+            return a.date.getTime() - b.date.getTime();
+        };
+
+        const profitLoss = {};
+        for (const account of stockHistoryByAccount) {
+            const boughtQuantity = {};
+            const boughtValue = {};
+
+            for (const stockOperation of account.stockHistory.sort(sortStockOperations)) {
+                if (endDate !== null && stockOperation.date > endDate) break;
+
+                const code = StockUtils.getStockCode(stockOperation.code);
+                if (!boughtQuantity[code]) boughtQuantity[code] = 0;
+                if (!boughtValue[code]) boughtValue[code] = 0;
+                if (!profitLoss[code]) profitLoss[code] = 0;
+
+                if (stockOperation.operation === 'C') {
+                    boughtQuantity[code] += stockOperation.quantity;
+                    boughtValue[code] += stockOperation.totalValue;
+                } else if (stockOperation.operation === 'V' && (startDate === null || stockOperation.date >= startDate)) {
+                    const averageBuyPriceSoFar = boughtQuantity[code] === 0 ? 0 : boughtValue[code] / boughtQuantity[code];
+                    profitLoss[code] += stockOperation.totalValue - stockOperation.quantity * averageBuyPriceSoFar;
+                }
+            }
+        }
+
+        return profitLoss;
+    }
+
+    async getKpis(startDate = null, endDate = null) {
+        const profitLoss = await this.getProfitLoss(startDate, endDate);
+        const stockHistory = (await this.getStockHistoryOperations())
+            .filter(o => (startDate === null || o.date >= startDate) && (endDate === null || o.date <= endDate));
+
+        return [
+            {
+                label: 'Compra',
+                value: -stockHistory.filter(o => o.operation === 'C').reduce((p, c) => p + c.totalValue, 0),
+                quantity: stockHistory.filter(o => o.operation === 'C').reduce((p, c) => p + c.quantity, 0)
+            },
+            {
+                label: 'Venda',
+                value: stockHistory.filter(o => o.operation === 'V').reduce((p, c) => p + c.totalValue, 0),
+                quantity: stockHistory.filter(o => o.operation === 'V').reduce((p, c) => p + c.quantity, 0)
+            },
+            {
+                label: 'Lucro/Prejuízo na Venda',
+                value: Object.values(profitLoss).reduce((p, c) => p + c, 0)
+            }
+        ];
     }
 
     async deleteStockOperation(id) {

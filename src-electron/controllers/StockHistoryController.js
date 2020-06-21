@@ -9,7 +9,9 @@ const METHODS = {
     REFRESH: 'stockHistory/refresh',
     SPLIT: 'stockHistory/split',
     CONSOLIDATED: 'stockHistory/consolidated',
-    AVERAGE_PRICES: 'stockHistory/average-prices'
+    AVERAGE_PRICES: 'stockHistory/average-prices',
+    PROFIT_LOSS: 'stockHistory/profit-loss',
+    KPIS: 'stockHistory/kpis'
 };
 
 ipcMain.on(METHODS.GET, async (event, arg) => {
@@ -84,6 +86,30 @@ ipcMain.on(METHODS.AVERAGE_PRICES, async (event, arg) => {
         event.reply(METHODS.AVERAGE_PRICES, { status: 'success', data: averagePrices });
     } catch (e) {
         event.reply(METHODS.AVERAGE_PRICES, { status: 'error', error: e, message: e.message });
+        throw e;
+    }
+});
+
+ipcMain.on(METHODS.PROFIT_LOSS, async (event, arg) => {
+    try {
+        const startDate = arg && arg.startDate ? new Date(arg.startDate) : null;
+        const endDate = arg && arg.endDate ? new Date(arg.endDate) : null;
+        const profitLoss = await StockHistoryService.getProfitLoss(startDate, endDate);
+        event.reply(METHODS.PROFIT_LOSS, { status: 'success', data: profitLoss });
+    } catch (e) {
+        event.reply(METHODS.PROFIT_LOSS, { status: 'error', error: e, message: e.message });
+        throw e;
+    }
+});
+
+ipcMain.on(METHODS.KPIS, async (event, arg) => {
+    try {
+        const startDate = arg && arg.startDate ? new Date(arg.startDate) : null;
+        const endDate = arg && arg.endDate ? new Date(arg.endDate) : null;
+        const kpis = await StockHistoryService.getKpis(startDate, endDate);
+        event.reply(METHODS.KPIS, { status: 'success', data: kpis });
+    } catch (e) {
+        event.reply(METHODS.KPIS, { status: 'error', error: e, message: e.message });
         throw e;
     }
 });
