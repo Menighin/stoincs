@@ -50,7 +50,9 @@ export default {
     },
     data() {
         return {
-            data: [],
+            stockPrices: {},
+            consolidated: [],
+            walletLabels: {},
             tab: null,
             barChartInWallet: true,
             barChartShowTotal: false,
@@ -61,11 +63,25 @@ export default {
     methods: {
     },
     computed: {
+        data() {
+            return this.consolidated.map(c => {
+                const price = this.stockPrices[c.code] ? (this.stockPrices[c.code].price || 0) : 0;
+                const actualValue = (c.quantityBought - c.quantitySold) * price;
+                const historicPosition = c.valueSold + actualValue - c.valueBought;
+                return {
+                    ...c,
+                    actualValue: actualValue,
+                    historicPosition: historicPosition,
+                    price: price,
+                    label: this.walletLabels[c.code]
+                };
+            });
+        },
         treemapOptions() {
             const rawData = this.data.filter(o => o.quantityBought - o.quantitySold > 0);
 
             const totalValue = rawData.reduce((prev, curr) => {
-                return prev + (curr.quantityBought - curr.quantitySold) * curr.price;
+                return prev + curr.actualValue;
             }, 0);
 
             const groups = [...new Set(rawData.map(o => o.label))]
@@ -76,7 +92,7 @@ export default {
                     ...rawData.filter(r => r.label === o).reduce((prev, curr) => {
                         const quantity = curr.quantityBought - curr.quantitySold;
                         prev.quantity += quantity;
-                        prev.value += quantity * curr.price;
+                        prev.value += curr.actualValue;
                         return prev;
                     }, { quantity: 0, value: 0 })
                 }));
@@ -305,16 +321,37 @@ export default {
     mounted() {
         ipcRenderer.on('wallet/get', (event, response) => {
             if (response.status === 'success') {
-                this.data = response.data;
-                this.waterfallOptions = this.data.map(o => o.code).sort();
-                this.waterfallSelected = this.waterfallOptions[0];
+                this.walletLabels = response.data.reduce((p, c) => { p[c.code] = c.label; return p }, {});
             } else {
-                this.$q.notify({ type: 'negative', message: `Error ao ler sua carteira: ${response.error.message}` });
-                console.error(response.error);
+                this.$q.notify({ type: 'negative', message: `Erro ao carregar carteira` });
+                console.error(response);
             }
         });
 
+        ipcRenderer.on('stock-prices/get', (event, response) => {
+            if (response.status === 'success') {
+                this.stockPrices = response.data;
+            } else {
+                this.$q.notify({ type: 'negative', message: `Erro ao carregar preços de ativos` });
+                console.error(response);
+            }
+        });
+
+        ipcRenderer.on('stockHistory/consolidated', (event, response) => {
+            if (response.status === 'success') {
+                this.consolidated = response.data;
+                this.waterfallOptions = response.data.map(o => o.code).sort();
+                console.log(this.waterfallOptions);
+                this.waterfallSelected = this.waterfallOptions[0];
+            } else {
+                this.$q.notify({ type: 'negative', message: `Erro ao carregar dados consolidados` });
+                console.error(response);
+            }
+        });
+
+        ipcRenderer.send('stock-prices/get');
         ipcRenderer.send('wallet/get');
+        ipcRenderer.send('stockHistory/consolidated');
 
         setTimeout(() => {
             this.tab = 'treemap';

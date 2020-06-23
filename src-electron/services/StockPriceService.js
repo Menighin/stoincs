@@ -10,10 +10,13 @@ class StockPriceService {
 
     async getStockPrices() {
         const rootPath = await FileSystemUtils.getDataPath();
-        console.log(rootPath);
         const path = `${rootPath}/${FILES.STOCK_PRICES}`;
 
-        const stockPrices = JSON.parse((await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || '[]');
+        const stockPrices = JSON.parse((await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || '{}');
+        Object.values(stockPrices).forEach(price => {
+            price.lastTradingDay = new Date(price.lastTradingDay);
+            price.lastUpdated = new Date(price.lastUpdated);
+        });
         return stockPrices;
     }
 
@@ -34,26 +37,15 @@ class StockPriceService {
         const now = new Date();
 
         for (const r of results) {
-            let found = false;
-            for (const s of stockPrices) {
-                if (r.code === s.code && r.status === 'success') {
-                    s.price = r.price;
-                    s.changePrice = r.changePrice;
-                    s.changePercent = r.changePercent;
-                    s.lastTradingDay = r.lastTradingDay;
-                    s.lastUpdated = now;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found)
-                stockPrices.push({
-                    code: r.code,
-                    changePrice: r.changePrice,
-                    changePercent: r.changePercent,
-                    lastTradingDay: r.lastTradingDay,
-                    lastUpdated: now
-                });
+            if (r.status !== 'success') continue;
+
+            stockPrices[r.code] = {
+                price: r.price,
+                changePrice: r.changePrice,
+                changePercent: r.changePercent,
+                lastTradingDay: r.lastTradingDay,
+                lastUpdated: now
+            };
             r.lastUpdated = now;
         }
 

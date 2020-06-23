@@ -203,26 +203,8 @@ export default {
         }
     },
     computed: {
-        filteredRawData() {
-            if (this.startDate === null || this.endDate === null) return [];
-
-            const startDate = DateUtils.fromDateStr(this.startDate);
-            const endDate = DateUtils.fromDateStr(this.endDate);
-            return this.rawData.filter(o => startDate <= o.date && o.date <= endDate);
-        }
     },
     mounted() {
-        ipcRenderer.on('stockHistory/get', (event, arg) => {
-            this.rawData = arg.reduce((p, c, i) => {
-                p = [...p, ...c.stockHistory.map(s => ({
-                    ...s,
-                    date: new Date(s.date)
-                }))];
-                return p;
-            }, []);
-        });
-        ipcRenderer.send('stockHistory/get');
-
         ipcRenderer.on('stockHistory/consolidated', (event, arg) => {
             if (arg.status === 'success')
                 this.dataTable = arg.data;

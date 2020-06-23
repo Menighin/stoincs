@@ -23,6 +23,7 @@ class NumberUtils {
      * @returns {String} - Formated number
      */
     static formatPercentage(n, showSign = true, locale = 'pt-BR') {
+        if (n === null || n === undefined) return null;
         const sign = showSign ? (n < 0 ? '' : '+') : '';
         return `${sign}${n.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
     }

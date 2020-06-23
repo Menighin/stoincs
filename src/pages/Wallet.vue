@@ -9,7 +9,7 @@
             class="table-container q-mx-lg"
             table-class="stock-table"
             title="Carteira de ações"
-            :data="filteredDataTable"
+            :data="dataTable"
             :columns="columns"
             row-key="row => row.code"
             flat
@@ -57,9 +57,9 @@
                 {{ props.row.lastUpdated ? `${DateUtils.getFormatedHoursFromSeconds(parseInt((new Date() - new Date(props.row.lastUpdated)) / 1000), true, true, false) }` : null }}
             </q-td>
 
-            <q-td auto-width slot="body-cell-totalValue" slot-scope="props" :props="props" :class="{ 'value-up': props.row.totalValue > 0, 'value-down': props.row.totalValue < 0 }">
-                {{ NumberUtils.formatCurrency(props.row.totalValue) }}
-                <div class="variation">{{ NumberUtils.formatPercentage(props.row.totalValuePercentage) }}</div>
+            <q-td auto-width slot="body-cell-historicPosition" slot-scope="props" :props="props" :class="{ 'value-up': props.row.historicPosition > 0, 'value-down': props.row.historicPosition < 0 }">
+                {{ NumberUtils.formatCurrency(props.row.historicPosition) }}
+                <div class="variation">{{ NumberUtils.formatPercentage(props.row.historicVariation) }}</div>
             </q-td>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
@@ -134,6 +134,10 @@ export default {
             data: [],
             now: new Date(),
             loadingStocks: {},
+            wallet: [],
+            stockPrices: {},
+            averagePrices: {},
+            consolidated: {},
             configuration: {
                 variation: 'percentage'
             },
@@ -148,7 +152,7 @@ export default {
             pagination: {
                 rowsPerPage: 50
             },
-            visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'averageBuyPrice', 'valueSold', 'lastUpdated', 'price', 'totalValue', 'label' ],
+            visibleColumns: [ 'code', 'quantity', 'value', 'averageBuyPrice', 'price', 'lastUpdated', 'historicPosition', 'label' ],
             columns: [
                 {
                     name: 'code',
@@ -158,31 +162,17 @@ export default {
                     sortable: true
                 },
                 {
-                    name: 'quantityBought',
+                    name: 'quantity',
                     align: 'right',
-                    label: 'Qt. Comprada',
-                    field: 'quantityBought',
+                    label: 'Quantidade',
+                    field: 'quantity',
                     sortable: true
                 },
                 {
-                    name: 'quantitySold',
+                    name: 'value',
                     align: 'right',
-                    label: 'Qt. Vendida',
-                    field: 'quantitySold',
-                    sortable: true
-                },
-                {
-                    name: 'quantityBalance',
-                    align: 'right',
-                    label: 'Qt. Saldo',
-                    field: 'quantityBalance',
-                    sortable: true
-                },
-                {
-                    name: 'valueBought',
-                    align: 'right',
-                    label: 'Valor Investido',
-                    field: 'valueBought',
+                    label: 'Valor',
+                    field: 'value',
                     sortable: true,
                     format: val => NumberUtils.formatCurrency(val)
                 },
@@ -195,17 +185,9 @@ export default {
                     format: val => NumberUtils.formatCurrency(val)
                 },
                 {
-                    name: 'valueSold',
-                    align: 'right',
-                    label: 'Valor Resgatado',
-                    field: 'valueSold',
-                    sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
-                },
-                {
                     name: 'price',
                     align: 'right',
-                    label: 'Último Valor',
+                    label: 'Preço Atual',
                     field: 'price',
                     sortable: true,
                     format: val => NumberUtils.formatCurrency(val)
@@ -218,12 +200,11 @@ export default {
                     format: val => val ? DateUtils.toString(new Date(val)) : null
                 },
                 {
-                    name: 'totalValue',
+                    name: 'historicPosition',
                     align: 'right',
-                    label: 'Valor Acumulado',
-                    field: 'totalValue',
-                    sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    label: 'Posição Histórica',
+                    field: 'historicPosition',
+                    sortable: true
                 },
                 {
                     name: 'label',
@@ -231,12 +212,6 @@ export default {
                     label: 'Label',
                     field: 'label',
                     sortable: true
-                },
-                {
-                    name: 'source',
-                    align: 'center',
-                    label: 'Origem',
-                    field: 'source'
                 },
                 {
                     name: 'action',
@@ -273,6 +248,9 @@ export default {
         },
         init() {
             ipcRenderer.send('wallet/get');
+            ipcRenderer.send('stock-prices/get');
+            ipcRenderer.send('stockHistory/average-prices');
+            ipcRenderer.send('stockHistory/consolidated');
             const config = localStorage.getItem('wallet/config');
             if (config)
                 this.configuration = JSON.parse(config);
@@ -312,36 +290,23 @@ export default {
     },
     computed: {
         dataTable() {
-            return this.data
-                .map(d => {
-                    const quantityBalance = Math.max(d.quantityBought - d.quantitySold, 0);
-                    const totalValue = d.valueSold + quantityBalance * d.price - d.valueBought;
-                    return {
-                        code: d.code,
-                        quantityBought: d.quantityBought,
-                        quantitySold: d.quantitySold,
-                        quantityBalance: quantityBalance,
-                        valueBought: d.valueBought,
-                        averageBuyPrice: d.valueBought / d.quantityBought,
-                        valueSold: d.valueSold,
-                        price: d.price,
-                        changePrice: d.changePrice,
-                        changePercent: d.changePercent,
-                        lastTradingDay: d.lastTradingDay,
-                        lastUpdated: d.lastUpdated,
-                        totalValue: totalValue,
-                        totalValuePercentage: totalValue / d.valueBought * 100,
-                        source: d.source,
-                        label: d.label
-                    };
-                })
-                .sort((a, b) => a.code < b.code ? -1 : (a.code > b.code ? 1 : 0));
-        },
-        filteredDataTable() {
-            if (this.withBalanceOnly)
-                return this.dataTable.filter(o => o.quantityBalance > 0);
-            else
-                return this.dataTable;
+            return this.wallet.map(w => {
+                const consolidatedStock = this.consolidated[w.code];
+                const price = this.stockPrices[w.code] ? this.stockPrices[w.code].price : 0;
+                const historicPosition = consolidatedStock ? consolidatedStock.valueSold + w.quantity * price - consolidatedStock.valueBought : 0;
+                const historicVariation = consolidatedStock && consolidatedStock.valueBought ? historicPosition / consolidatedStock.valueBought : 0;
+                return {
+                    ...w,
+                    value: price * w.quantity,
+                    price: price,
+                    changePrice: this.stockPrices[w.code] ? this.stockPrices[w.code].changePrice : 0,
+                    changePercent: this.stockPrices[w.code] ? this.stockPrices[w.code].changePrice / this.stockPrices[w.code].price * 100 : 0,
+                    lastUpdated: this.stockPrices[w.code] ? this.stockPrices[w.code].lastUpdated : null,
+                    averageBuyPrice: this.averagePrices[w.code] ? this.averagePrices[w.code].averageBuyPrice : 0,
+                    historicPosition: historicPosition,
+                    historicVariation: historicVariation * 100
+                };
+            });
         },
         configSummary() {
             if (this.configuration.which === 'none') {
@@ -371,10 +336,37 @@ export default {
     mounted() {
         ipcRenderer.on('wallet/get', (event, response) => {
             if (response.status === 'success') {
-                this.data = response.data;
+                this.wallet = response.data;
             } else {
-                this.$q.notify({ type: 'negative', message: `Error ao ler sua carteira: ${response.error.message}` });
-                console.error(response.error);
+                this.$q.notify({ type: 'negative', message: `Erro ao carregar carteira` });
+                console.error(response);
+            }
+        });
+
+        ipcRenderer.on('stock-prices/get', (event, response) => {
+            if (response.status === 'success') {
+                this.stockPrices = response.data;
+            } else {
+                this.$q.notify({ type: 'negative', message: `Erro ao carregar preços de ativos` });
+                console.error(response);
+            }
+        });
+
+        ipcRenderer.on('stockHistory/average-prices', (event, response) => {
+            if (response.status === 'success') {
+                this.averagePrices = response.data;
+            } else {
+                this.$q.notify({ type: 'negative', message: `Erro ao carregar preços médios de ativos` });
+                console.error(response);
+            }
+        });
+
+        ipcRenderer.on('stockHistory/consolidated', (event, response) => {
+            if (response.status === 'success') {
+                this.consolidated = response.data.reduce((p, c) => { p[c.code] = c; return p }, {});
+            } else {
+                this.$q.notify({ type: 'negative', message: `Erro ao carregar dados consolidados` });
+                console.error(response);
             }
         });
 
@@ -383,7 +375,7 @@ export default {
                 this.init();
                 this.$q.notify({ type: 'positive', message: `Sua carteira foi atualizada!` });
             } else {
-                this.$q.notify({ type: 'negative', message: `Error pegar carteira do seu histórico: ${response.error.message}` });
+                this.$q.notify({ type: 'negative', message: `Erro ao carregar carteira do seu histórico: ${response.error.message}` });
                 console.error(response.error);
             }
         });
