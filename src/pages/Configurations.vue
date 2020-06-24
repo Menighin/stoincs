@@ -1,5 +1,5 @@
 <template>
-    <q-page class="flex flex-center column">
+    <q-page class="flex flex-center column configurations-page">
         <div class="row">
             <div class="col-lg-6 col-md-12 col-sm-12 q-pa-md">
                 <div class="row q-ma-sm justify-between items-center">
@@ -48,21 +48,32 @@
                         </div>
 
                         <q-item-label header>Quais ações devem ter o valor atualizado?</q-item-label>
-                        <q-radio v-model="priceUpdate.which" val="all" label="Todas" />
-                        <q-radio v-model="priceUpdate.which" val="balance" label="As que possuem saldo" />
-                        <q-radio v-model="priceUpdate.which" val="none" label="Nenhuma" />
+                        <div class="q-gutter-md row items-start">
+                            <q-input placeholder="Código" v-model="stockToAdd" @keydown.enter="addStock" filled mask="AAAA##" />
+                            <q-btn flat round color="primary" class="q-mx-sm q-my-lg" icon="eva-plus-circle-outline" @click="addStock"/>
+                            <q-btn flat round color="primary" class="q-mx-sm q-my-lg" icon="eva-trash-2-outline" @click="clearStocks"/>
+                            <q-btn flat round color="primary" class="q-mx-sm q-my-lg" icon="eva-more-vertical-outline">
+                                <q-menu>
+                                    <q-list style="min-width: 100px">
+                                        <q-item clickable v-close-popup @click="addWalletStocks">
+                                            <q-item-section>Adicionar ações da carteira</q-item-section>
+                                        </q-item>
+                                        <q-item clickable v-close-popup @click="addHistoryStocks">
+                                            <q-item-section>Adicionar ações no histórico</q-item-section>
+                                        </q-item>
+                                    </q-list>
+                                </q-menu>
+                            </q-btn>
+                        </div>
 
-                        <q-input v-model="stockToAdd" />
-                        <q-btn @click="addStock" label="Adicionar" />
-                        <q-btn @click="addWalletStocks" label="Adicionar Carteira" />
-                        <q-btn @click="addHistoryStocks" label="Adicionar Historico" />
-                        <q-btn @click="clearStocks" label="Limpar" />
-
-                        <template v-for="(s, i) in this.stocks">
-                            <q-chip :key="`${s}-${i}`" removable @remove="removeStock(s)" color="primary" text-color="white" icon="cake">
-                                {{ s }}
-                            </q-chip>
-                        </template>
+                        <span style="font-size: 11px; color: #777; padding: 0">{{ stocks.length }} ações</span>
+                        <div class="stocks-container">
+                            <template v-for="(s, i) in this.filteredStocks">
+                                <q-chip :key="`${s}-${i}`" removable @remove="removeStock(s)" color="primary" text-color="white">
+                                    {{ s }}
+                                </q-chip>
+                            </template>
+                        </div>
 
                         <q-item-label header>Quantas ações devem ser atualizadas por tick?</q-item-label>
                         <q-input v-model="priceUpdate.many" @blur="priceUpdate.many = Math.max(1, priceUpdate.many)" type="number" filled/>
@@ -179,10 +190,7 @@ export default {
                 return ['Nenhum valor de ação será atualizado automaticamente'];
             }
 
-            let many = this.wallet.length;
-            if (this.priceUpdate.which === 'balance') {
-                many = this.wallet.filter(d => d.quantityBought - d.quantitySold > 0).length;
-            }
+            let many = this.stocks.length;
 
             const hoursBetween = Math.ceil(DateUtils.minutesBetweenTimes(this.priceUpdate.startTime, this.priceUpdate.endTime) / 60);
 
@@ -196,6 +204,10 @@ export default {
             msgs.push(`Serão <strong>${updatesPerHour}</strong> atualizações por hora, totalizando <strong>${updatesPerHour * hoursBetween}</strong> atualizações por dia, dado os horários de atualizacao.`);
 
             return msgs;
+        },
+        filteredStocks() {
+            if (this.stockToAdd === null || this.stockToAdd === undefined || this.stockToAdd.length === 0) return this.stocks;
+            return this.stocks.filter(s => s.startsWith(this.stockToAdd));
         }
     },
     mounted() {
@@ -244,3 +256,18 @@ export default {
     }
 };
 </script>
+
+<style lang="scss">
+
+.configurations-page {
+    .stocks-container {
+        overflow: auto;
+        max-width: 520px;
+        max-height: 77px;
+        padding: 2px 5px;
+        border: 1px solid #ccc;
+        min-height: 77px;
+    }
+}
+
+</style>

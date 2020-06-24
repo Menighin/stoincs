@@ -89,24 +89,15 @@
             <q-list id="menu-list">
                 <q-expansion-item
                     expand-separator
-                    label="Carteira"
-                    icon="eva-bar-chart"
+                    label="Ações"
+                    icon="account_balance_wallet"
                     class="expansion-item q-router-link--active"
                     :content-inset-level="1">
                     <q-list>
-                        <q-item clickable @click="navigate('/wallet', $event)">Dados</q-item>
-                        <q-item clickable @click="navigate('/wallet-charts', $event)">Gráficos</q-item>
-                    </q-list>
-                </q-expansion-item>
-                <q-expansion-item
-                    expand-separator
-                    label="Negociações"
-                    class="expansion-item"
-                    icon="eva-book-open-outline"
-                    :content-inset-level="1">
-                    <q-list>
-                        <q-item clickable @click="navigate('/stock-history', $event)">Extrato</q-item>
+                        <q-item clickable @click="navigate('/wallet', $event)">Carteira</q-item>
                         <q-item clickable @click="navigate('/consolidated', $event)">Consolidado</q-item>
+                        <q-item clickable @click="navigate('/stock-history', $event)">Extrato</q-item>
+                        <q-item clickable @click="navigate('/wallet-charts', $event)">Gráficos</q-item>
                     </q-list>
                 </q-expansion-item>
                 <q-item clickable @click="navigate('/configurations', $event)">

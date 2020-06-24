@@ -4,7 +4,6 @@ import WalletService from '../services/WalletService';
 const METHODS = {
     GET_WALLET: 'wallet/get',
     REFRESH_FROM_HISTORY: 'wallet/refresh-from-history',
-    UPDATE_LAST_VALUE: 'wallet/update-last-value',
     UPDATE_LABEL: 'wallet/update-label'
 };
 
@@ -24,15 +23,6 @@ ipcMain.on(METHODS.REFRESH_FROM_HISTORY, async (event, arg) => {
         event.reply(METHODS.REFRESH_FROM_HISTORY, { status: 'success' });
     } catch (e) {
         event.reply(METHODS.REFRESH_FROM_HISTORY, { status: 'error', message: e.message });
-    }
-});
-
-ipcMain.on(METHODS.UPDATE_LAST_VALUE, async (event, arg) => {
-    try {
-        const lastValues = await WalletService.updateLastValues(arg.stocks);
-        event.reply(METHODS.UPDATE_LAST_VALUE, { status: 'success', data: lastValues });
-    } catch (e) {
-        event.reply(METHODS.UPDATE_LAST_VALUE, { status: 'error', message: e.message });
     }
 });
 

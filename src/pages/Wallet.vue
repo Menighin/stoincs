@@ -45,8 +45,8 @@
             </template>
 
             <q-td auto-width slot="body-cell-price" slot-scope="props" :props="props">
-                <q-spinner v-if="props.row.code in loadingStocks" color="primary" size="12px" />
-                <div class="q-pl-sm price-cell" :class="{ 'updating-price': props.row.code in loadingStocks, 'value-up': props.row.changePrice > 0, 'value-down': props.row.changePrice < 0 }">
+                <q-spinner v-if="loadingStocks[props.row.code] === 1" color="primary" size="12px" />
+                <div class="q-pl-sm price-cell" :class="{ 'updating-price': loadingStocks[props.row.code] === 1, 'value-up': props.row.changePrice > 0, 'value-down': props.row.changePrice < 0 }">
                     {{ NumberUtils.formatCurrency(props.row.price) }}
                     <div class="variation" v-if="configuration.variation === 'price'">{{ NumberUtils.formatCurrency(props.row.changePrice, true) }}</div>
                     <div class="variation" v-if="configuration.variation === 'percentage'">{{ NumberUtils.formatPercentage(props.row.changePercent) }}</div>
@@ -257,7 +257,7 @@ export default {
         },
         syncRow(row) {
             this.$set(this.loadingStocks, row.code, 1);
-            ipcRenderer.send('wallet/update-last-value', { stocks: [row.code], type: 'manual' });
+            ipcRenderer.send('stock-prices/update', { stocks: [row.code] });
         },
         filterLabelFn(val, update) {
             update(() => {
@@ -396,20 +396,16 @@ export default {
 
         ipcRenderer.on('stock-prices/update', (event, response) => {
             for (const s of response.data)
-                delete this.loadingStocks[s.code];
+                this.$set(this.loadingStocks, s.code, 0);
 
             // Update successfull updates
             for (const r of response.data.filter(o => o.status === 'success')) {
-                for (const d of this.data) {
-                    if (r.code === d.code) {
-                        d.price = r.price;
-                        d.changePrice = r.changePrice;
-                        d.changePercent = r.changePercent;
-                        d.lastTradingDay = r.lastTradingDay;
-                        d.lastUpdated = r.lastUpdated;
-                        break;
-                    }
-                }
+                if (!this.stockPrices[r.code]) this.stockPrices[r.code] = {};
+                this.stockPrices[r.code].price = r.price;
+                this.stockPrices[r.code].changePrice = r.changePrice;
+                this.stockPrices[r.code].changePercent = r.changePercent;
+                this.stockPrices[r.code].lastTradingDay = r.lastTradingDay;
+                this.stockPrices[r.code].lastUpdated = r.lastUpdated;
             }
 
             // Prompt errors

@@ -341,7 +341,6 @@ export default {
             if (response.status === 'success') {
                 this.consolidated = response.data;
                 this.waterfallOptions = response.data.map(o => o.code).sort();
-                console.log(this.waterfallOptions);
                 this.waterfallSelected = this.waterfallOptions[0];
             } else {
                 this.$q.notify({ type: 'negative', message: `Erro ao carregar dados consolidados` });
