@@ -38,6 +38,14 @@
                                         :disable="isUploadingToGoogle"
                                         @click="uploadToGoogle"
                                     ></q-btn>
+                                    <q-btn
+                                        dense
+                                        flat
+                                        color="primary"
+                                        size="10px"
+                                        icon="eva-cloud-download-outline"
+                                        @click="downloadFiles"
+                                    ></q-btn>
                                 </div>
 
                                 <q-avatar size="72px">
@@ -94,6 +102,7 @@
                     class="expansion-item q-router-link--active"
                     :content-inset-level="1">
                     <q-list>
+                        <!-- <q-item clickable @click="navigate('/prices', $event)">Preços</q-item> -->
                         <q-item clickable @click="navigate('/wallet', $event)">Carteira</q-item>
                         <q-item clickable @click="navigate('/consolidated', $event)">Consolidado</q-item>
                         <q-item clickable @click="navigate('/stock-history', $event)">Extrato</q-item>
@@ -183,6 +192,9 @@ export default {
         uploadToGoogle() {
             this.isUploadingToGoogle = true;
             ipcRenderer.send('google-drive/upload');
+        },
+        downloadFiles() {
+            ipcRenderer.send('files/download');
         },
         navigate(path, event) {
             const element = event.currentTarget;

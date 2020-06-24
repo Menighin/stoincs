@@ -73,4 +73,4 @@ class StockPriceService {
 }
 
 export default new StockPriceService();
-export { FILES as StockHistoryFiles };
+export { FILES as StockPriceFiles };

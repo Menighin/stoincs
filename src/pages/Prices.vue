@@ -5,67 +5,6 @@
             <q-btn outline color="primary" class="q-mx-sm q-my-lg" icon="eva-settings-2-outline" @click="configDialog = true"/>
         </div>
 
-        <q-table
-            class="table-container q-mx-lg"
-            table-class="stock-table"
-            title="Carteira de ações"
-            :data="dataTable"
-            :columns="columns"
-            row-key="row => row.code"
-            flat
-            bordered
-            :rows-per-page-options="[50, 100, 150]"
-            rows-per-page-label="Items por página"
-            :pagination.sync="pagination"
-            :visible-columns="visibleColumns"
-            :loading="tableLoading"
-        >
-            <template v-slot:top>
-                <h5 style="margin: 0">Carteira de Ações</h5>
-
-                <q-space />
-
-                <q-select
-                    v-model="visibleColumns"
-                    multiple
-                    outlined
-                    dense
-                    options-dense
-                    :display-value="`Colunas (${visibleColumns.length}/${columns.length})`"
-                    emit-value
-                    map-options
-                    :options="columns"
-                    option-value="name"
-                    options-cover
-                    style="min-width: 150px"
-                    class="q-ma-sm"
-                />
-            </template>
-
-            <q-td auto-width slot="body-cell-price" slot-scope="props" :props="props">
-                <q-spinner v-if="loadingStocks[props.row.code] === 1" color="primary" size="12px" />
-                <div class="q-pl-sm price-cell" :class="{ 'updating-price': loadingStocks[props.row.code] === 1, 'value-up': props.row.changePrice > 0, 'value-down': props.row.changePrice < 0 }">
-                    {{ NumberUtils.formatCurrency(props.row.price) }}
-                    <div class="variation" v-if="configuration.variation === 'price'">{{ NumberUtils.formatCurrency(props.row.changePrice, true) }}</div>
-                    <div class="variation" v-if="configuration.variation === 'percentage'">{{ NumberUtils.formatPercentage(props.row.changePercent) }}</div>
-                </div>
-            </q-td>
-
-            <q-td auto-width slot="body-cell-lastUpdated" slot-scope="props" :props="props">
-                {{ props.row.lastUpdated ? `${DateUtils.getFormatedHoursFromSeconds(parseInt((new Date() - new Date(props.row.lastUpdated)) / 1000), true, true, false) }` : null }}
-            </q-td>
-
-            <q-td auto-width slot="body-cell-historicPosition" slot-scope="props" :props="props" :class="{ 'value-up': props.row.historicPosition > 0, 'value-down': props.row.historicPosition < 0 }">
-                {{ NumberUtils.formatCurrency(props.row.historicPosition) }}
-                <div class="variation">{{ NumberUtils.formatPercentage(props.row.historicVariation) }}</div>
-            </q-td>
-
-            <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
-                <q-btn flat icon="eva-sync-outline" @click="syncRow(props.row)" title="Atualizar" color="primary" />
-                <q-btn flat icon="eva-pricetags-outline" @click="editLabelDialog = true; editLabelCode = props.row.code; editLabel = props.row.label; partialEditLabel = ''" title="Editar label" color="primary" />
-            </q-td>
-        </q-table>
-
         <q-dialog v-model="editLabelDialog">
             <q-card style="min-width: 550px">
                 <q-card-section class="row q-ma-sm justify-between items-center">
@@ -96,26 +35,6 @@
 
             </q-card>
         </q-dialog>
-
-        <q-dialog v-model="configDialog">
-            <q-card class="q-pb-lg" style="min-width: 550px">
-                <q-card-section class="row q-ma-sm justify-between items-center">
-                    <div class="text-h6">Configurações</div>
-                </q-card-section>
-
-                <q-separator />
-
-                <q-card-section style="max-height: 80vh" class="scroll">
-                    <q-card-section>
-                        <div class="text-h6">Visualização</div>
-                        <q-item-label header>Como devem ser exibidas as variações de valor?</q-item-label>
-                        <q-radio @input="saveConfig" v-model="configuration.variation" val="price" label="Reais" />
-                        <q-radio @input="saveConfig" v-model="configuration.variation" val="percentage" label="Porcentagem" />
-                    </q-card-section>
-                </q-card-section>
-
-            </q-card>
-        </q-dialog>
     </q-page>
 </template>
 
@@ -129,100 +48,12 @@ export default {
     name: 'PageWallet',
     data() {
         return {
-            now: new Date(),
+            data: [],
             loadingStocks: {},
             wallet: [],
             stockPrices: {},
-            averagePrices: {},
-            consolidated: {},
-            configuration: {
-                variation: 'percentage'
-            },
-            tableLoading: false,
-            showCreateForm: false,
-            configDialog: false,
-            editLabelDialog: false,
-            editLabelCode: '',
-            editLabel: '',
-            partialEditLabel: null,
-            filteredLabelOptions: [],
-            pagination: {
-                rowsPerPage: 50
-            },
-            visibleColumns: [ 'code', 'quantity', 'value', 'averageBuyPrice', 'price', 'lastUpdated', 'historicPosition', 'label' ],
-            columns: [
-                {
-                    name: 'code',
-                    align: 'center',
-                    label: 'Ativo',
-                    field: 'code',
-                    sortable: true
-                },
-                {
-                    name: 'quantity',
-                    align: 'right',
-                    label: 'Quantidade',
-                    field: 'quantity',
-                    sortable: true
-                },
-                {
-                    name: 'value',
-                    align: 'right',
-                    label: 'Valor',
-                    field: 'value',
-                    sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
-                },
-                {
-                    name: 'averageBuyPrice',
-                    align: 'right',
-                    label: 'Pç. Médio Compra',
-                    field: 'averageBuyPrice',
-                    sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
-                },
-                {
-                    name: 'price',
-                    align: 'right',
-                    label: 'Preço Atual',
-                    field: 'price',
-                    sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
-                },
-                {
-                    name: 'lastUpdated',
-                    align: 'center',
-                    label: 'Atualizado a',
-                    field: 'lastUpdated',
-                    format: val => val ? DateUtils.toString(new Date(val)) : null
-                },
-                {
-                    name: 'historicPosition',
-                    align: 'right',
-                    label: 'Posição Histórica',
-                    field: 'historicPosition',
-                    sortable: true
-                },
-                {
-                    name: 'label',
-                    align: 'center',
-                    label: 'Label',
-                    field: 'label',
-                    sortable: true
-                },
-                {
-                    name: 'action',
-                    align: 'center',
-                    label: 'Ações',
-                    field: 'action',
-                    required: true
-                }
-            ],
-            newOperation: {
-            },
             NumberUtils: NumberUtils,
-            DateUtils: DateUtils,
-            updateSlice: []
+            DateUtils: DateUtils
         };
     },
     methods: {
@@ -410,6 +241,8 @@ export default {
         this.init();
     },
     beforeDestroy() {
+        clearInterval(this.updatePricesInterval);
+        clearInterval(this.tickInterval);
     }
 };
 </script>

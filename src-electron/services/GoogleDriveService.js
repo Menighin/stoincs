@@ -5,9 +5,7 @@ import opn from 'open';
 import express from 'express';
 import FileSystemUtils from '../utils/FileSystemUtils';
 import NotificationService from './NotificationService';
-import { StockHistoryFiles } from './StockHistoryService';
-import { WalletFiles } from './WalletService';
-import { ConfigurationFiles } from './ConfigurationService';
+import FileService from './FileService';
 import SyncGoogleDriveJob from '../jobs/SyncGoogleDriveJob';
 
 const SCOPES = [
@@ -129,11 +127,7 @@ class GoogleDriveService {
 
         const rootPath = await FileSystemUtils.getDataPath();
 
-        const files = [
-            ...Object.values(StockHistoryFiles),
-            ...Object.values(WalletFiles),
-            ...Object.values(ConfigurationFiles)
-        ];
+        const files = FileService.getFileNames();
 
         for (const file of files) {
             try {
