@@ -1,36 +1,78 @@
 <template>
-    <q-page class="">
+    <q-page class="prices-page">
         <div class="filter">
             <q-btn outline color="primary" label="Sincronizar com Histórico" class="q-mx-sm q-my-lg" icon="eva-sync-outline" @click="downloadFromHistory"/>
             <q-btn outline color="primary" class="q-mx-sm q-my-lg" icon="eva-settings-2-outline" @click="configDialog = true"/>
         </div>
 
-        <q-dialog v-model="editLabelDialog">
+        <div class="stock-cards q-pa-md row items-start q-gutter-lg">
+            <q-card v-for="sp in pricesCard" :key="`price-${sp.code}`" class="stock-card">
+                <q-card-section class="stock-title q-py-sm">
+                    <div class="row">
+                        <div class="col code">
+                            {{ sp.code }}
+                        </div>
+                        <div class="col quantity">
+                            {{ sp.quantity }}
+                        </div>
+                    </div>
+                </q-card-section>
+
+                <q-separator />
+
+                <q-card-section class="stock-info q-px-lg q-py-sm">
+                    <div class="row" :class="{'variation-up': sp.variation === 'up', 'variation-down': sp.variation === 'down'}" style="width: 260px;">
+                        <div class="col-10">
+                            <div class="column" style="height: 100%">
+                                <div class="col price flex flex-center q-mx-lg q-py-sm">
+                                    {{ sp.price }}
+                                </div>
+                                <div class="col variation flex flex-center">
+                                    <span>{{ sp.changePercent }}</span>
+                                    <span>{{ sp.changePrice }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-2 flex flex-center icon">
+                            <q-icon name="eva-trending-up-outline" class="variation-up" style="font-size: 36px" v-if="sp.variation === 'up'" />
+                            <q-icon name="eva-trending-down-outline" class="variation-down" style="font-size: 36px" v-else-if="sp.variation === 'down'" />
+                            <q-icon name="eva-minus-outline" style="font-size: 36px" v-else />
+                        </div>
+                    </div>
+                    <div class="last-updated" align="center">
+                        {{ sp.lastUpdated }}
+                    </div>
+                </q-card-section>
+
+                <q-separator />
+
+                <q-card-actions align="right">
+                    <q-btn round flat color="primary" size="12px" icon="eva-bell-outline" />
+                    <q-btn round flat color="primary" size="12px" icon="eva-sync-outline" @click="syncStock(sp.code)" />
+                    <q-btn round flat color="primary" size="12px" icon="eva-trash-2-outline" />
+                </q-card-actions>
+
+                <q-inner-loading :showing="loadingStocks[sp.code] === 1">
+                    <q-spinner-tail size="50px" color="primary" />
+                </q-inner-loading>
+            </q-card>
+        </div>
+
+        <q-dialog>
             <q-card style="min-width: 550px">
                 <q-card-section class="row q-ma-sm justify-between items-center">
-                    <div class="text-h6">Editar label para {{ editLabelCode }}</div>
+                    <div class="text-h6">Editar label para</div>
                 </q-card-section>
                 <q-separator />
                 <q-card-section style="max-height: 80vh" class="scroll">
 
                     <q-item-label header>Label do ativo</q-item-label>
-                    <q-select
-                        filled
-                        v-model="editLabel"
-                        use-input
-                        clearable
-                        @new-value="createLabelOption"
-                        :options="filteredLabelOptions"
-                        @filter="filterLabelFn"
-                        @input-value="partialCreateLabelOption"
-                        @blur="createLabelOption(partialEditLabel)"
-                    />
 
                 </q-card-section>
                 <q-separator />
                 <q-card-actions align="right">
                     <q-btn flat label="Cancelar" color="primary" v-close-popup />
-                    <q-btn flat label="Salvar" color="primary" @click="saveLabel" />
+                    <q-btn flat label="Salvar" color="primary" />
                 </q-card-actions>
 
             </q-card>
@@ -48,9 +90,8 @@ export default {
     name: 'PageWallet',
     data() {
         return {
-            data: [],
             loadingStocks: {},
-            wallet: [],
+            wallet: {},
             stockPrices: {},
             NumberUtils: NumberUtils,
             DateUtils: DateUtils
@@ -73,94 +114,33 @@ export default {
         init() {
             ipcRenderer.send('wallet/get');
             ipcRenderer.send('stock-prices/get');
-            ipcRenderer.send('stockHistory/average-prices');
-            ipcRenderer.send('stockHistory/consolidated');
-            const config = localStorage.getItem('wallet/config');
-            if (config)
-                this.configuration = JSON.parse(config);
         },
-        syncRow(row) {
-            this.$set(this.loadingStocks, row.code, 1);
-            ipcRenderer.send('stock-prices/update', { stocks: [row.code] });
-        },
-        filterLabelFn(val, update) {
-            update(() => {
-                if (val === '') {
-                    this.filteredLabelOptions = this.labelOptions;
-                } else {
-                    const needle = val.toLowerCase();
-                    this.filteredLabelOptions = this.labelOptions.filter(
-                        v => v.toLowerCase().indexOf(needle) > -1
-                    );
-                }
-            });
-        },
-        createLabelOption(val, done) {
-            if (val.length > 0) {
-                if (done)
-                    done(val, 'toggle');
-                else
-                    this.editLabel = val;
-            }
-        },
-        partialCreateLabelOption(val) {
-            this.partialEditLabel = val;
-        },
-        saveLabel() {
-            ipcRenderer.send('wallet/update-label', { stock: this.editLabelCode, label: this.editLabel });
-            this.editLabel = '';
-            this.editLabelDialog = false;
+        syncStock(code) {
+            this.$set(this.loadingStocks, code, 1);
+            ipcRenderer.send('stock-prices/update', { stocks: [code] });
         }
     },
     computed: {
-        dataTable() {
-            return this.wallet.map(w => {
-                const consolidatedStock = this.consolidated[w.code];
-                const price = this.stockPrices[w.code] ? this.stockPrices[w.code].price : 0;
-                const historicPosition = consolidatedStock ? consolidatedStock.valueSold + w.quantity * price - consolidatedStock.valueBought : 0;
-                const historicVariation = consolidatedStock && consolidatedStock.valueBought ? historicPosition / consolidatedStock.valueBought : 0;
+        pricesCard() {
+            return Object.keys(this.stockPrices).sort().map(k => {
+                const stockPrice = this.stockPrices[k];
+                const quantity = this.wallet[k] ? this.wallet[k].quantity : '-';
                 return {
-                    ...w,
-                    value: price * w.quantity,
-                    price: price,
-                    changePrice: this.stockPrices[w.code] ? this.stockPrices[w.code].changePrice : 0,
-                    changePercent: this.stockPrices[w.code] ? this.stockPrices[w.code].changePrice / this.stockPrices[w.code].price * 100 : 0,
-                    lastUpdated: this.stockPrices[w.code] ? this.stockPrices[w.code].lastUpdated : null,
-                    averageBuyPrice: this.averagePrices[w.code] ? this.averagePrices[w.code].averageBuyPrice : 0,
-                    historicPosition: historicPosition,
-                    historicVariation: historicVariation * 100
+                    code: k,
+                    price: NumberUtils.formatCurrency(stockPrice.price),
+                    changePercent: NumberUtils.formatPercentage(stockPrice.changePercent, true) || '-',
+                    changePrice: NumberUtils.formatCurrency(stockPrice.changePrice, true) || '-',
+                    lastUpdated: DateUtils.getDiffDateFormated(new Date(stockPrice.lastUpdated), new Date()),
+                    quantity: quantity,
+                    variation: stockPrice.changePrice > 0 ? 'up' : stockPrice.changePrice < 0 ? 'down' : 'unchanged'
                 };
             });
-        },
-        configSummary() {
-            if (this.configuration.which === 'none') {
-                return ['Nenhum valor de ação será atualizado automaticamente'];
-            }
-
-            let many = this.dataTable.length;
-            if (this.configuration.which === 'balance') {
-                many = this.dataTable.filter(d => d.quantityBalance > 0).length;
-            }
-
-            const interval = (Math.max(1, many / this.configuration.many) * this.configuration.when).toFixed(2);
-            const ticksPerHour = 60 / this.configuration.when;
-            const updatesPerHour = parseInt(Math.ceil(ticksPerHour * Math.min(this.configuration.many, many)));
-
-            const msgs = [`<strong>${many}</strong> ações serão atualizadas.`];
-            msgs.push(`A cada <strong>${DateUtils.getFormatedHoursFromSeconds(this.configuration.when * 60, true, true, false)}</strong>, <strong>${this.configuration.many}</strong> ações serão atualizadas.`);
-            msgs.push(`Isso significa que uma mesma ação será atualizada a cada <strong>${DateUtils.getFormatedHoursFromSeconds(interval * 60, true, true, false)}</strong>.`);
-            msgs.push(`Serão <strong>${updatesPerHour}</strong> atualizações por hora, totalizando <strong>${updatesPerHour * 24}</strong> atualizações por dia.`);
-
-            return msgs;
-        },
-        labelOptions() {
-            return [...new Set(this.dataTable.map(o => o.label).filter(o => o && o.length > 0))].sort();
         }
     },
     mounted() {
         ipcRenderer.on('wallet/get', (event, response) => {
             if (response.status === 'success') {
-                this.wallet = response.data;
+                this.wallet = response.data.reduce((p, c) => { p[c.code] = c; return p }, {});
             } else {
                 this.$q.notify({ type: 'negative', message: `Erro ao carregar carteira` });
                 console.error(response);
@@ -173,43 +153,6 @@ export default {
             } else {
                 this.$q.notify({ type: 'negative', message: `Erro ao carregar preços de ativos` });
                 console.error(response);
-            }
-        });
-
-        ipcRenderer.on('stockHistory/average-prices', (event, response) => {
-            if (response.status === 'success') {
-                this.averagePrices = response.data;
-            } else {
-                this.$q.notify({ type: 'negative', message: `Erro ao carregar preços médios de ativos` });
-                console.error(response);
-            }
-        });
-
-        ipcRenderer.on('stockHistory/consolidated', (event, response) => {
-            if (response.status === 'success') {
-                this.consolidated = response.data.reduce((p, c) => { p[c.code] = c; return p }, {});
-            } else {
-                this.$q.notify({ type: 'negative', message: `Erro ao carregar dados consolidados` });
-                console.error(response);
-            }
-        });
-
-        ipcRenderer.on('wallet/refresh-from-history', (event, response) => {
-            if (response.status === 'success') {
-                this.init();
-                this.$q.notify({ type: 'positive', message: `Sua carteira foi atualizada!` });
-            } else {
-                this.$q.notify({ type: 'negative', message: `Erro ao carregar carteira do seu histórico: ${response.error.message}` });
-                console.error(response.error);
-            }
-        });
-
-        ipcRenderer.on('wallet/update-label', (event, response) => {
-            if (response.status === 'success') {
-                this.init();
-            } else {
-                this.$q.notify({ type: 'negative', message: `Error ao ler sua carteira: ${response.error.message}` });
-                console.error(response.error);
             }
         });
 
@@ -249,56 +192,54 @@ export default {
 
 <style lang="scss">
 
-    .filter {
-        text-align: right;
-    }
-
-    .table-container {
-
-        .q-table__middle {
-            max-height: 700px;
+    .prices-page {
+        .filter {
+            text-align: right;
         }
 
-        thead tr th {
-            position: sticky;
-            z-index: 1;
-        }
-
-        thead tr:first-child th {
-            top: 0;
-            background: #FFF;
-        }
-
-        .stock-table {
-            table {
-                tbody {
-                    .price-cell {
-                        display: inline-block;
+        .stock-cards {
+            .stock-card {
+                .stock-title {
+                    .code {
+                        font-size: 24px;
                         vertical-align: middle;
+                    }
 
-                        &.updating-price {
-                            color: #aaa !important;
+                    .quantity {
+                        vertical-align: middle;
+                        font-size: 18px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: flex-end;
+                    }
+                }
+
+                .stock-info {
+                    .price {
+                        font-size: 36px;
+                        border-bottom: 4px dotted #eee;
+                    }
+                    .variation {
+                        font-size: 18px;
+                        span:first-child {
+                            margin-right: 20px;
                         }
-
-                        .variation {
-                            font-size: 10px;
-                        }
                     }
-
-                    .value-up {
-                        color: #21BA45;
-                    }
-
-                    .value-down {
-                        color: #C10015;
-                    }
-
-                    tr:nth-child(odd) {
-                        background: #f7f7f7;
+                    .last-updated {
+                        color: #aaa;
+                        font-size: 11px;
+                        padding: 8px 0 5px;
                     }
                 }
             }
 
+            .variation-up {
+                color: #5fbf47
+            }
+
+            .variation-down {
+                color: #f55
+            }
         }
     }
 

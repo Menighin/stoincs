@@ -66,6 +66,33 @@ class DateUtils {
     }
 
     /**
+     * Returns the difference of d1 to d2, the second being the higher
+     * XhYm - When the difference is <= 24h
+     * XdYh - When the difference is <= 3d
+     * dd/MM/yy - When the difference is > 3d
+     * @param {Date} d1 First date
+     * @param {Date} d2 Second date, the higher
+     */
+    static getDiffDateFormated(d1, d2) {
+        let diff = Math.abs(d2.getTime() - d1.getTime());
+        const millisDay = 1000 * 60 * 60 * 24;
+        const millisThreeDay = millisDay * 3;
+        if (diff <= millisDay) {
+            const hours = parseInt(diff / (1000 * 60 * 60));
+            diff -= hours * 1000 * 60 * 60;
+            const minutes = parseInt(diff / (1000 * 60));
+            return `${hours.toString().padStart(2, '0')}h${minutes.toString().padStart(2, '0')}m`;
+        } else if (diff <= millisThreeDay) {
+            const days = parseInt(diff / (1000 * 60 * 60 * 24));
+            diff -= days * 1000 * 60 * 60;
+            const hours = parseInt(diff / (1000 * 60 * 60));
+            return `${days.toString().padStart(2, '0')}d${hours.toString().padStart(2, '0')}h`;
+        } else {
+            return `${d1.getDate().toString().padStart(2, '0')}/${(d1.getMonth() + 1).toString().padStart(2, '0')}/${d1.getFullYear().toString().slice(2)}`;
+        }
+    }
+
+    /**
      * Calculats, how many minutes are between t1 and t2. If t2 is lower than t1, t2 is considered to be on the next day
      * @param {String} t1 String representing the start hour
      * @param {String} t2 String representing the end hour

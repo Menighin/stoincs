@@ -102,7 +102,7 @@
                     class="expansion-item q-router-link--active"
                     :content-inset-level="1">
                     <q-list>
-                        <!-- <q-item clickable @click="navigate('/prices', $event)">Preços</q-item> -->
+                        <q-item clickable @click="navigate('/prices', $event)">Preços</q-item>
                         <q-item clickable @click="navigate('/wallet', $event)">Carteira</q-item>
                         <q-item clickable @click="navigate('/consolidated', $event)">Consolidado</q-item>
                         <q-item clickable @click="navigate('/stock-history', $event)">Extrato</q-item>
