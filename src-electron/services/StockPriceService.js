@@ -70,6 +70,28 @@ class StockPriceService {
         await this.saveStockPrices(stockPrices);
     }
 
+    async deleteStockPrice(code) {
+        const stockPrices = await this.getStockPrices();
+        delete stockPrices[code];
+        this.saveStockPrices(stockPrices);
+    }
+
+    async addStockPrice(code) {
+        const stockPrices = await this.getStockPrices();
+        stockPrices[code] = {
+            price: 0,
+            changePrice: 0,
+            changePercent: 0,
+            lastTradingDay: new Date(),
+            lastUpdated: new Date()
+        };
+        this.saveStockPrices(stockPrices);
+
+        const result = {};
+        result[code] = stockPrices[code];
+        return result;
+    }
+
 }
 
 export default new StockPriceService();

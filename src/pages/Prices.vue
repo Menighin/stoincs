@@ -1,15 +1,37 @@
 <template>
     <q-page class="prices-page">
         <div class="filter">
-            <q-btn outline color="primary" label="Sincronizar com Histórico" class="q-mx-sm q-my-lg" icon="eva-sync-outline" @click="downloadFromHistory"/>
+            <q-btn outline color="primary" label="Sincronizar com Histórico" class="q-mx-sm q-my-lg" icon="eva-sync-outline" />
             <q-btn outline color="primary" class="q-mx-sm q-my-lg" icon="eva-settings-2-outline" @click="configDialog = true"/>
+            <q-btn outline color="primary" class="q-mx-sm q-my-lg" icon="eva-plus-outline" @click="addStock"/>
         </div>
 
-        <div class="stock-cards q-pa-md row items-start q-gutter-lg">
-            <q-card v-for="sp in pricesCard" :key="`price-${sp.code}`" class="stock-card">
+        <transition-group class="stock-cards q-pa-md row items-start q-gutter-lg" appear enter-active-class="animated fadeIn" leave-active-class="animated fadeOut">
+
+            <q-card v-for="sp in pricesCard" :key="`price-${sp.code}`" class="stock-card" :class="{'new': sp.isNew}">
                 <q-card-section class="stock-title q-py-sm">
                     <div class="row">
-                        <div class="col code">
+                        <div class="col new-stock-code" :class="{ 'invalid': newStockError }" v-if="sp.isNew">
+                            <q-input
+                                borderless
+                                mask="AAAA##"
+                                type="text"
+                                ref="newStockInput"
+                                v-model="newStock"
+                                placeholder="Código"
+                                @input="newStockTooltip = false; newStockError = false;"
+                                @keydown.enter="saveNewStock"
+                                @keydown.esc="cancelNewStock"
+                                @blur="cancelNewStock">
+                                <q-tooltip content-class="bg-primary tooltip" anchor="bottom left" self="top left" v-model="newStockTooltip" :target="newStockTooltip">
+                                    Pressione <strong>Enter</strong> para salvar, <strong>ESC</strong> para cancelar
+                                </q-tooltip>
+                                <q-tooltip content-class="tooltip bg-red" anchor="bottom left" self="top left" v-model="newStockError" :target="newStockError">
+                                    {{ errorMsg }}
+                                </q-tooltip>
+                            </q-input>
+                        </div>
+                        <div class="col code" v-else>
                             {{ sp.code }}
                         </div>
                         <div class="col quantity">
@@ -49,14 +71,14 @@
                 <q-card-actions align="right">
                     <q-btn round flat color="primary" size="12px" icon="eva-bell-outline" />
                     <q-btn round flat color="primary" size="12px" icon="eva-sync-outline" @click="syncStock(sp.code)" />
-                    <q-btn round flat color="primary" size="12px" icon="eva-trash-2-outline" />
+                    <q-btn round flat color="primary" size="12px" icon="eva-trash-2-outline" @click="deleteStock(sp.code)" />
                 </q-card-actions>
 
                 <q-inner-loading :showing="loadingStocks[sp.code] === 1">
                     <q-spinner-tail size="50px" color="primary" />
                 </q-inner-loading>
             </q-card>
-        </div>
+        </transition-group>
 
         <q-dialog>
             <q-card style="min-width: 550px">
@@ -94,18 +116,24 @@ export default {
             wallet: {},
             stockPrices: {},
             NumberUtils: NumberUtils,
-            DateUtils: DateUtils
+            DateUtils: DateUtils,
+            newStock: null,
+            newStockTooltip: false,
+            newStockError: false,
+            errorMsg: ''
         };
     },
     methods: {
-        downloadFromHistory() {
+        deleteStock(code) {
             this.$q.dialog({
                 title: 'Confirmação',
-                message: 'Tem certeza que deseja continuar?',
+                message: `Tem certeza que deseja remover <strong>${code}</strong>?`,
                 cancel: true,
+                html: true,
                 persistent: true
             }).onOk(() => {
-                ipcRenderer.send('wallet/refresh-from-history');
+                ipcRenderer.send('configuration/delete-stock', { code: code });
+                this.$delete(this.stockPrices, code);
             });
         },
         saveConfig() {
@@ -118,6 +146,40 @@ export default {
         syncStock(code) {
             this.$set(this.loadingStocks, code, 1);
             ipcRenderer.send('stock-prices/update', { stocks: [code] });
+        },
+        async addStock() {
+            this.$set(this.stockPrices, '0new', {
+                price: 0,
+                changePercent: 0,
+                changePrice: 0,
+                lastUpdated: new Date(),
+                isNew: true
+            });
+            await this.$nextTick();
+            this.$refs.newStockInput[0].focus();
+            this.newStockTooltip = true;
+        },
+        saveNewStock() {
+            if (this.newStock === null || this.newStock.length < 5) {
+                this.newStockError = true;
+                this.errorMsg = 'Esse não é um código válido';
+                return;
+            }
+
+            if (Object.keys(this.stockPrices).indexOf(this.newStock) !== -1) {
+                this.newStockError = true;
+                this.errorMsg = `${this.newStock} já está cadastrado`;
+                return;
+            }
+
+            ipcRenderer.send('configuration/add-stock', { code: this.newStock });
+            this.newStockError = false;
+            this.$delete(this.stockPrices, '0new');
+        },
+        cancelNewStock() {
+            this.newStock = null;
+            this.$delete(this.stockPrices, '0new');
+            this.newStockError = false;
         }
     },
     computed: {
@@ -127,12 +189,13 @@ export default {
                 const quantity = this.wallet[k] ? this.wallet[k].quantity : '-';
                 return {
                     code: k,
-                    price: NumberUtils.formatCurrency(stockPrice.price),
+                    price: NumberUtils.formatCurrency(stockPrice.price) || '-',
                     changePercent: NumberUtils.formatPercentage(stockPrice.changePercent, true) || '-',
                     changePrice: NumberUtils.formatCurrency(stockPrice.changePrice, true) || '-',
                     lastUpdated: DateUtils.getDiffDateFormated(new Date(stockPrice.lastUpdated), new Date()),
                     quantity: quantity,
-                    variation: stockPrice.changePrice > 0 ? 'up' : stockPrice.changePrice < 0 ? 'down' : 'unchanged'
+                    variation: stockPrice.changePrice > 0 ? 'up' : stockPrice.changePrice < 0 ? 'down' : 'unchanged',
+                    isNew: stockPrice.isNew || false
                 };
             });
         }
@@ -181,11 +244,28 @@ export default {
             }
         });
 
+        ipcRenderer.on('configuration/delete-stock', (event, response) => {
+            if (response.status === 'success') {
+                this.$q.notify({ type: 'positive', message: `${response.code} removida com sucesso` });
+            } else {
+                this.$q.notify({ type: 'negative', message: `Erro ao remover ação: ${response.message}` });
+                console.error(response);
+            }
+        });
+
+        ipcRenderer.on('configuration/add-stock', (event, response) => {
+            if (response.status === 'success') {
+                this.$q.notify({ type: 'positive', message: `Ação adicionada com sucesso` });
+                const code = Object.keys(response.data)[0];
+                const value = Object.values(response.data)[0];
+                this.$set(this.stockPrices, code, value);
+            } else {
+                this.$q.notify({ type: 'negative', message: `Erro ao remover ação: ${response.message}` });
+                console.error(response);
+            }
+        });
+
         this.init();
-    },
-    beforeDestroy() {
-        clearInterval(this.updatePricesInterval);
-        clearInterval(this.tickInterval);
     }
 };
 </script>
@@ -198,11 +278,36 @@ export default {
         }
 
         .stock-cards {
+            display: flex;
+            justify-content: center;
             .stock-card {
+
+                &.new {
+                    color: #aaa;
+                }
+
                 .stock-title {
                     .code {
                         font-size: 24px;
                         vertical-align: middle;
+                    }
+
+                    .new-stock-code {
+                        &.invalid {
+                            input {
+                                color: red !important;
+                            }
+                        }
+
+                        .q-field__control {
+                            height: auto
+                        }
+
+                        input {
+                            border: 0;
+                            font-size: 24px;
+                            padding: 0;
+                        }
                     }
 
                     .quantity {

@@ -84,7 +84,7 @@ class DateUtils {
             return `${hours.toString().padStart(2, '0')}h${minutes.toString().padStart(2, '0')}m`;
         } else if (diff <= millisThreeDay) {
             const days = parseInt(diff / (1000 * 60 * 60 * 24));
-            diff -= days * 1000 * 60 * 60;
+            diff -= days * 1000 * 60 * 60 * 24;
             const hours = parseInt(diff / (1000 * 60 * 60));
             return `${days.toString().padStart(2, '0')}d${hours.toString().padStart(2, '0')}h`;
         } else {
