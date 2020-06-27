@@ -120,7 +120,7 @@
             </q-list>
         </q-drawer>
 
-        <q-page-container>
+        <q-page-container class="page-container">
             <router-view />
             <!-- <q-btn color="secondary" @click="notify">Notify</q-btn> -->
         </q-page-container>
@@ -297,5 +297,9 @@ export default {
         position: absolute;
         bottom: 8px;
         right: 16px;
+    }
+
+    .page-container {
+        background: #fbfbfb;
     }
 </style>

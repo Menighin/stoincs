@@ -1,6 +1,6 @@
 <template>
-    <q-page class="stock-history-consolidated">
-        <div class="row q-ma-sm justify-between items-center">
+    <q-page class="stock-history-consolidated q-ma-none">
+        <div class="row q-pa-sm justify-between items-center">
             <q-card class="kpis-card q-px-lg q-py-md" flat bordered>
                 <q-card-section horizontal>
                     <template v-for="(kpi, i) in kpis">
@@ -76,16 +76,8 @@
                 />
             </template>
 
-            <q-td auto-width slot="body-cell-averageBuyPrice" slot-scope="props" :props="props">
-                {{ NumberUtils.formatCurrency(averagePrices[props.row.code] ? averagePrices[props.row.code].averageBuyPrice : 0) }}
-            </q-td>
-
-            <q-td auto-width slot="body-cell-averageSellPrice" slot-scope="props" :props="props">
-                {{ NumberUtils.formatCurrency(averagePrices[props.row.code] ? averagePrices[props.row.code].averageSellPrice : 0) }}
-            </q-td>
-
-            <q-td auto-width slot="body-cell-profitLoss" slot-scope="props" :props="props" :class="{ 'value-up': profitLoss[props.row.code] > 0, 'value-down': profitLoss[props.row.code] < 0 }">
-                {{ NumberUtils.formatCurrency(profitLoss[props.row.code] ? profitLoss[props.row.code] : 0) }}
+            <q-td auto-width slot="body-cell-profitLoss" slot-scope="props" :props="props" :class="{ 'value-up': props.row.profitLoss > 0, 'value-down': props.row.profitLoss < 0 }">
+                {{ NumberUtils.formatCurrency(props.row.profitLoss) }}
             </q-td>
         </q-table>
     </q-page>
@@ -101,7 +93,6 @@ export default {
     name: 'PageConsolidated',
     data() {
         return {
-            rawData: [],
             tableLoading: false,
             Math: Math,
             NumberUtils: NumberUtils,
@@ -109,8 +100,6 @@ export default {
                 rowsPerPage: 25
             },
             dataTable: [],
-            averagePrices: {},
-            profitLoss: {},
             kpis: {},
             startDate: null,
             endDate: null,
@@ -157,7 +146,8 @@ export default {
                     align: 'right',
                     label: 'Pç. Médio Compra',
                     field: 'averageBuyPrice',
-                    sortable: true
+                    sortable: true,
+                    format: val => NumberUtils.formatCurrency(val)
                 },
                 {
                     name: 'valueSold',
@@ -172,7 +162,8 @@ export default {
                     align: 'right',
                     label: 'Pç. Médio Venda',
                     field: 'averageSellPrice',
-                    sortable: true
+                    sortable: true,
+                    format: val => NumberUtils.formatCurrency(val)
                 },
                 {
                     name: 'valueBalance',
@@ -197,8 +188,6 @@ export default {
             const startDate = DateUtils.fromDateStr(this.startDate);
             const endDate = DateUtils.fromDateStr(this.endDate);
             ipcRenderer.send('stockHistory/consolidated', { startDate: startDate, endDate: endDate });
-            ipcRenderer.send('stockHistory/average-prices', { endDate: endDate });
-            ipcRenderer.send('stockHistory/profit-loss', { startDate: startDate, endDate: endDate });
             ipcRenderer.send('stockHistory/kpis', { startDate: startDate, endDate: endDate });
         }
     },
@@ -210,24 +199,6 @@ export default {
                 this.dataTable = arg.data;
             else {
                 this.$q.notify({ type: 'negative', message: `Erro ao computar dados consolidados: ${arg.message}` });
-                console.error(arg);
-            }
-        });
-
-        ipcRenderer.on('stockHistory/average-prices', (event, arg) => {
-            if (arg.status === 'success')
-                this.averagePrices = arg.data;
-            else {
-                this.$q.notify({ type: 'negative', message: `Erro ao computar preços médios` });
-                console.error(arg);
-            }
-        });
-
-        ipcRenderer.on('stockHistory/profit-loss', (event, arg) => {
-            if (arg.status === 'success')
-                this.profitLoss = arg.data;
-            else {
-                this.$q.notify({ type: 'negative', message: `Erro ao computar profit/loss` });
                 console.error(arg);
             }
         });
@@ -277,7 +248,7 @@ export default {
         .table-container {
 
             .q-table__middle {
-                max-height: 500px;
+                max-height: 620px;
             }
 
             thead tr th {

@@ -15,7 +15,7 @@ const NOTIFICATION = {
 class UpdateStockHistoryJob {
 
     setup() {
-        setTimeout(() => this.run(), 60000);
+        setTimeout(() => this.run(), 2000);
         setInterval(() => this.run(), 1000 * 60 * 60 * 12);
     }
 
@@ -37,7 +37,7 @@ class UpdateStockHistoryJob {
 
             console.log('Executing CEI Crawler...');
             let stocksByAccount = null;
-            if (jobMetadata === null) {
+            if (!jobMetadata || !jobMetadata.lastRun) {
                 stocksByAccount = await ceiCrawler.getStockHistory();
             } else {
                 const lastRun = jobMetadata.lastRun;
@@ -49,8 +49,6 @@ class UpdateStockHistoryJob {
                     return;
                 }
             }
-
-            console.log('LAST RUN: ' + jobMetadata.lastRun);
 
             await ceiCrawler.close();
 

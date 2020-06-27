@@ -98,6 +98,8 @@ class StockHistoryService {
     }
 
     async getConsolidatedStockHistory(startDate = null, endDate = null) {
+        const averagePrices = await this.getAveragePrices(endDate);
+        const profitLoss = await this.getProfitLoss(startDate, endDate);
         const stockHistoryFiltered = (await this.getStockHistoryOperations())
             .filter(o => (startDate === null || startDate <= o.date) && (endDate === null || o.date <= endDate));
 
@@ -120,10 +122,16 @@ class StockHistoryService {
                 p[key].quantitySold += c.quantity;
                 p[key].valueSold += c.totalValue;
             }
-            p[key].quantityBalance = p[key].quantityBought - p[key].quantitySold;
-            p[key].valueBalance = p[key].valueSold - p[key].valueBought;
+            p[key].quantityBalance = Math.max(p[key].quantityBought - p[key].quantitySold, 0);
             return p;
         }, {});
+
+        Object.keys(consolidatedByStock).forEach(code => {
+            consolidatedByStock[code].averageBuyPrice = averagePrices[code] ? averagePrices[code].averageBuyPrice : 0;
+            consolidatedByStock[code].averageSellPrice = averagePrices[code] ? averagePrices[code].averageSellPrice : 0;
+            consolidatedByStock[code].profitLoss = profitLoss[code] || 0;
+            consolidatedByStock[code].valueBalance = consolidatedByStock[code].quantityBalance * consolidatedByStock[code].averageBuyPrice;
+        });
 
         return Object.values(consolidatedByStock).sort((a, b) => (a.code > b.code) ? 1 : ((b.code > a.code) ? -1 : 0));
     }
@@ -153,7 +161,7 @@ class StockHistoryService {
                 return p;
             }, {});
 
-        return Object.keys(totalsByStock).reduce((p, c, i) => {
+        return Object.keys(totalsByStock).reduce((p, c) => {
             const totals = totalsByStock[c];
             p[c] = {};
             p[c].averageBuyPrice = totals.quantityBought > 0 ? totals.valueBought / totals.quantityBought : 0;

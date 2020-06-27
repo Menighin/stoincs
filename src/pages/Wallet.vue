@@ -133,7 +133,6 @@ export default {
             loadingStocks: {},
             wallet: [],
             stockPrices: {},
-            averagePrices: {},
             consolidated: {},
             configuration: {
                 variation: 'percentage'
@@ -242,7 +241,6 @@ export default {
         init() {
             ipcRenderer.send('wallet/get');
             ipcRenderer.send('stock-prices/get');
-            ipcRenderer.send('stockHistory/average-prices');
             ipcRenderer.send('stockHistory/consolidated');
             const config = localStorage.getItem('wallet/config');
             if (config)
@@ -288,6 +286,7 @@ export default {
                 const price = this.stockPrices[w.code] ? this.stockPrices[w.code].price : 0;
                 const historicPosition = consolidatedStock ? consolidatedStock.valueSold + w.quantity * price - consolidatedStock.valueBought : 0;
                 const historicVariation = consolidatedStock && consolidatedStock.valueBought ? historicPosition / consolidatedStock.valueBought : 0;
+                const averageBuyPrice = consolidatedStock && consolidatedStock.averageBuyPrice ? consolidatedStock.averageBuyPrice : 0;
                 return {
                     ...w,
                     value: price * w.quantity,
@@ -295,7 +294,7 @@ export default {
                     changePrice: this.stockPrices[w.code] ? this.stockPrices[w.code].changePrice : 0,
                     changePercent: this.stockPrices[w.code] ? this.stockPrices[w.code].changePrice / this.stockPrices[w.code].price * 100 : 0,
                     lastUpdated: this.stockPrices[w.code] ? this.stockPrices[w.code].lastUpdated : null,
-                    averageBuyPrice: this.averagePrices[w.code] ? this.averagePrices[w.code].averageBuyPrice : 0,
+                    averageBuyPrice: averageBuyPrice,
                     historicPosition: historicPosition,
                     historicVariation: historicVariation * 100
                 };
@@ -341,15 +340,6 @@ export default {
                 this.stockPrices = response.data;
             } else {
                 this.$q.notify({ type: 'negative', message: `Erro ao carregar preços de ativos` });
-                console.error(response);
-            }
-        });
-
-        ipcRenderer.on('stockHistory/average-prices', (event, response) => {
-            if (response.status === 'success') {
-                this.averagePrices = response.data;
-            } else {
-                this.$q.notify({ type: 'negative', message: `Erro ao carregar preços médios de ativos` });
                 console.error(response);
             }
         });

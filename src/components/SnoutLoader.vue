@@ -1,5 +1,5 @@
 <template>
-    <div class="snout-loader">
+    <div class="snout-loader" ref="snoutLoaderContainer">
         <div class="message" ref="message">{{ message }}</div>
         <div class="svg">
             <inline-svg
@@ -98,11 +98,13 @@ export default {
         EventBus.$on('snout-loader-show', () => {
             self.$refs.snoutLoader.$el.classList.remove('bounce-out');
             self.$refs.snoutLoader.$el.classList.add('bounce-in');
+            self.$refs.snoutLoaderContainer.classList.add('active');
         });
 
         EventBus.$on('snout-loader-hide', () => {
             self.$refs.snoutLoader.$el.classList.remove('bounce-in');
             self.$refs.snoutLoader.$el.classList.add('bounce-out');
+            self.$refs.snoutLoaderContainer.classList.remove('active');
         });
     }
 };
@@ -110,6 +112,10 @@ export default {
 
 <style lang="scss" scoped>
     .snout-loader {
+        &.active {
+            opacity: 1;
+        }
+        opacity: 0;
         text-align: right;
         .message {
             color: white;

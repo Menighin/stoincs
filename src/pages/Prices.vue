@@ -1,7 +1,7 @@
 <template>
     <q-page class="prices-page filter">
         <div class="page-actions">
-            <q-btn round outline color="primary" class="q-mx-sm q-my-lg" icon="sort">
+            <q-btn round color="primary" class="q-mx-sm q-my-lg" icon="sort">
                 <q-menu content-class="sort-menu">
                     <q-list style="min-width: 100px">
                         <q-item v-for="item in sortMenu" :class="{'active': item.value === selectedSort}" :key="item.value" clickable v-close-popup @click="sort(item.value)">
@@ -10,7 +10,7 @@
                     </q-list>
                 </q-menu>
             </q-btn>
-            <q-btn round outline color="primary" class="q-mx-sm q-my-lg" icon="eva-plus-outline" @click="addStock"/>
+            <q-btn round color="primary" class="q-mx-sm q-my-lg" icon="eva-plus-outline" @click="addStock"/>
         </div>
 
         <transition-group class="stock-cards q-pa-md row items-start q-gutter-lg" name="list-complete">

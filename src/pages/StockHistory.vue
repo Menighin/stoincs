@@ -522,7 +522,7 @@ export default {
     .table-container {
 
         .q-table__middle {
-            max-height: 500px;
+            max-height: 700px;
         }
 
         thead tr th {
