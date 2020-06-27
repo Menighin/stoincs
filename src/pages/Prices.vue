@@ -1,12 +1,19 @@
 <template>
-    <q-page class="prices-page">
-        <div class="filter">
-            <q-btn outline color="primary" label="Sincronizar com Histórico" class="q-mx-sm q-my-lg" icon="eva-sync-outline" />
-            <q-btn outline color="primary" class="q-mx-sm q-my-lg" icon="eva-settings-2-outline" @click="configDialog = true"/>
-            <q-btn outline color="primary" class="q-mx-sm q-my-lg" icon="eva-plus-outline" @click="addStock"/>
+    <q-page class="prices-page filter">
+        <div class="page-actions">
+            <q-btn round outline color="primary" class="q-mx-sm q-my-lg" icon="sort">
+                <q-menu content-class="sort-menu">
+                    <q-list style="min-width: 100px">
+                        <q-item v-for="item in sortMenu" :class="{'active': item.value === selectedSort}" :key="item.value" clickable v-close-popup @click="sort(item.value)">
+                            <q-item-section>{{ item.label }}</q-item-section>
+                        </q-item>
+                    </q-list>
+                </q-menu>
+            </q-btn>
+            <q-btn round outline color="primary" class="q-mx-sm q-my-lg" icon="eva-plus-outline" @click="addStock"/>
         </div>
 
-        <transition-group class="stock-cards q-pa-md row items-start q-gutter-lg" appear enter-active-class="animated fadeIn" leave-active-class="animated fadeOut">
+        <transition-group class="stock-cards q-pa-md row items-start q-gutter-lg" name="list-complete">
 
             <q-card v-for="sp in pricesCard" :key="`price-${sp.code}`" class="stock-card" :class="{'new': sp.isNew}">
                 <q-card-section class="stock-title q-py-sm">
@@ -23,7 +30,7 @@
                                 @keydown.enter="saveNewStock"
                                 @keydown.esc="cancelNewStock"
                                 @blur="cancelNewStock">
-                                <q-tooltip content-class="bg-primary tooltip" anchor="bottom left" self="top left" v-model="newStockTooltip" :target="newStockTooltip">
+                                <q-tooltip :delay="1000" content-class="bg-primary tooltip" anchor="bottom left" self="top left" v-model="newStockTooltip" :target="newStockTooltip">
                                     Pressione <strong>Enter</strong> para salvar, <strong>ESC</strong> para cancelar
                                 </q-tooltip>
                                 <q-tooltip content-class="tooltip bg-red" anchor="bottom left" self="top left" v-model="newStockError" :target="newStockError">
@@ -35,7 +42,7 @@
                             {{ sp.code }}
                         </div>
                         <div class="col quantity">
-                            {{ sp.quantity }}
+                            {{ sp.quantity || '-' }}
                         </div>
                     </div>
                 </q-card-section>
@@ -69,7 +76,7 @@
                 <q-separator />
 
                 <q-card-actions align="right">
-                    <q-btn round flat color="primary" size="12px" icon="eva-bell-outline" />
+                    <q-btn round flat color="primary" size="12px" icon="eva-bell-outline" @click="setupAlarm(sp.code)" />
                     <q-btn round flat color="primary" size="12px" icon="eva-sync-outline" @click="syncStock(sp.code)" />
                     <q-btn round flat color="primary" size="12px" icon="eva-trash-2-outline" @click="deleteStock(sp.code)" />
                 </q-card-actions>
@@ -87,9 +94,7 @@
                 </q-card-section>
                 <q-separator />
                 <q-card-section style="max-height: 80vh" class="scroll">
-
                     <q-item-label header>Label do ativo</q-item-label>
-
                 </q-card-section>
                 <q-separator />
                 <q-card-actions align="right">
@@ -120,7 +125,14 @@ export default {
             newStock: null,
             newStockTooltip: false,
             newStockError: false,
-            errorMsg: ''
+            errorMsg: '',
+            selectedSort: 'code',
+            sortMenu: [
+                { value: 'code', label: 'Código' },
+                { value: 'walletQuantity', label: 'Quantidade em carteira' },
+                { value: 'price', label: 'Preço' },
+                { value: 'variation', label: 'Variação' }
+            ]
         };
     },
     methods: {
@@ -147,8 +159,12 @@ export default {
             this.$set(this.loadingStocks, code, 1);
             ipcRenderer.send('stock-prices/update', { stocks: [code] });
         },
+        sort(code) {
+            localStorage.setItem('prices-page-sort', code);
+            this.selectedSort = code;
+        },
         async addStock() {
-            this.$set(this.stockPrices, '0new', {
+            this.$set(this.stockPrices, 'new-stock', {
                 price: 0,
                 changePercent: 0,
                 changePrice: 0,
@@ -157,7 +173,9 @@ export default {
             });
             await this.$nextTick();
             this.$refs.newStockInput[0].focus();
-            this.newStockTooltip = true;
+            setTimeout(() => {
+                this.newStockTooltip = true;
+            }, 500);
         },
         saveNewStock() {
             if (this.newStock === null || this.newStock.length < 5) {
@@ -174,23 +192,29 @@ export default {
 
             ipcRenderer.send('configuration/add-stock', { code: this.newStock });
             this.newStockError = false;
-            this.$delete(this.stockPrices, '0new');
+            this.$delete(this.stockPrices, 'new-stock');
         },
         cancelNewStock() {
             this.newStock = null;
-            this.$delete(this.stockPrices, '0new');
+            this.$delete(this.stockPrices, 'new-stock');
             this.newStockError = false;
+            this.newStockTooltip = false;
+        },
+        setupAlarm(code) {
+            this.$q.notify({ type: 'positive', message: `Feature nao implementada ainda n_n'` });
         }
     },
     computed: {
         pricesCard() {
-            return Object.keys(this.stockPrices).sort().map(k => {
+            const result = Object.keys(this.stockPrices).map(k => {
                 const stockPrice = this.stockPrices[k];
-                const quantity = this.wallet[k] ? this.wallet[k].quantity : '-';
+                const quantity = this.wallet[k] ? this.wallet[k].quantity : 0;
                 return {
                     code: k,
                     price: NumberUtils.formatCurrency(stockPrice.price) || '-',
+                    priceRaw: stockPrice.price,
                     changePercent: NumberUtils.formatPercentage(stockPrice.changePercent, true) || '-',
+                    changePercentRaw: stockPrice.changePercent,
                     changePrice: NumberUtils.formatCurrency(stockPrice.changePrice, true) || '-',
                     lastUpdated: DateUtils.getDiffDateFormated(new Date(stockPrice.lastUpdated), new Date()),
                     quantity: quantity,
@@ -198,6 +222,24 @@ export default {
                     isNew: stockPrice.isNew || false
                 };
             });
+
+            result.sort((a, b) => {
+                if (a.code === 'new-stock') return -1;
+                if (b.code === 'new-stock') return 1;
+
+                if (this.selectedSort === 'code')
+                    return a.code < b.code ? -1 : a.code > b.code ? 1 : 0;
+                else if (this.selectedSort === 'price')
+                    return b.priceRaw - a.priceRaw;
+                else if (this.selectedSort === 'walletQuantity')
+                    return b.quantity - a.quantity;
+                else if (this.selectedSort === 'variation')
+                    return Math.abs(b.changePercentRaw) - Math.abs(a.changePercentRaw);
+
+                return 1;
+            });
+
+            return result;
         }
     },
     mounted() {
@@ -265,6 +307,8 @@ export default {
             }
         });
 
+        this.selectedSort = localStorage.getItem('prices-page-sort') || 'code';
+
         this.init();
     }
 };
@@ -272,15 +316,36 @@ export default {
 
 <style lang="scss">
 
+    .sort-menu {
+        .active {
+            color: $primary;
+        }
+    }
+
     .prices-page {
-        .filter {
+
+        .page-actions {
             text-align: right;
+        }
+
+        .list-complete-item {
+            transition: all 1s;
+        }
+
+        .list-complete-enter, .list-complete-leave-to {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+
+        .list-complete-leave-active {
+            position: absolute;
         }
 
         .stock-cards {
             display: flex;
             justify-content: center;
             .stock-card {
+                transition: all 300ms;
 
                 &.new {
                     color: #aaa;
@@ -306,7 +371,7 @@ export default {
                         input {
                             border: 0;
                             font-size: 24px;
-                            padding: 0;
+                            padding: 5px 0;
                         }
                     }
 
