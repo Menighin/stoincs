@@ -8,8 +8,11 @@ class UpdatePricesJob {
     /** @type {BrowserWindow} */
     _browserWindow;
 
-    /** @type {which: String, when: Number, many: Number} */
+    /** @type { when: Number, many: Number} */
     _configuration;
+
+    /** @type {String[]} */
+    _stocks;
 
     _interval;
 
@@ -22,7 +25,7 @@ class UpdatePricesJob {
     async setup(browserWindow) {
         this._browserWindow = browserWindow;
 
-        this._configuration = (await ConfigurationService.getConfiguration()).priceUpdate || {};
+        await this.init();
 
         if (this._configuration && this._configuration.when > 0) {
             setTimeout(() => {
@@ -32,17 +35,15 @@ class UpdatePricesJob {
         }
     }
 
+    async init() {
+        this._configuration = (await ConfigurationService.getConfiguration()).priceUpdate || {};
+        this._stocks = Object.keys((await StockPriceService.getStockPrices()) || {}).sort();
+    }
+
     async run() {
-        if (this._configuration.which === 'none' || !this.inWorkingHours()) {
-            console.log('Prices wont be updated');
-            return;
-        }
+        const totalToUpdate = this._stocks.length;
 
-        const stocksToUpdate = this._configuration.stocks || [];
-
-        const totalToUpdate = stocksToUpdate.length;
-
-        if (stocksToUpdate.length === 0) return;
+        if (this._stocks.length === 0) return;
 
         if (this._updateSlice.length === 0 || this._updateSlice[1] >= totalToUpdate) {
             this._updateSlice = [0, this._configuration.many];
@@ -51,7 +52,7 @@ class UpdatePricesJob {
             this._updateSlice[1] = Math.min(this._updateSlice[1] + this._configuration.many, totalToUpdate);
         }
 
-        const stocks = stocksToUpdate.slice(this._updateSlice[0], this._updateSlice[1]);
+        const stocks = this._stocks.slice(this._updateSlice[0], this._updateSlice[1]);
 
         this._browserWindow.webContents.send('stock-prices/updating', { data: stocks });
         NotificationService.notifyLoadingStart('updating-prince', 'Atualizando preços');
@@ -64,7 +65,7 @@ class UpdatePricesJob {
 
     async updateConfig() {
         clearInterval(this._interval);
-        this._configuration = (await ConfigurationService.getConfiguration()).priceUpdate || {};
+        await this.init();
 
         console.log(`Updating prices job to run every ${this._configuration.when} minute(s)`);
         this._interval = setInterval(() => { this.run() }, this._configuration.when * 1000 * 60);

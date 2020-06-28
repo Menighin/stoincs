@@ -16,7 +16,7 @@
     "@quasar/extras": "^1.4.0",
     "adm-zip": "^0.4.16",
     "axios": "^0.19.2",
-    "cei-crawler": "^0.2.0",
+    "cei-crawler": "^0.2.3",
     "express": "^4.17.1",
     "googleapis": "^39.2.0",
     "highcharts": "^8.0.4",

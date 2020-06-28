@@ -21,7 +21,22 @@
             :loading="tableLoading"
         >
             <template v-slot:top>
-                <h5 style="margin: 0">Carteira de Ações</h5>
+                <h5 style="margin: 0 5px 0 0">Carteira de Ações</h5>
+                <q-icon name="help" class="cursor-pointer" size="24px" color="info">
+                    <q-menu anchor="bottom right" self="top right" content-class="q-pa-sm">
+                        Contém as informações de todos os ativos que você possui saldo. As colunas são:<br />
+                        <ul>
+                            <li><strong>Ativo</strong>: Código do ativo no carteira</li>
+                            <li><strong>Quantidade</strong>: Quantidade do ativo na carteira</li>
+                            <li><strong>Valor</strong>: Valor em R$ do ativo na sua carteira calculado por <i>Quantidade x Preço</i></li>
+                            <li><strong>Preço Médio de Compra</strong>: Preço médio da compra de um ativo, dado o seu extrato de negociações</li>
+                            <li><strong>Preço Atual</strong>: Preço atual do ativo. Para que ele seja atualizado você deve incluir o ativo na tela de preços ou nas configurações</li>
+                            <li><strong>Atualizado a</strong>: Tempo desde a ultima atualização do preço do ativo</li>
+                            <li><strong>Posição histórica</strong>: Dado seu histórico de negociações e o preço atual do ativo, calcula sua posição atual se vendesse o ativo nesse momento</li>
+                            <li><strong>Label</strong>: Label utilizado para categorizar o ativo nos gráficos</li>
+                        </ul>
+                    </q-menu>
+                </q-icon>
 
                 <q-space />
 
@@ -99,8 +114,8 @@
 
         <q-dialog v-model="configDialog">
             <q-card class="q-pb-lg" style="min-width: 550px">
-                <q-card-section class="row q-ma-sm justify-between items-center">
-                    <div class="text-h6">Configurações</div>
+                <q-card-section class="row q-ma-none justify-between items-center">
+                    <div class="text-h5">Configurações</div>
                 </q-card-section>
 
                 <q-separator />
@@ -175,7 +190,7 @@ export default {
                 {
                     name: 'averageBuyPrice',
                     align: 'right',
-                    label: 'Pç. Médio Compra',
+                    label: 'Preço Médio de Compra',
                     field: 'averageBuyPrice',
                     sortable: true,
                     format: val => NumberUtils.formatCurrency(val)

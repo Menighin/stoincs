@@ -144,7 +144,7 @@ export default {
                 html: true,
                 persistent: true
             }).onOk(() => {
-                ipcRenderer.send('configuration/delete-stock', { code: code });
+                ipcRenderer.send('stock-prices/delete-stock', { code: code });
                 this.$delete(this.stockPrices, code);
             });
         },
@@ -190,7 +190,7 @@ export default {
                 return;
             }
 
-            ipcRenderer.send('configuration/add-stock', { code: this.newStock });
+            ipcRenderer.send('stock-prices/add-stock', { code: this.newStock });
             this.newStockError = false;
             this.$delete(this.stockPrices, 'new-stock');
         },
@@ -286,7 +286,7 @@ export default {
             }
         });
 
-        ipcRenderer.on('configuration/delete-stock', (event, response) => {
+        ipcRenderer.on('stock-prices/delete-stock', (event, response) => {
             if (response.status === 'success') {
                 this.$q.notify({ type: 'positive', message: `${response.code} removida com sucesso` });
             } else {
@@ -295,7 +295,7 @@ export default {
             }
         });
 
-        ipcRenderer.on('configuration/add-stock', (event, response) => {
+        ipcRenderer.on('stock-prices/add-stock', (event, response) => {
             if (response.status === 'success') {
                 this.$q.notify({ type: 'positive', message: `Ação adicionada com sucesso` });
                 const code = Object.keys(response.data)[0];

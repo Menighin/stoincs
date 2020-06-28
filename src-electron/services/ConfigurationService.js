@@ -49,22 +49,6 @@ class ConfigurationService {
         };
     }
 
-    async deleteStock(code) {
-        const configuration = await this.getConfiguration();
-        const index = configuration.priceUpdate.stocks.indexOf(code);
-        configuration.priceUpdate.stocks.splice(index, 1);
-
-        await this.saveConfiguration(configuration);
-    }
-
-    async addStock(code) {
-        const configuration = await this.getConfiguration();
-        configuration.priceUpdate.stocks.push(code);
-        configuration.priceUpdate.stocks.sort();
-
-        await this.saveConfiguration(configuration);
-    }
-
 }
 
 export default new ConfigurationService();

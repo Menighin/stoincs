@@ -70,6 +70,31 @@ class StockPriceService {
         await this.saveStockPrices(stockPrices);
     }
 
+    async saveStockPricesConfiguration(stocks) {
+        const stockPrices = await this.getStockPrices();
+
+        // Deleting the ones that should be deleted
+        Object.keys(stockPrices).forEach(code => {
+            if (stocks.indexOf(code) === -1)
+                delete stockPrices[code];
+        });
+
+        // Adding the new ones
+        const now = new Date();
+        stocks.forEach(code => {
+            if (!stockPrices[code])
+                stockPrices[code] = {
+                    price: 0,
+                    changePrice: 0,
+                    changePercent: 0,
+                    lastTradingDay: now,
+                    lastUpdated: now
+                };
+        });
+
+        await this.saveStockPrices(stockPrices);
+    }
+
     async deleteStockPrice(code) {
         const stockPrices = await this.getStockPrices();
         delete stockPrices[code];

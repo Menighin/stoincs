@@ -151,6 +151,7 @@ export default {
             };
 
             ipcRenderer.send('configuration/update', configuration);
+            ipcRenderer.send('stock-prices/save-stocks', this.stocks);
         },
         addStock() {
             if (!this.stocks)
@@ -186,7 +187,7 @@ export default {
     },
     computed: {
         configSummary() {
-            if (this.priceUpdate.which === 'none' || this.priceUpdate.many < 1 || this.priceUpdate.when < 1) {
+            if (this.stocks.length === 0 || this.priceUpdate.many < 1 || this.priceUpdate.when < 1) {
                 return ['Nenhum valor de ação será atualizado automaticamente'];
             }
 
@@ -241,18 +242,26 @@ export default {
                     many: 1,
                     when: 1,
                     startTime: '00:00',
-                    endTime: '00:00',
-                    stocks: []
+                    endTime: '00:00'
                 };
-                this.stocks = this.priceUpdate.stocks || [];
             } else {
-                this.$q.notify({ type: 'negative', message: `Error ao ler sua carteira: ${response.error.message}` });
+                this.$q.notify({ type: 'negative', message: `Error ao ler suas configurações: ${response.error.message}` });
+                console.error(response.error);
+            }
+        });
+
+        ipcRenderer.on('stock-prices/get', (event, response) => {
+            if (response.status === 'success') {
+                this.stocks = Object.keys(response.data);
+            } else {
+                this.$q.notify({ type: 'negative', message: `Error ao ler preço de ações: ${response.error.message}` });
                 console.error(response.error);
             }
         });
 
         ipcRenderer.send('configuration/get-stock-options');
         ipcRenderer.send('configuration/get');
+        ipcRenderer.send('stock-prices/get');
     }
 };
 </script>
