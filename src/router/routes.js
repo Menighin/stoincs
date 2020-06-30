@@ -10,7 +10,8 @@ const routes = [
             { path: '/consolidated', component: () => import('pages/Consolidated.vue') },
             { path: '/prices', component: () => import('pages/Prices.vue') },
             { path: '/wallet', component: () => import('pages/Wallet.vue') },
-            { path: '/wallet-charts', component: () => import('pages/WalletCharts.vue') }
+            { path: '/wallet-charts', component: () => import('pages/WalletCharts.vue') },
+            { path: '/treasury-direct-wallet', component: () => import('pages/TreasuryDirectWallet.vue') }
         ]
     }
 ];

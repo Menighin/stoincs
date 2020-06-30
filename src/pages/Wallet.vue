@@ -315,27 +315,6 @@ export default {
                 };
             });
         },
-        configSummary() {
-            if (this.configuration.which === 'none') {
-                return ['Nenhum valor de ação será atualizado automaticamente'];
-            }
-
-            let many = this.dataTable.length;
-            if (this.configuration.which === 'balance') {
-                many = this.dataTable.filter(d => d.quantityBalance > 0).length;
-            }
-
-            const interval = (Math.max(1, many / this.configuration.many) * this.configuration.when).toFixed(2);
-            const ticksPerHour = 60 / this.configuration.when;
-            const updatesPerHour = parseInt(Math.ceil(ticksPerHour * Math.min(this.configuration.many, many)));
-
-            const msgs = [`<strong>${many}</strong> ações serão atualizadas.`];
-            msgs.push(`A cada <strong>${DateUtils.getFormatedHoursFromSeconds(this.configuration.when * 60, true, true, false)}</strong>, <strong>${this.configuration.many}</strong> ações serão atualizadas.`);
-            msgs.push(`Isso significa que uma mesma ação será atualizada a cada <strong>${DateUtils.getFormatedHoursFromSeconds(interval * 60, true, true, false)}</strong>.`);
-            msgs.push(`Serão <strong>${updatesPerHour}</strong> atualizações por hora, totalizando <strong>${updatesPerHour * 24}</strong> atualizações por dia.`);
-
-            return msgs;
-        },
         labelOptions() {
             return [...new Set(this.dataTable.map(o => o.label).filter(o => o && o.length > 0))].sort();
         }

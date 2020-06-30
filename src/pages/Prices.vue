@@ -86,24 +86,6 @@
                 </q-inner-loading>
             </q-card>
         </transition-group>
-
-        <q-dialog>
-            <q-card style="min-width: 550px">
-                <q-card-section class="row q-ma-sm justify-between items-center">
-                    <div class="text-h6">Editar label para</div>
-                </q-card-section>
-                <q-separator />
-                <q-card-section style="max-height: 80vh" class="scroll">
-                    <q-item-label header>Label do ativo</q-item-label>
-                </q-card-section>
-                <q-separator />
-                <q-card-actions align="right">
-                    <q-btn flat label="Cancelar" color="primary" v-close-popup />
-                    <q-btn flat label="Salvar" color="primary" />
-                </q-card-actions>
-
-            </q-card>
-        </q-dialog>
     </q-page>
 </template>
 

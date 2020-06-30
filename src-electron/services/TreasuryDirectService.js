@@ -35,6 +35,9 @@ class TreasuryDirectService {
         const path = `${rootPath}/${FILES.TREASURY_DIRECT}`;
 
         const treasuryDirect = JSON.parse((await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || '[]');
+        treasuryDirect.forEach(t => {
+            t.expirationDate = new Date(t.expirationDate);
+        });
         return treasuryDirect;
     }
 

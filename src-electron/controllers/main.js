@@ -4,5 +4,6 @@ import GoogleDriveController from './GoogleDriveController';
 import ConfigurationController from './ConfigurationController';
 import StockPriceController from './StockPriceController';
 import FileController from './FileController';
+import TreasuryDirectController from './TreasuryDirectController';
 
 export default {};

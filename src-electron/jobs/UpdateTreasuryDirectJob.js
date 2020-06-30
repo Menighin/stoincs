@@ -29,6 +29,7 @@ class UpdateTreasuryDirectJob {
 
         try {
             const jobMetadata = await TreasuryDirectService.getTreasuryDirectJobMetadata();
+            const now = new Date();
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
 
@@ -52,6 +53,7 @@ class UpdateTreasuryDirectJob {
                         data[treasure.code].grossValue += treasure.grossValue;
                         data[treasure.code].netValue += treasure.netValue;
                         data[treasure.code].quantity += treasure.quantity;
+                        data[treasure.code].lastUpdated = now;
                     });
                     return data;
                 }, {});

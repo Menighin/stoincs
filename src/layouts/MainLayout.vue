@@ -90,7 +90,7 @@
             @mouseover="miniState = false"
             @mouseout="miniState = true"
             mini-to-overlay
-            :width="200"
+            :width="230"
             :breakpoint="500"
             content-class="bg-grey-2"
         >
@@ -107,6 +107,17 @@
                         <q-item clickable @click="navigate('/consolidated', $event)">Consolidado</q-item>
                         <q-item clickable @click="navigate('/stock-history', $event)">Extrato</q-item>
                         <q-item clickable @click="navigate('/wallet-charts', $event)">Gráficos</q-item>
+                    </q-list>
+                </q-expansion-item>
+                <q-expansion-item
+                    expand-separator
+                    label="Tesouro Direto"
+                    icon="fas fa-landmark"
+                    class="expansion-item q-router-link--active"
+                    :content-inset-level="1">
+                    <q-list>
+                        <q-item clickable @click="navigate('/treasury-direct-wallet', $event)">Carteira</q-item>
+                        <q-item clickable @click="navigate('/treasury-direct-wallet-chart', $event)">Gráficos</q-item>
                     </q-list>
                 </q-expansion-item>
                 <q-item clickable @click="navigate('/configurations', $event)">

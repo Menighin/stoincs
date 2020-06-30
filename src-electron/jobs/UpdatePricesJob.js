@@ -56,10 +56,15 @@ class UpdatePricesJob {
 
         this._browserWindow.webContents.send('stock-prices/updating', { data: stocks });
         NotificationService.notifyLoadingStart('updating-prince', 'Atualizando preços');
-        const result = await StockPriceService.updateStockPrices(stocks);
-        this._browserWindow.webContents.send('stock-prices/update', { data: result });
 
-        NotificationService.notifyMessage('Preços atualizados', stocks.join(', '), 'fas fa-coins');
+        try {
+            const result = await StockPriceService.updateStockPrices(stocks);
+            this._browserWindow.webContents.send('stock-prices/update', { data: result });
+
+            NotificationService.notifyMessage('Preços atualizados', stocks.join(', '), 'fas fa-coins');
+        } catch (e) {
+            NotificationService.notifyMessage('Falha ao atualizar preços', e.getMessage(), 'fas fa-coins');
+        }
         NotificationService.notifyLoadingFinish('updating-prince');
     }
 
