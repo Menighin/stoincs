@@ -1,22 +1,19 @@
-import CeiCrawler from 'cei-crawler';
 import StockHistoryService from '../services/StockHistoryService';
 import DateUtils from '../utils/DateUtils';
 import StockUtils from '../utils/StockUtils';
 import NotificationService from '../services/NotificationService';
 import WalletService from '../services/WalletService';
 import CeiCrawlerService from '../services/CeiCrawlerService';
-import puppeteer from 'puppeteer';
 
 const NOTIFICATION = {
     TITLE: 'Negociações',
-    ICON: 'eva-book-open-outline'
+    ICON: 'fas fa-receipt'
 };
 
 class UpdateStockHistoryJob {
 
     setup() {
         setTimeout(() => this.run(), 2000);
-        setTimeout(() => this.run(), 4000);
         setInterval(() => this.run(), 1000 * 60 * 60 * 12);
     }
 
@@ -36,7 +33,7 @@ class UpdateStockHistoryJob {
                 stocksByAccount = await CeiCrawlerService.getStockHistory();
             } else {
                 const lastRun = jobMetadata.lastRun;
-                if (!DateUtils.isSameDate(yesterday, lastRun) || true) {
+                if (!DateUtils.isSameDate(yesterday, lastRun)) {
                     stocksByAccount = await CeiCrawlerService.getStockHistory(lastRun, yesterday);
                 } else {
                     NotificationService.notifyMessage(NOTIFICATION.TITLE, `Negociações já estão atualizadas com o CEI`, NOTIFICATION.ICON);

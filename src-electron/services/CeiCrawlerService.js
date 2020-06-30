@@ -16,13 +16,13 @@ class CeiCrawlerService {
     async _getFreeInstance() {
         clearTimeout(this._closeTimeout);
         if (this._ceiCrawler != null && this._isFree) {
-            console.log(`Instance exists and it is free. Returning it...`);
+            console.log(`[CEI CRAWLER SERVICE] Instance exists and it is free. Returning it...`);
             this._isFree = false;
             return this._ceiCrawler;
         }
 
         if (this._isFree === false) {
-            console.log('Will wait until instance is free');
+            console.log('[CEI CRAWLER SERVICE] Will wait until instance is free');
             await this._waitForFreeInstance();
             this._isFree = false;
             return this._ceiCrawler;
@@ -42,21 +42,21 @@ class CeiCrawlerService {
     async _waitForFreeInstance() {
         let duration = 20000; // Start with 10s
         while (!this._isFree) {
-            console.log(`Waiting free instance for ${duration}ms...`);
+            console.log(`[CEI CRAWLER SERVICE] Waiting free instance for ${duration}ms...`);
             await AsyncUtils.timeout(duration);
             duration = Math.max(1000, parseInt(duration / 2)); // half down until 1s max
         }
-        console.log(`Wait is over!`);
+        console.log(`[CEI CRAWLER SERVICE] Wait is over!`);
     }
 
     async _freeUpInstance() {
-        console.log('Freeing instance...');
+        console.log('[CEI CRAWLER SERVICE] Freeing instance...');
         this._isFree = true;
 
         // If freed instance is not used for some time, closes it
         if (this._closeTimeout === null)
             this._closeTimeout = setTimeout(async () => {
-                console.log('Closing instance after some time idle...');
+                console.log('[CEI CRAWLER SERVICE] Closing instance after some time idle...');
                 await this._ceiCrawler.close();
                 this._ceiCrawler = null;
                 this._closeTimeout = null;
@@ -67,6 +67,18 @@ class CeiCrawlerService {
         const ceiCrawler = await this._getFreeInstance();
         try {
             const result = await ceiCrawler.getStockHistory(startDate, endDate);
+            await this._freeUpInstance();
+            return result;
+        } catch (e) {
+            await this._freeUpInstance();
+            throw e;
+        }
+    }
+
+    async getWallet(date) {
+        const ceiCrawler = await this._getFreeInstance();
+        try {
+            const result = await ceiCrawler.getWallet(date);
             await this._freeUpInstance();
             return result;
         } catch (e) {

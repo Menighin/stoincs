@@ -98,7 +98,7 @@
                 <q-expansion-item
                     expand-separator
                     label="Ações"
-                    icon="account_balance_wallet"
+                    icon="fas fa-wallet"
                     class="expansion-item q-router-link--active"
                     :content-inset-level="1">
                     <q-list>

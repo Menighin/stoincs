@@ -1,6 +1,7 @@
 import { app, BrowserWindow, nativeTheme, globalShortcut } from 'electron';
 import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
 import UpdatePricesJob from '../jobs/UpdatePricesJob';
+import UpdateTreasuryDirectJob from '../jobs/UpdateTreasuryDirectJob';
 import SyncGoogleDriveJob from '../jobs/SyncGoogleDriveJob';
 import NotificationService from '../services/NotificationService';
 import Controllers from '../controllers/main';
@@ -52,6 +53,7 @@ function createWindow() {
     NotificationService.setup(mainWindow);
     UpdateStockHistoryJob.setup();
     UpdatePricesJob.setup(mainWindow);
+    UpdateTreasuryDirectJob.setup();
     SyncGoogleDriveJob.setup(mainWindow);
 }
 

@@ -1,17 +1,14 @@
-import CeiCrawler from 'cei-crawler';
 import TreasuryDirectService from '../services/TreasuryDirectService';
 import DateUtils from '../utils/DateUtils';
-import StockUtils from '../utils/StockUtils';
 import NotificationService from '../services/NotificationService';
-import ConfigurationService from '../services/ConfigurationService';
-import puppeteer from 'puppeteer';
+import CeiCrawlerService from '../services/CeiCrawlerService';
 
 const NOTIFICATION = {
-    TITLE: 'Negociações',
-    ICON: 'eva-book-open-outline'
+    TITLE: 'Tesouro Direto',
+    ICON: 'fas fa-landmark'
 };
 
-class UpdateStockHistoryJob {
+class UpdateTreasuryDirectJob {
 
     /** @type {StockHistoryService} */
     _treasureDirectService;
@@ -20,86 +17,59 @@ class UpdateStockHistoryJob {
      * Setup the job to run from time to time
      * @param {TreasuryDirectService} treasuryDirectService - Service to handle the treasury direct
      */
-    setup(treasuryDirectService) {
-        this._treasureDirectService = treasuryDirectService;
-        setTimeout(() => this.run(), 60000);
+    setup() {
+        setTimeout(() => this.run(), 2000);
         setInterval(() => this.run(), 1000 * 60 * 60 * 12);
     }
 
     async run() {
-        console.log('Running stock history job...');
-        const evtCode = 'STOCK_HISTORY_JOB';
-        NotificationService.notifyLoadingStart(evtCode, 'Crawling negociações do CEI');
-        const configuration = await ConfigurationService.getConfiguration();
+        console.log('Running stock treasury direct...');
+        const evtCode = 'TREASURY_DIRECT_JOB';
+        NotificationService.notifyLoadingStart(evtCode, 'Crawling tesouro direto do CEI');
 
         try {
-            const user = configuration.username || '';
-            const password = configuration.password || '';
-
-            const jobMetadata = await this._treasureDirectService.getStockHistoryJobMetadata();
+            const jobMetadata = await TreasuryDirectService.getTreasuryDirectJobMetadata();
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
-            const chromiumPath = puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked/node_modules/puppeteer');
-            const ceiCrawler = new CeiCrawler(user, password, { puppeteerLaunch: { headless: true, executablePath: chromiumPath }, capDates: true });
 
-            console.log('Executing CEI Crawler...');
-            let stocksByAccount = null;
-            if (jobMetadata === null) {
-                stocksByAccount = await ceiCrawler.getStockHistory();
+            console.log('Executing CEI Crawler - Treasury Direct...');
+
+            if (jobMetadata === null || !DateUtils.isSameDate(yesterday, jobMetadata.lastRun)) {
+                const wallets = await CeiCrawlerService.getWallet(yesterday);
+                const treasuryDirect = wallets.reduce((data, account) => {
+                    account.nationalTreasuryWallet.forEach(treasure => {
+                        if (!data[treasure.code])
+                            data[treasure.code] = {
+                                code: treasure.code,
+                                expirationDate: treasure.expirationDate,
+                                investedValue: 0,
+                                grossValue: 0,
+                                netValue: 0,
+                                quantity: 0
+                            };
+
+                        data[treasure.code].investedValue += treasure.investedValue;
+                        data[treasure.code].grossValue += treasure.grossValue;
+                        data[treasure.code].netValue += treasure.netValue;
+                        data[treasure.code].quantity += treasure.quantity;
+                    });
+                    return data;
+                }, {});
+
+                await TreasuryDirectService.saveTreasuryDirect(Object.values(treasuryDirect));
+                await TreasuryDirectService.updateTreasuryDirectJobMetadata();
+                NotificationService.notifyMessage(NOTIFICATION.TITLE, `Tesouro direto foi atualizado!`, NOTIFICATION.ICON);
             } else {
-                const lastRun = jobMetadata.lastRun;
-                if (!DateUtils.isSameDate(yesterday, lastRun)) {
-                    stocksByAccount = await ceiCrawler.getStockHistory(lastRun, yesterday);
-                } else {
-                    NotificationService.notifyMessage(NOTIFICATION.TITLE, `Negociações já estão atualizadas com o CEI`, NOTIFICATION.ICON);
-                    NotificationService.notifyLoadingFinish(evtCode);
-                    return;
-                }
+                NotificationService.notifyMessage(NOTIFICATION.TITLE, `Tesouro direto já estava atualizado com o CEI`, NOTIFICATION.ICON);
             }
-
-            await ceiCrawler.close();
-
-            console.log('Processing stock history from CEI');
-            let newNegotiations = 0;
-
-            // Setting CEI as source and ID for stock Histories
-            stocksByAccount.forEach(i => {
-                i.stockHistory.forEach(s => {
-                    s.source = 'CEI';
-                    s.id = StockUtils.generateId(s, i.account);
-                    newNegotiations++;
-                });
-            });
-
-            // Merging duplicates
-            stocksByAccount.forEach(acc => {
-                const stockOperationById = {};
-                acc.stockHistory.forEach(s => {
-                    if (s.id in stockOperationById) {
-                        stockOperationById[s.id].totalValue += s.totalValue;
-                        stockOperationById[s.id].quantity += s.quantity;
-                    } else {
-                        stockOperationById[s.id] = s;
-                    }
-                });
-                acc.stockHistory = Object.values(stockOperationById);
-            });
-
-            await this._treasureDirectService.saveStockHistory(stocksByAccount);
-            await this._treasureDirectService.updateStockHistoryJobMetadata();
-
-            // Update wallet
-
-            NotificationService.notifyMessage(NOTIFICATION.TITLE, `${newNegotiations} novas negociações adicionadas`, NOTIFICATION.ICON);
         } catch (e) {
-            console.log('Erro StockHistory crawler');
+            console.log('Erro TreasuryDirect crawler');
             console.log(e);
-            NotificationService.notifyMessage(NOTIFICATION.TITLE, `Erro ao buscar no CEI: ${e.message}`, NOTIFICATION.ICON);
-            NotificationService.notifyLoadingFinish(evtCode);
+            NotificationService.notifyMessage(NOTIFICATION.TITLE, `Erro ao buscar tesouro direto no CEI: ${e.message}`, NOTIFICATION.ICON);
         }
         NotificationService.notifyLoadingFinish(evtCode);
     }
 
 }
 
-export default new UpdateStockHistoryJob();
+export default new UpdateTreasuryDirectJob();

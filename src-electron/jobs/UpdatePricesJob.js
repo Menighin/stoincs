@@ -59,7 +59,7 @@ class UpdatePricesJob {
         const result = await StockPriceService.updateStockPrices(stocks);
         this._browserWindow.webContents.send('stock-prices/update', { data: result });
 
-        NotificationService.notifyMessage('Preços atualizados', stocks.join(', '), 'eva-bar-chart');
+        NotificationService.notifyMessage('Preços atualizados', stocks.join(', '), 'fas fa-coins');
         NotificationService.notifyLoadingFinish('updating-prince');
     }
 
