@@ -1,217 +1,205 @@
 <template>
-    <q-page class="treasury-direct-wallet-page">
-        <div class="row q-px-sm q-py-lg justify-between items-center">
-            <q-card class="kpis-card q-px-lg q-py-md" flat bordered>
-                <q-card-section horizontal>
-                    <template v-for="(kpi, i) in kpis">
+    <q-page class="chart-page" ref="chartPage">
+        <q-tabs v-model="tab" class="text-secondary" active-color="accent">
+            <q-tab name="treemap" label="Treemap" />
+            <q-tab name="bars" label="Barras" />
+        </q-tabs>
 
-                        <q-card-section :key="`kpi-${i}`">
-                            <div class="label">{{ kpi.label }}</div>
-                            <div class="value" :class="{ 'value-up': kpi.value > 0 && kpi.colorFormat, 'value-down': kpi.value < 0 && kpi.colorFormat }">
-                                {{ NumberUtils.formatCurrency(kpi.value) }}
-                            </div>
-                        </q-card-section>
+        <q-tab-panels v-model="tab" animated class="chart-panel" ref="chartPanel">
+            <q-tab-panel name="treemap">
+                <highcharts ref="treemapChart" class="chart" :options="treemapOptions" />
+            </q-tab-panel>
 
-                        <q-separator vertical :key="`separator-${i}`" v-if="i !== kpis.length - 1" />
-
-                    </template>
-                </q-card-section>
-            </q-card>
-        </div>
-        <q-table
-            class="table-container q-mx-lg"
-            table-class="stock-table"
-            title="Carteira de Tesouro Direto"
-            :data="dataTable"
-            :columns="columns"
-            row-key="row => row.code"
-            flat
-            bordered
-            :rows-per-page-options="[50, 100, 150]"
-            rows-per-page-label="Items por página"
-            :pagination.sync="pagination"
-            :visible-columns="visibleColumns">
-            <template v-slot:top>
-                <h5 style="margin: 0 5px 0 0">Carteira de Tesouro Direto</h5>
-                <q-icon name="help" class="cursor-pointer" size="24px" color="info">
-                    <q-menu anchor="bottom right" self="top right" content-class="q-pa-sm">
-                        Contém as informações de todos os ativos que você possui saldo. As colunas são:<br />
-                        <ul>
-                            <li><strong>Titulo</strong>: Código do titulo</li>
-                            <li><strong>Quantidade</strong>: Quantidade do titulo na carteira</li>
-                            <li><strong>Valor Investido</strong>: Valor em R$ investido nas compras do titulo</li>
-                            <li><strong>Valor Bruto</strong>: Valor atual do titulo sem descontar impostos</li>
-                            <li><strong>Lucro Bruto</strong>: Lucro atual do titulo sem descontar impostos</li>
-                            <li><strong>Valor Líquido</strong>: Lucro atual do titulo descontando impostos</li>
-                            <li><strong>Lucro Líquido</strong>: Lucro atual do titulo descontando impostos</li>
-                            <li><strong>Data de Vencimento</strong>: Data em que o Título vence e é resgatado automaticamente</li>
-                            <li><strong>Atualizado a</strong>: Tempo desde a ultima atualização das informações do título</li>
-                        </ul>
-                    </q-menu>
-                </q-icon>
-
-                <q-space />
-
-                <q-select
-                    v-model="visibleColumns"
-                    multiple
-                    outlined
-                    dense
-                    options-dense
-                    :display-value="`Colunas (${visibleColumns.length}/${columns.length})`"
-                    emit-value
-                    map-options
-                    :options="columns"
-                    option-value="name"
-                    options-cover
-                    style="min-width: 150px"
-                    class="q-ma-sm"
-                />
-            </template>
-
-            <q-td auto-width slot="body-cell-grossProfit" slot-scope="props" :props="props">
-                <div class="q-pl-sm profit-cell" :class="{ 'value-up': props.row.grossProfit > 0, 'value-down': props.row.grossProfit < 0 }">
-                    {{ NumberUtils.formatCurrency(props.row.grossProfit) }}
-                    <div class="variation">{{ NumberUtils.formatPercentage(props.row.grossProfitPercentage) }}</div>
+            <q-tab-panel name="bars">
+                <q-checkbox label="Mostrar coluna de total" v-model="barChartShowTotal" />
+                <div style="height: 90%">
+                    <highcharts ref="barChart" class="chart" :options="barOptions" />
                 </div>
-            </q-td>
-
-            <q-td auto-width slot="body-cell-netProfit" slot-scope="props" :props="props">
-                <div class="q-pl-sm profit-cell" :class="{ 'value-up': props.row.netProfit > 0, 'value-down': props.row.netProfit < 0 }">
-                    {{ NumberUtils.formatCurrency(props.row.netProfit) }}
-                    <div class="variation">{{ NumberUtils.formatPercentage(props.row.netProfitPercentage) }}</div>
-                </div>
-            </q-td>
-        </q-table>
+            </q-tab-panel>
+        </q-tab-panels>
     </q-page>
 </template>
 
 <script>
 
+import { Chart } from 'highcharts-vue';
+import Highcharts from 'highcharts';
+import treemapInit from 'highcharts/modules/treemap';
+import waterfallInit from 'highcharts/highcharts-more';
 import { ipcRenderer } from 'electron';
+import HighchartUtils, { SeriesColors } from '../utils/HighchartUtils';
 import NumberUtils from '../../src-electron/utils/NumberUtils';
-import DateUtils from '../../src-electron/utils/DateUtils';
+
+treemapInit(Highcharts);
+waterfallInit(Highcharts);
 
 export default {
-    name: 'PageTreasuryDirectWallet',
+    name: 'PageWalletCharts',
+    components: {
+        highcharts: Chart
+    },
     data() {
         return {
-            now: new Date(),
             treasuryDirect: [],
-            pagination: {
-                rowsPerPage: 50
-            },
-            visibleColumns: [ 'code', 'quantity', 'investedValue', 'grossValue', 'grossProfit', 'netValue', 'netProfit', 'expirationDate', 'lastUpdated' ],
-            columns: [
-                {
-                    name: 'code',
-                    align: 'center',
-                    label: 'Titulo',
-                    field: 'code',
-                    sortable: true
-                },
-                {
-                    name: 'quantity',
-                    align: 'right',
-                    label: 'Quantidade',
-                    field: 'quantity',
-                    sortable: true
-                },
-                {
-                    name: 'investedValue',
-                    align: 'right',
-                    label: 'Valor Investido',
-                    field: 'investedValue',
-                    sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
-                },
-                {
-                    name: 'grossValue',
-                    align: 'right',
-                    label: 'Valor Bruto',
-                    field: 'grossValue',
-                    sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
-                },
-                {
-                    name: 'grossProfit',
-                    align: 'right',
-                    label: 'Lucro Bruto',
-                    field: 'grossProfit',
-                    sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
-                },
-                {
-                    name: 'netValue',
-                    align: 'right',
-                    label: 'Valor Líquido',
-                    field: 'netValue',
-                    sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
-                },
-                {
-                    name: 'netProfit',
-                    align: 'right',
-                    label: 'Lucro Líquido',
-                    field: 'netProfit',
-                    sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
-                },
-                {
-                    name: 'expirationDate',
-                    align: 'center',
-                    label: 'Data de Vencimento',
-                    field: 'expirationDate',
-                    format: val => val ? DateUtils.toString(new Date(val), true, false) : null
-                },
-                {
-                    name: 'lastUpdated',
-                    align: 'center',
-                    label: 'Atualizado a',
-                    field: 'lastUpdated',
-                    format: val => val ? DateUtils.toString(new Date(val)) : null
-                }
-            ],
-            NumberUtils: NumberUtils,
-            DateUtils: DateUtils
+            tab: null,
+            barChartShowTotal: false
         };
     },
     methods: {
-        init() {
-            ipcRenderer.send('treasury-direct/get');
-        }
     },
     computed: {
-        dataTable() {
-            return this.treasuryDirect.map(t => {
-                t.grossProfit = t.grossValue - t.investedValue;
-                t.grossProfitPercentage = t.grossProfit / t.investedValue * 100;
-                t.netProfit = t.netValue - t.investedValue;
-                t.netProfitPercentage = t.netProfit / t.investedValue * 100;
-                return t;
-            });
+        data() {
+            return this.treasuryDirect;
         },
-        kpis() {
-            const totalInvested = this.dataTable.reduce((p, c) => p + c.investedValue, 0);
-            const totalGrossProfit = this.dataTable.reduce((p, c) => p + c.grossProfit, 0);
-            const totalNetProfit = this.dataTable.reduce((p, c) => p + c.netProfit, 0);
-            return [
-                {
-                    label: 'Total Investido',
-                    value: totalInvested,
-                    colorFormat: false
+        treemapOptions() {
+            const totalValue = this.data.reduce((prev, curr) => {
+                return prev + curr.netValue;
+            }, 0);
+
+            const data = this.data.map((o, i) => ({
+                name: o.code,
+                value: o.netValue,
+                investedValue: o.investedValue,
+                grossValue: o.grossValue,
+                quantity: o.quantity,
+                leaf: true,
+                percentage: o.netValue / totalValue,
+                color: SeriesColors[i % SeriesColors.length]
+            }));
+
+            console.log(totalValue, data);
+
+            return {
+                series: [{
+                    type: 'treemap',
+                    layoutAlgorithm: 'squarified',
+                    alternateStartingDirection: true,
+                    data: data,
+                    dataLabels: {
+                        useHTML: true,
+                        formatter: function() {
+                            if (this.point.leaf)
+                                return `<div style="text-align: center">${this.point.name}<br />${NumberUtils.formatPercentage(this.percentage * 100, false)}</div>`;
+                            else
+                                return `${this.point.name}<br />${NumberUtils.formatPercentage(this.percentage * 100, false)}`;
+                        }
+                    }
+                }],
+                title: {
+                    text: null
                 },
-                {
-                    label: 'Lucro Bruto',
-                    value: totalGrossProfit,
-                    colorFormat: true
-                },
-                {
-                    label: 'Lucro Líquido',
-                    value: totalNetProfit,
-                    colorFormat: true
+                tooltip: {
+                    useHTML: true,
+                    pointFormatter: function() {
+                        const items = [
+                            {
+                                name: 'Porcentagem',
+                                value: NumberUtils.formatPercentage(this.percentage * 100, false),
+                                color: SeriesColors[0 % SeriesColors.length]
+                            },
+                            {
+                                name: 'Valor Investido',
+                                value: NumberUtils.formatCurrency(this.investedValue),
+                                color: SeriesColors[1 % SeriesColors.length]
+                            },
+                            {
+                                name: 'Valor Liquido',
+                                value: NumberUtils.formatCurrency(this.value),
+                                color: SeriesColors[2 % SeriesColors.length]
+                            },
+                            {
+                                name: 'Valor Bruto',
+                                value: NumberUtils.formatCurrency(this.grossValue),
+                                color: SeriesColors[3 % SeriesColors.length]
+                            },
+                            {
+                                name: 'Quantidade',
+                                value: this.quantity,
+                                color: SeriesColors[4 % SeriesColors.length]
+                            }
+                        ];
+
+                        return HighchartUtils.getTooltipContent(this.name, items);
+                    }
                 }
-            ];
+            };
+        },
+        barOptions() {
+            let categories = [];
+            let seriesBoughtValue = [];
+            let seriesActualValue = [];
+
+            for (const d of this.data) {
+                categories.push(d.code);
+                seriesBoughtValue.push(d.investedValue);
+                seriesActualValue.push(d.netValue);
+            }
+
+            if (this.barChartShowTotal) {
+                categories = ['Total', ...categories];
+                seriesBoughtValue = [seriesBoughtValue.reduce((p, c) => p + c), ...seriesBoughtValue];
+                seriesActualValue = [seriesActualValue.reduce((p, c) => p + c), ...seriesActualValue];
+            }
+
+            return {
+                chart: {
+                    type: 'column'
+                },
+                title: {
+                    text: null
+                },
+                xAxis: {
+                    categories: categories
+                },
+                yAxis: [{
+                    min: 0,
+                    title: {
+                        text: 'Valor'
+                    }
+                }],
+                tooltip: {
+                    shared: true,
+                    formatter: function() {
+                        const items = this.points.map(p => ({
+                            name: p.series.name,
+                            value: NumberUtils.formatCurrency(p.y),
+                            color: p.color
+                        }));
+
+                        // The result
+                        items.push({
+                            name: 'Balanço',
+                            value: NumberUtils.formatCurrency(this.points[1].y - this.points[0].y, true),
+                            color: SeriesColors[3]
+                        });
+
+                        return HighchartUtils.getTooltipContent(this.x, items);
+                    }
+                },
+                plotOptions: {
+                    column: {
+                        grouping: false,
+                        borderWidth: 0
+                    }
+                },
+                series: [{
+                    name: 'Valor Investido',
+                    color: SeriesColors[0],
+                    data: seriesBoughtValue,
+                    tooltip: {
+                        valuePrefix: 'R$'
+                    },
+                    pointPadding: 0
+                }, {
+                    name: 'Valor Atual Liquido',
+                    color: SeriesColors[1],
+                    data: seriesActualValue,
+                    tooltip: {
+                        valuePrefix: 'R$'
+                    },
+                    pointPadding: 0.25
+                }]
+            };
         }
     },
     mounted() {
@@ -228,74 +216,30 @@ export default {
             }
         });
 
-        this.init();
-    },
-    beforeDestroy() {
+        ipcRenderer.send('treasury-direct/get');
+
+        setTimeout(() => {
+            this.tab = 'treemap';
+            this.$refs.chartPanel.$el.style.height = `${this.$refs.chartPage.$el.clientHeight - 100}px`;
+
+            setTimeout(() => { this.$refs.treemapChart.chart.reflow() }, 200);
+        }, 200);
     }
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
+    .chart-page {
+        padding: 10px 20px;
 
-    .treasury-direct-wallet-page {
-
-        .kpis-card {
-            margin: 0 auto;
-            .label {
-                color: $label;
-                font-size: 10px;
+        .chart-panel {
+            text-align: center;
+            .chart {
+                margin: 0 auto;
+                width: 100%;
+                min-height: 600px;
+                height: 100%;
             }
-
-            .value {
-                font-size: 32px;
-                font-weight: bold;
-            }
-        }
-
-        .table-container {
-
-            .q-table__middle {
-                max-height: 700px;
-            }
-
-            thead tr th {
-                position: sticky;
-                z-index: 1;
-            }
-
-            thead tr:first-child th {
-                top: 0;
-                background: #FFF;
-            }
-
-            .stock-table {
-                table {
-                    tbody {
-                        .profit-cell {
-                            display: inline-block;
-                            vertical-align: middle;
-
-                            .variation {
-                                font-size: 10px;
-                            }
-                        }
-
-                        tr:nth-child(odd) {
-                            background: #f7f7f7;
-                        }
-                    }
-                }
-
-            }
-        }
-
-        .value-up {
-            color: #21BA45;
-        }
-
-        .value-down {
-            color: #C10015;
         }
     }
-
 </style>

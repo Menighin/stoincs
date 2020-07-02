@@ -13,7 +13,7 @@ const NOTIFICATION = {
 class UpdateStockHistoryJob {
 
     setup() {
-        setTimeout(() => this.run(), 2000);
+        setTimeout(() => this.run(), 15000);
         setInterval(() => this.run(), 1000 * 60 * 60 * 12);
     }
 

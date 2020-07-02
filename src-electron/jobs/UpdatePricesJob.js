@@ -31,7 +31,7 @@ class UpdatePricesJob {
             setTimeout(() => {
                 this.run();
                 this._interval = setInterval(() => { this.run() }, this._configuration.when * 1000 * 60);
-            }, 2000);
+            }, 15000);
         }
     }
 

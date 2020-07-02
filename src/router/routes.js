@@ -11,7 +11,8 @@ const routes = [
             { path: '/prices', component: () => import('pages/Prices.vue') },
             { path: '/wallet', component: () => import('pages/Wallet.vue') },
             { path: '/wallet-charts', component: () => import('pages/WalletCharts.vue') },
-            { path: '/treasury-direct-wallet', component: () => import('pages/TreasuryDirectWallet.vue') }
+            { path: '/treasury-direct-wallet', component: () => import('pages/TreasuryDirectWallet.vue') },
+            { path: '/treasury-direct-wallet-chart', component: () => import('pages/TreasuryDirectWalletChart.vue') }
         ]
     }
 ];
