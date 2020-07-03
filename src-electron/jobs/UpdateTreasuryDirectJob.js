@@ -23,7 +23,7 @@ class UpdateTreasuryDirectJob {
     }
 
     async run() {
-        console.log('Running stock treasury direct...');
+        console.log('[TREASURY DIRECT JOB] Running stock treasury direct...');
         const evtCode = 'TREASURY_DIRECT_JOB';
         NotificationService.notifyLoadingStart(evtCode, 'Crawling tesouro direto do CEI');
 
@@ -33,9 +33,10 @@ class UpdateTreasuryDirectJob {
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
 
-            console.log('Executing CEI Crawler - Treasury Direct...');
+            console.log('[TREASURY DIRECT JOB] Last run: ' + (jobMetadata == null ? 'NEVER' : jobMetadata.lastRun));
 
             if (jobMetadata === null || !DateUtils.isSameDate(yesterday, jobMetadata.lastRun)) {
+                console.log('[TREASURY DIRECT JOB] Executing CEI Crawler - Treasury Direct...');
                 const wallets = await CeiCrawlerService.getWallet(yesterday);
                 const treasuryDirect = wallets.reduce((data, account) => {
                     account.nationalTreasuryWallet.forEach(treasure => {
@@ -65,7 +66,7 @@ class UpdateTreasuryDirectJob {
                 NotificationService.notifyMessage(NOTIFICATION.TITLE, `Tesouro direto já estava atualizado com o CEI`, NOTIFICATION.ICON);
             }
         } catch (e) {
-            console.log('Erro TreasuryDirect crawler');
+            console.log('[TREASURY DIRECT JOB] Erro TreasuryDirect crawler');
             console.log(e);
             NotificationService.notifyMessage(NOTIFICATION.TITLE, `Erro ao buscar tesouro direto no CEI: ${e.message}`, NOTIFICATION.ICON);
         }
