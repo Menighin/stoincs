@@ -3,6 +3,10 @@ import FileSystemUtils from '../utils/FileSystemUtils';
 import WalletService from './WalletService';
 import StockHistoryService from './StockHistoryService';
 import StockUtils from '../utils/StockUtils';
+import UpdatePricesJob from '../jobs/UpdatePricesJob';
+import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
+import UpdateTreasuryDirectJob from '../jobs/UpdateTreasuryDirectJob';
+import CeiCrawlerService from '../services/CeiCrawlerService';
 
 const FILES = {
     CONFIGURATION: 'configuration'
@@ -19,9 +23,16 @@ class ConfigurationService {
     }
 
     async saveConfiguration(configuration) {
+        // Save file
         const rootPath = await FileSystemUtils.getDataPath();
         const path = `${rootPath}/${FILES.CONFIGURATION}`;
         await fs.promises.writeFile(path, JSON.stringify(configuration));
+
+        // Restart jobs and configurations
+        await CeiCrawlerService.freeUpInstance(true);
+        await UpdatePricesJob.updateConfig();
+        UpdateStockHistoryJob.run();
+        UpdateTreasuryDirectJob.run();
     }
 
     async getStockOptions() {

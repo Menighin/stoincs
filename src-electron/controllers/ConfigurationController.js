@@ -1,6 +1,4 @@
 import { ipcMain } from 'electron';
-import UpdatePricesJob from '../jobs/UpdatePricesJob';
-import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
 import ConfigurationService from '../services/ConfigurationService';
 
 const METHODS = {
@@ -22,8 +20,6 @@ ipcMain.on(METHODS.GET_CONFIGURATION, async (event, arg) => {
 ipcMain.on(METHODS.UPDATE_CONFIGURATION, async (event, arg) => {
     try {
         await ConfigurationService.saveConfiguration(arg);
-        await UpdatePricesJob.updateConfig();
-        UpdateStockHistoryJob.run();
         event.reply(METHODS.UPDATE_CONFIGURATION, { status: 'success' });
     } catch (e) {
         event.reply(METHODS.UPDATE_CONFIGURATION, { status: 'error', message: e.message });

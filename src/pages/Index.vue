@@ -9,8 +9,9 @@
             aria-label="Porquinho Digital Logo"
         ></inline-svg>
 
-        <q-dialog v-model="intro">
-            <div style="width: 800px">
+        <q-dialog v-model="intro" persistent>
+            <div style="width: 800px; position: relative">
+                <q-btn icon="close" flat round dense v-close-popup @click="closeIntro" style="position: absolute; right: 5px; top: 5px; z-index: 99999999" />
                 <q-carousel
                     transition-prev="slide-right"
                     transition-next="slide-left"
@@ -67,7 +68,7 @@
                             aria-label="Porquinho Digital Logo"
                         ></inline-svg>
                         <div class="q-mt-md text-center">
-                            <strong>Bons investimentos!</strong>
+                            <h5 style="padding: 0; margin: 0"><strong>Bons investimentos!</strong></h5>
                         </div>
                     </q-carousel-slide>
                 </q-carousel>
@@ -87,10 +88,19 @@ export default {
     },
     data() {
         return {
-            intro: true,
+            intro: false,
             lorem: 'Lorem ipsum dolor sit amet consectetur, adipisicing elit. Natus, ratione eum minus fuga, quasi dicta facilis corporis magnam, suscipit at quo nostrum!',
             slide: 1
         };
+    },
+    methods: {
+        closeIntro() {
+            localStorage.setItem('intro', true);
+        }
+    },
+    mounted() {
+        if (!localStorage.getItem('intro'))
+            this.intro = true;
     }
 };
 </script>

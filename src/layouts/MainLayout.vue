@@ -20,7 +20,7 @@
                 <q-btn
                     round
                     class="q-mx-sm"
-                    :icon="userInfo === null ? 'eva-google-outline' : undefined">
+                    :icon="userInfo === null ? 'eva-google' : undefined">
                     <q-avatar size="32px" v-if="userInfo !== null">
                         <img :src="userInfo.photo">
                     </q-avatar>

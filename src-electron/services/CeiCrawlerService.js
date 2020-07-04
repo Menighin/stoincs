@@ -49,28 +49,34 @@ class CeiCrawlerService {
         console.log(`[CEI CRAWLER SERVICE] Wait is over!`);
     }
 
-    async _freeUpInstance() {
+    async freeUpInstance(instantly = false) {
         console.log('[CEI CRAWLER SERVICE] Freeing instance...');
         this._isFree = true;
 
         // If freed instance is not used for some time, closes it
-        if (this._closeTimeout === null)
+        if (this._closeTimeout === null && !instantly)
             this._closeTimeout = setTimeout(async () => {
                 console.log('[CEI CRAWLER SERVICE] Closing instance after some time idle...');
-                await this._ceiCrawler.close();
+                if (this._ceiCrawler != null)
+                    await this._ceiCrawler.close();
                 this._ceiCrawler = null;
                 this._closeTimeout = null;
             }, 60 * 1000);
+
+        if (instantly) {
+            this._closeTimeout = null;
+            this._ceiCrawler = null;
+        }
     }
 
     async getStockHistory(startDate, endDate) {
         const ceiCrawler = await this._getFreeInstance();
         try {
             const result = await ceiCrawler.getStockHistory(startDate, endDate);
-            await this._freeUpInstance();
+            await this.freeUpInstance();
             return result;
         } catch (e) {
-            await this._freeUpInstance();
+            await this.freeUpInstance();
             throw e;
         }
     }
@@ -79,10 +85,10 @@ class CeiCrawlerService {
         const ceiCrawler = await this._getFreeInstance();
         try {
             const result = await ceiCrawler.getWallet(date);
-            await this._freeUpInstance();
+            await this.freeUpInstance();
             return result;
         } catch (e) {
-            await this._freeUpInstance();
+            await this.freeUpInstance();
             throw e;
         }
     }
