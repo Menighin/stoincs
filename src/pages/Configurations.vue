@@ -47,12 +47,14 @@
                             </q-icon>
                         </div>
 
+                        <q-item-label header class="q-my-none q-py-none">Atualizar automaticamente? <q-checkbox v-model="autoUpdate" /></q-item-label>
+
                         <q-item-label header>Quais ações devem ter o valor atualizado?</q-item-label>
                         <div class="q-gutter-md row items-start">
-                            <q-input placeholder="Código" v-model="stockToAdd" @keydown.enter="addStock" filled mask="AAAA##" />
-                            <q-btn flat round color="primary" class="q-mx-sm q-my-lg" icon="eva-plus-circle-outline" @click="addStock"/>
-                            <q-btn flat round color="primary" class="q-mx-sm q-my-lg" icon="eva-trash-2-outline" @click="clearStocks"/>
-                            <q-btn flat round color="primary" class="q-mx-sm q-my-lg" icon="eva-more-vertical-outline">
+                            <q-input dense placeholder="Código" v-model="stockToAdd" @keydown.enter="addStock" filled mask="AAAA##" />
+                            <q-btn flat round color="primary" class="q-mx-sm q-my-md" icon="eva-plus-circle-outline" @click="addStock"/>
+                            <q-btn flat round color="primary" class="q-mx-sm q-my-md" icon="eva-trash-2-outline" @click="clearStocks"/>
+                            <q-btn flat round color="primary" class="q-mx-sm q-my-md" icon="eva-more-vertical-outline">
                                 <q-menu>
                                     <q-list style="min-width: 100px">
                                         <q-item clickable v-close-popup @click="addWalletStocks">
@@ -76,14 +78,14 @@
                         </div>
 
                         <q-item-label header>Quantas ações devem ser atualizadas por tick?</q-item-label>
-                        <q-input v-model="priceUpdate.many" @blur="priceUpdate.many = Math.max(1, priceUpdate.many)" type="number" filled/>
+                        <q-input dense v-model="priceUpdate.many" @blur="priceUpdate.many = Math.max(1, priceUpdate.many)" type="number" filled/>
 
                         <q-item-label header>Qual o intervalo, em minutos, entre cada tick?</q-item-label>
-                        <q-input v-model="priceUpdate.when" @blur="priceUpdate.when = Math.max(1, priceUpdate.when)" type="number" filled/>
+                        <q-input dense v-model="priceUpdate.when" @blur="priceUpdate.when = Math.max(1, priceUpdate.when)" type="number" filled/>
 
                         <q-item-label header>Entre quais horas do dia os preços devem ser atualizados?</q-item-label>
                         <div class="row">
-                            <q-input class="q-pr-sm" filled v-model="priceUpdate.startTime" mask="time" :rules="['time']" label="Início">
+                            <q-input dense class="q-pr-sm q-pb-none" filled v-model="priceUpdate.startTime" mask="time" :rules="['time']" label="Início">
                                 <template v-slot:append>
                                     <q-icon name="access_time" class="cursor-pointer">
                                         <q-popup-proxy transition-show="scale" transition-hide="scale">
@@ -92,7 +94,7 @@
                                     </q-icon>
                                 </template>
                             </q-input>
-                            <q-input class="q-pl-sm" filled v-model="priceUpdate.endTime" mask="time" :rules="['time']" label="Fim">
+                            <q-input dense class="q-pl-sm q-pb-none" filled v-model="priceUpdate.endTime" mask="time" :rules="['time']" label="Fim">
                                 <template v-slot:append>
                                     <q-icon name="access_time" class="cursor-pointer">
                                         <q-popup-proxy transition-show="scale" transition-hide="scale">
@@ -135,7 +137,8 @@ export default {
             walletStocks: [],
             historyStocks: [],
             Math: Math,
-            wallet: []
+            wallet: [],
+            autoUpdate: false
         };
     },
     methods: {
@@ -146,7 +149,7 @@ export default {
                 alphaVantageKey: this.alphaVantageKey,
                 priceUpdate: {
                     ...this.priceUpdate,
-                    stocks: this.stocks
+                    auto: this.autoUpdate
                 }
             };
 
@@ -213,7 +216,6 @@ export default {
     },
     mounted() {
         ipcRenderer.on('configuration/get-stock-options', (event, response) => {
-            console.log(response);
             if (response.status === 'success') {
                 this.walletStocks = response.data.wallet;
                 this.historyStocks = response.data.stockHistory;
@@ -237,13 +239,15 @@ export default {
                 this.username = response.data.username || '';
                 this.password = response.data.password || '';
                 this.alphaVantageKey = response.data.alphaVantageKey || '';
-                this.priceUpdate = response.data.priceUpdate || {
-                    which: 'none',
-                    many: 1,
-                    when: 1,
-                    startTime: '00:00',
-                    endTime: '00:00'
-                };
+                this.priceUpdate = response.data.priceUpdate;
+
+                if (!this.priceUpdate.auto) this.priceUpdate.auto = true;
+                if (!this.priceUpdate.many) this.priceUpdate.many = 1;
+                if (!this.priceUpdate.when) this.priceUpdate.when = 1;
+                if (!this.priceUpdate.startTime) this.priceUpdate.startTime = '00:00';
+                if (!this.priceUpdate.endTime) this.priceUpdate.endTime = '00:00';
+
+                this.autoUpdate = this.priceUpdate.auto;
             } else {
                 this.$q.notify({ type: 'negative', message: `Error ao ler suas configurações: ${response.error.message}` });
                 console.error(response.error);

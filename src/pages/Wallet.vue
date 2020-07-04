@@ -58,12 +58,27 @@
             </template>
 
             <q-td auto-width slot="body-cell-price" slot-scope="props" :props="props">
-                <q-spinner v-if="loadingStocks[props.row.code] === 1" color="primary" size="12px" />
-                <div class="q-pl-sm price-cell" :class="{ 'updating-price': loadingStocks[props.row.code] === 1, 'value-up': props.row.changePrice > 0, 'value-down': props.row.changePrice < 0 }">
+                <div class="q-pl-sm price-cell" v-if="!editingStockPrice[props.row.code]" :class="{ 'updating-price': loadingStocks[props.row.code], 'value-up': props.row.changePrice > 0, 'value-down': props.row.changePrice < 0 }">
                     {{ NumberUtils.formatCurrency(props.row.price) }}
                     <div class="variation" v-if="configuration.variation === 'price'">{{ NumberUtils.formatCurrency(props.row.changePrice, true) }}</div>
                     <div class="variation" v-if="configuration.variation === 'percentage'">{{ NumberUtils.formatPercentage(props.row.changePercent) }}</div>
                 </div>
+                <q-input
+                    borderless
+                    mask="R$ #,##" reverse-fill-mask
+                    fill-mask="0"
+                    type="text"
+                    v-model="newPrice"
+                    placeholder="Preço"
+                    ref="editPriceRef"
+                    class="q-pa-none edit-price-input"
+                    @keydown.enter="saveStockPrice(props.row.code)"
+                    @keydown.esc="cancelStockPriceEdit(props.row.code)"
+                    @blur="cancelStockPriceEdit(props.row.code)"
+                    v-if="editingStockPrice[props.row.code]">
+                </q-input>
+                <q-spinner v-if="loadingStocks[props.row.code]" color="primary" size="12px" class="update-price" />
+                <q-btn v-if="!loadingStocks[props.row.code] && !editingStockPrice[props.row.code]" icon="eva-edit-outline" flat round size="12px" color="primary" class="edit-price" @click="editPrice(props.row.code)" />
             </q-td>
 
             <q-td auto-width slot="body-cell-lastUpdated" slot-scope="props" :props="props">
@@ -122,6 +137,9 @@
 
                 <q-card-section style="max-height: 80vh" class="scroll">
                     <q-card-section>
+                        <div class="text-h6">Preços</div>
+                        <q-checkbox label="Atualizar preços automaticamente" v-model="autoUpdatePrices" @input="autoUpdatePricesChange" />
+
                         <div class="text-h6">Visualização</div>
                         <q-item-label header>Como devem ser exibidas as variações de valor?</q-item-label>
                         <q-radio @input="saveConfig" v-model="configuration.variation" val="price" label="Reais" />
@@ -146,6 +164,7 @@ export default {
         return {
             now: new Date(),
             loadingStocks: {},
+            editingStockPrice: {},
             wallet: [],
             stockPrices: {},
             consolidated: {},
@@ -201,6 +220,7 @@ export default {
                     label: 'Preço Atual',
                     field: 'price',
                     sortable: true,
+                    headerStyle: 'padding-right: 54px',
                     format: val => NumberUtils.formatCurrency(val)
                 },
                 {
@@ -236,7 +256,9 @@ export default {
             },
             NumberUtils: NumberUtils,
             DateUtils: DateUtils,
-            updateSlice: []
+            updateSlice: [],
+            autoUpdatePrices: false,
+            newPrice: ''
         };
     },
     methods: {
@@ -257,6 +279,7 @@ export default {
             ipcRenderer.send('wallet/get');
             ipcRenderer.send('stock-prices/get');
             ipcRenderer.send('stockHistory/consolidated');
+            ipcRenderer.send('configuration/get');
             const config = localStorage.getItem('wallet/config');
             if (config)
                 this.configuration = JSON.parse(config);
@@ -292,6 +315,23 @@ export default {
             ipcRenderer.send('wallet/update-label', { stock: this.editLabelCode, label: this.editLabel });
             this.editLabel = '';
             this.editLabelDialog = false;
+        },
+        autoUpdatePricesChange() {
+            ipcRenderer.send('configuration/auto-update-price', { autoUpdate: this.autoUpdatePrices });
+        },
+        async editPrice(code) {
+            this.$set(this.editingStockPrice, code, 1);
+            await this.$nextTick();
+            this.$refs.editPriceRef.focus();
+        },
+        saveStockPrice(code) {
+            this.stockPrices[code].price = NumberUtils.getNumberFromCurrency(this.newPrice);
+            this.newPrice = '';
+            this.$set(this.editingStockPrice, code, 0);
+        },
+        cancelStockPriceEdit(code) {
+            this.newPrice = '';
+            this.$set(this.editingStockPrice, code, 0);
         }
     },
     computed: {
@@ -391,6 +431,25 @@ export default {
             }
         });
 
+        ipcRenderer.on('configuration/get', (event, response) => {
+            if (response.status === 'success') {
+                const priceUpdate = response.data.priceUpdate || {};
+                this.autoUpdatePrices = priceUpdate.auto || false;
+            } else {
+                this.$q.notify({ type: 'negative', message: `Error ao ler suas configurações: ${response.error.message}` });
+                console.error(response.error);
+            }
+        });
+
+        ipcRenderer.on('configuration/auto-update-price', (event, response) => {
+            if (response.status === 'success') {
+                this.$q.notify({ type: 'positive', message: `Atualização automática de preços atualizada!` });
+            } else {
+                this.$q.notify({ type: 'negative', message: `Error ao ler suas configurações: ${response.error.message}` });
+                console.error(response.error);
+            }
+        });
+
         this.init();
     },
     beforeDestroy() {
@@ -434,6 +493,19 @@ export default {
                         .variation {
                             font-size: 10px;
                         }
+                    }
+
+                    .edit-price-input {
+                        height: 12px;
+                        input {
+                            text-align: right;
+                            padding-right: 38px;
+                            font-size: 13px;
+                        }
+                    }
+
+                    .update-price {
+                        margin: 12px;
                     }
 
                     .value-up {

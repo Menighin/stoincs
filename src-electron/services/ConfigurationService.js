@@ -22,17 +22,19 @@ class ConfigurationService {
         return configurations;
     }
 
-    async saveConfiguration(configuration) {
+    async saveConfiguration(configuration, restartJobs = true) {
         // Save file
         const rootPath = await FileSystemUtils.getDataPath();
         const path = `${rootPath}/${FILES.CONFIGURATION}`;
         await fs.promises.writeFile(path, JSON.stringify(configuration));
 
         // Restart jobs and configurations
-        await CeiCrawlerService.freeUpInstance(true);
-        await UpdatePricesJob.updateConfig();
-        UpdateStockHistoryJob.run();
-        UpdateTreasuryDirectJob.run();
+        if (restartJobs) {
+            await CeiCrawlerService.freeUpInstance(true);
+            await UpdatePricesJob.updateConfig();
+            UpdateStockHistoryJob.run();
+            UpdateTreasuryDirectJob.run();
+        }
     }
 
     async getStockOptions() {
@@ -58,6 +60,15 @@ class ConfigurationService {
             wallet: Object.keys(uniqueWalletStocks).sort(),
             stockHistory: Object.keys(uniqueHistoryStocks).sort()
         };
+    }
+
+    async updateAutoUpdatePrice(value) {
+        const configuration = await this.getConfiguration();
+        if (!configuration.priceUpdate)
+            configuration.priceUpdate = {};
+        configuration.priceUpdate.auto = value;
+        await this.saveConfiguration(configuration, false);
+        await UpdatePricesJob.updateConfig();
     }
 
 }
