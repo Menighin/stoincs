@@ -1,5 +1,5 @@
 <template>
-    <q-page class="">
+    <q-page class="wallet-page">
         <div class="filter">
             <q-btn outline color="primary" label="Sincronizar com Histórico" class="q-mx-sm q-my-lg" icon="eva-sync-outline" @click="downloadFromHistory"/>
             <q-btn outline color="primary" class="q-mx-sm q-my-lg" icon="eva-settings-2-outline" @click="configDialog = true"/>
@@ -11,7 +11,7 @@
             title="Carteira de ações"
             :data="dataTable"
             :columns="columns"
-            row-key="row => row.code"
+            :row-key="row => row.code"
             flat
             bordered
             :rows-per-page-options="[50, 100, 150]"
@@ -46,10 +46,11 @@
                     outlined
                     dense
                     options-dense
-                    :display-value="`Colunas (${visibleColumns.length}/${columns.length})`"
+                    :display-value="`Colunas (${visibleColumns.length}/${columns.length - 1})`"
                     emit-value
                     map-options
-                    :options="columns"
+                    :options="columns.filter(o => o.name != 'action')"
+                    @input="changeVisibleColumns"
                     option-value="name"
                     options-cover
                     style="min-width: 150px"
@@ -82,7 +83,8 @@
             </q-td>
 
             <q-td auto-width slot="body-cell-lastUpdated" slot-scope="props" :props="props">
-                {{ props.row.lastUpdated ? `${DateUtils.getFormatedHoursFromSeconds(parseInt((new Date() - new Date(props.row.lastUpdated)) / 1000), true, true, false) }` : null }}
+                {{ props }}
+                <!-- {{ props.row.lastUpdated ? `${DateUtils.getFormatedHoursFromSeconds(parseInt((new Date() - new Date(props.row.lastUpdated)) / 1000), true, true, false) }` : null }} -->
             </q-td>
 
             <q-td auto-width slot="body-cell-historicPosition" slot-scope="props" :props="props" :class="{ 'value-up': props.row.historicPosition > 0, 'value-down': props.row.historicPosition < 0 }">
@@ -231,6 +233,13 @@ export default {
                     format: val => val ? DateUtils.toString(new Date(val)) : null
                 },
                 {
+                    name: 'lastTradingDay',
+                    align: 'center',
+                    label: 'Ultima atualização Alpha Vantage',
+                    field: 'lastTradingDay',
+                    format: val => val ? DateUtils.toString(new Date(val), true, false) : null
+                },
+                {
                     name: 'historicPosition',
                     align: 'right',
                     label: 'Posição Histórica',
@@ -286,7 +295,7 @@ export default {
         },
         syncRow(row) {
             this.$set(this.loadingStocks, row.code, 1);
-            ipcRenderer.send('stock-prices/update', { stocks: [row.code] });
+            ipcRenderer.send('stock-prices/auto-update', { stocks: [row.code] });
         },
         filterLabelFn(val, update) {
             update(() => {
@@ -321,17 +330,25 @@ export default {
         },
         async editPrice(code) {
             this.$set(this.editingStockPrice, code, 1);
+            this.newPrice = this.stockPrices[code].price.toFixed(2).toString();
             await this.$nextTick();
-            this.$refs.editPriceRef.focus();
+            this.$refs.editPriceRef.select();
         },
         saveStockPrice(code) {
             this.stockPrices[code].price = NumberUtils.getNumberFromCurrency(this.newPrice);
+            this.stockPrices[code].changePrice = null;
+            this.stockPrices[code].changePercent = null;
+            this.stockPrices[code].lastUpdated = new Date();
             this.newPrice = '';
             this.$set(this.editingStockPrice, code, 0);
+            ipcRenderer.send('stock-prices/update-stock-price', { code: code, stockPrice: this.stockPrices[code] });
         },
         cancelStockPriceEdit(code) {
             this.newPrice = '';
             this.$set(this.editingStockPrice, code, 0);
+        },
+        changeVisibleColumns() {
+            localStorage.setItem('wallet/columns', JSON.stringify(this.visibleColumns));
         }
     },
     computed: {
@@ -347,8 +364,9 @@ export default {
                     value: price * w.quantity,
                     price: price,
                     changePrice: this.stockPrices[w.code] ? this.stockPrices[w.code].changePrice : 0,
-                    changePercent: this.stockPrices[w.code] ? this.stockPrices[w.code].changePrice / this.stockPrices[w.code].price * 100 : 0,
+                    changePercent: this.stockPrices[w.code] ? this.stockPrices[w.code].changePercent : 0,
                     lastUpdated: this.stockPrices[w.code] ? this.stockPrices[w.code].lastUpdated : null,
+                    lastTradingDay: this.stockPrices[w.code] ? this.stockPrices[w.code].lastTradingDay : null,
                     averageBuyPrice: averageBuyPrice,
                     historicPosition: historicPosition,
                     historicVariation: historicVariation * 100
@@ -407,11 +425,13 @@ export default {
         });
 
         ipcRenderer.on('stock-prices/updating', (event, response) => {
-            for (const stock of response.data)
+            for (const stock of response.data) {
                 this.$set(this.loadingStocks, stock, 1);
+                this.cancelStockPriceEdit(stock);
+            }
         });
 
-        ipcRenderer.on('stock-prices/update', (event, response) => {
+        ipcRenderer.on('stock-prices/auto-update', (event, response) => {
             for (const s of response.data)
                 this.$set(this.loadingStocks, s.code, 0);
 
@@ -450,6 +470,18 @@ export default {
             }
         });
 
+        ipcRenderer.on('stock-prices/update-stock-price', (event, response) => {
+            if (response.status === 'success') {
+                this.$q.notify({ type: 'positive', message: `Preço atualizado com suceso!` });
+            } else {
+                this.$q.notify({ type: 'negative', message: `Error ao salvar preço: ${response.error.message}` });
+                console.error(response.error);
+            }
+        });
+
+        if (localStorage.getItem('wallet/columns'))
+            this.visibleColumns = JSON.parse(localStorage.getItem('wallet/columns'));
+
         this.init();
     },
     beforeDestroy() {
@@ -459,69 +491,71 @@ export default {
 
 <style lang="scss">
 
-    .filter {
-        text-align: right;
-    }
-
-    .table-container {
-
-        .q-table__middle {
-            max-height: 700px;
+    .wallet-page {
+        .filter {
+            text-align: right;
         }
 
-        thead tr th {
-            position: sticky;
-            z-index: 1;
-        }
+        .table-container {
 
-        thead tr:first-child th {
-            top: 0;
-            background: #FFF;
-        }
-
-        .stock-table {
-            table {
-                tbody {
-                    .price-cell {
-                        display: inline-block;
-                        vertical-align: middle;
-
-                        &.updating-price {
-                            color: #aaa !important;
-                        }
-
-                        .variation {
-                            font-size: 10px;
-                        }
-                    }
-
-                    .edit-price-input {
-                        height: 12px;
-                        input {
-                            text-align: right;
-                            padding-right: 38px;
-                            font-size: 13px;
-                        }
-                    }
-
-                    .update-price {
-                        margin: 12px;
-                    }
-
-                    .value-up {
-                        color: #21BA45;
-                    }
-
-                    .value-down {
-                        color: #C10015;
-                    }
-
-                    tr:nth-child(odd) {
-                        background: #f7f7f7;
-                    }
-                }
+            .q-table__middle {
+                max-height: 700px;
             }
 
+            thead tr th {
+                position: sticky;
+                z-index: 1;
+            }
+
+            thead tr:first-child th {
+                top: 0;
+                background: #FFF;
+            }
+
+            .stock-table {
+                table {
+                    tbody {
+                        .price-cell {
+                            display: inline-block;
+                            vertical-align: middle;
+
+                            &.updating-price {
+                                color: #aaa !important;
+                            }
+
+                            .variation {
+                                font-size: 10px;
+                            }
+                        }
+
+                        .edit-price-input {
+                            height: 12px;
+                            input {
+                                text-align: right;
+                                padding-right: 38px;
+                                font-size: 13px;
+                            }
+                        }
+
+                        .update-price {
+                            margin: 12px;
+                        }
+
+                        .value-up {
+                            color: #21BA45;
+                        }
+
+                        .value-down {
+                            color: #C10015;
+                        }
+
+                        tr:nth-child(odd) {
+                            background: #f7f7f7;
+                        }
+                    }
+                }
+
+            }
         }
     }
 

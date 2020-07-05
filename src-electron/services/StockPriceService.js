@@ -26,7 +26,13 @@ class StockPriceService {
         await fs.promises.writeFile(path, JSON.stringify(stockPrices));
     }
 
-    async updateStockPrices(stocks) {
+    async updateStockPrice(code, stockPrice) {
+        const stockPrices = await this.getStockPrices();
+        stockPrices[code] = stockPrice;
+        await this.saveStockPrices(stockPrices);
+    }
+
+    async autoUpdateStockPrices(stocks) {
         console.log(`Updating stocks ${stocks.join(', ')}...`);
 
         const promises = stocks.map(s => AlphaVantageService.getLastValue(s));

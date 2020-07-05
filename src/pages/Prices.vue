@@ -139,7 +139,7 @@ export default {
         },
         syncStock(code) {
             this.$set(this.loadingStocks, code, 1);
-            ipcRenderer.send('stock-prices/update', { stocks: [code] });
+            ipcRenderer.send('stock-prices/auto-update', { stocks: [code] });
         },
         sort(code) {
             localStorage.setItem('prices-page-sort', code);
@@ -248,7 +248,7 @@ export default {
                 this.$set(this.loadingStocks, stock, 1);
         });
 
-        ipcRenderer.on('stock-prices/update', (event, response) => {
+        ipcRenderer.on('stock-prices/auto-update', (event, response) => {
             for (const s of response.data)
                 this.$set(this.loadingStocks, s.code, 0);
 

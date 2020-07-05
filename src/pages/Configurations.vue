@@ -154,7 +154,7 @@ export default {
             };
 
             ipcRenderer.send('configuration/update', configuration);
-            ipcRenderer.send('stock-prices/save-stocks', this.stocks);
+            ipcRenderer.send('stock-prices/save-stocks-configuration', this.stocks);
         },
         addStock() {
             if (!this.stocks)
