@@ -24,8 +24,10 @@ class CeiCrawlerService {
         if (this._isFree === false) {
             console.log('[CEI CRAWLER SERVICE] Will wait until instance is free');
             await this._waitForFreeInstance();
-            this._isFree = false;
-            return this._ceiCrawler;
+            if (this._ceiCrawler != null) {
+                this._isFree = false;
+                return this._ceiCrawler;
+            }
         }
 
         this._isFree = false;
@@ -71,6 +73,7 @@ class CeiCrawlerService {
 
     async getStockHistory(startDate, endDate) {
         const ceiCrawler = await this._getFreeInstance();
+        console.log('[CEI CRAWLER SERVICE] Getting stock history...');
         try {
             const result = await ceiCrawler.getStockHistory(startDate, endDate);
             await this.freeUpInstance();
@@ -83,6 +86,7 @@ class CeiCrawlerService {
 
     async getWallet(date) {
         const ceiCrawler = await this._getFreeInstance();
+        console.log('[CEI CRAWLER SERVICE] Getting wallet...');
         try {
             const result = await ceiCrawler.getWallet(date);
             await this.freeUpInstance();

@@ -19,6 +19,7 @@
             :pagination.sync="pagination"
             :visible-columns="visibleColumns"
             :loading="tableLoading"
+            ref="table"
         >
             <template v-slot:top>
                 <h5 style="margin: 0 5px 0 0">Carteira de Ações</h5>
@@ -75,6 +76,7 @@
                     class="q-pa-none edit-price-input"
                     @keydown.enter="saveStockPrice(props.row.code)"
                     @keydown.esc="cancelStockPriceEdit(props.row.code)"
+                    @keydown.tab="saveAndEditNextRow(props, $event)"
                     @blur="cancelStockPriceEdit(props.row.code)"
                     v-if="editingStockPrice[props.row.code]">
                 </q-input>
@@ -83,8 +85,7 @@
             </q-td>
 
             <q-td auto-width slot="body-cell-lastUpdated" slot-scope="props" :props="props">
-                {{ props }}
-                <!-- {{ props.row.lastUpdated ? `${DateUtils.getFormatedHoursFromSeconds(parseInt((new Date() - new Date(props.row.lastUpdated)) / 1000), true, true, false) }` : null }} -->
+                {{ props.row.lastUpdated ? `${DateUtils.getFormatedHoursFromSeconds(parseInt((new Date() - new Date(props.row.lastUpdated)) / 1000), true, true, false) }` : null }}
             </q-td>
 
             <q-td auto-width slot="body-cell-historicPosition" slot-scope="props" :props="props" :class="{ 'value-up': props.row.historicPosition > 0, 'value-down': props.row.historicPosition < 0 }">
@@ -330,7 +331,7 @@ export default {
         },
         async editPrice(code) {
             this.$set(this.editingStockPrice, code, 1);
-            this.newPrice = this.stockPrices[code].price.toFixed(2).toString();
+            this.newPrice = this.stockPrices[code].price.toFixed(2).toString().replace('.', ',');
             await this.$nextTick();
             this.$refs.editPriceRef.select();
         },
@@ -343,12 +344,22 @@ export default {
             this.$set(this.editingStockPrice, code, 0);
             ipcRenderer.send('stock-prices/update-stock-price', { code: code, stockPrice: this.stockPrices[code] });
         },
+        async editNextStockPrice(index) {
+            const rowsPerPage = this.$refs.table.pagination.rowsPerPage;
+            let code = this.$refs.table.$el.querySelectorAll('tbody tr')[(index + 1) % rowsPerPage].querySelector('td').textContent;
+            await this.editPrice(code);
+        },
         cancelStockPriceEdit(code) {
             this.newPrice = '';
             this.$set(this.editingStockPrice, code, 0);
         },
         changeVisibleColumns() {
             localStorage.setItem('wallet/columns', JSON.stringify(this.visibleColumns));
+        },
+        saveAndEditNextRow(props, event) {
+            event.preventDefault();
+            this.saveStockPrice(props.row.code);
+            this.editNextStockPrice(props.rowIndex);
         }
     },
     computed: {

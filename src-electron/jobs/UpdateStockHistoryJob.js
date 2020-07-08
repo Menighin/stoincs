@@ -24,6 +24,7 @@ class UpdateStockHistoryJob {
 
         try {
             const jobMetadata = await StockHistoryService.getStockHistoryJobMetadata();
+            const today = new Date();
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
 
@@ -33,8 +34,13 @@ class UpdateStockHistoryJob {
                 stocksByAccount = await CeiCrawlerService.getStockHistory();
             } else {
                 const lastRun = jobMetadata.lastRun;
-                if (!DateUtils.isSameDate(yesterday, lastRun)) {
-                    stocksByAccount = await CeiCrawlerService.getStockHistory(lastRun, yesterday);
+                if (!DateUtils.isSameDate(today, lastRun)) {
+                    const lastStockHistoryDate = (await StockHistoryService.getStockHistoryOperations())
+                        .reduce((p, c) => {
+                            return p > c.date ? p : c.date;
+                        }, new Date(2000, 1, 1));
+                    lastStockHistoryDate.setDate(lastStockHistoryDate.getDate() + 1);
+                    stocksByAccount = await CeiCrawlerService.getStockHistory(lastStockHistoryDate, yesterday);
                 } else {
                     NotificationService.notifyMessage(NOTIFICATION.TITLE, `Negociações já estão atualizadas com o CEI`, NOTIFICATION.ICON);
                     NotificationService.notifyLoadingFinish(evtCode);
