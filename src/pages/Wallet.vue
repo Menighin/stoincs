@@ -345,9 +345,9 @@ export default {
             ipcRenderer.send('stock-prices/update-stock-price', { code: code, stockPrice: this.stockPrices[code] });
         },
         async editNextStockPrice(index) {
-            const rowsPerPage = this.$refs.table.pagination.rowsPerPage;
-            let code = this.$refs.table.$el.querySelectorAll('tbody tr')[(index + 1) % rowsPerPage].querySelector('td').textContent;
-            await this.editPrice(code);
+            const table = this.$refs.table;
+            const nextRow = table.filteredSortedRows[(index + 1) % table.filteredSortedRows.length];
+            await this.editPrice(nextRow.code);
         },
         cancelStockPriceEdit(code) {
             this.newPrice = '';
