@@ -6,6 +6,7 @@ import SyncGoogleDriveJob from '../jobs/SyncGoogleDriveJob';
 import NotificationService from '../services/NotificationService';
 import Controllers from '../controllers/main';
 import GoogleDriveService from '../services/GoogleDriveService';
+import AutoUpdaterService from '../services/AutoUpdaterService';
 
 try {
     if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
@@ -56,6 +57,10 @@ function createWindow() {
     UpdatePricesJob.setup(mainWindow);
     UpdateTreasuryDirectJob.setup();
     SyncGoogleDriveJob.setup(mainWindow);
+    AutoUpdaterService.setup(mainWindow);
+    setTimeout(() => {
+        AutoUpdaterService.checkForUpdates();
+    }, 5000);
 }
 
 app.on('ready', () => {

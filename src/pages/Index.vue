@@ -2,6 +2,7 @@
     <q-page class="flex flex-center">
         <img alt="Quasar logo" src="~assets/snout.svg" v-show="false">
         <inline-svg
+            ref="snoutLoader"
             src="img/snout.svg"
             fill="black"
             id="logo-svg"
@@ -80,6 +81,7 @@
 
 <script>
 import InlineSvg from 'vue-inline-svg';
+import EventBus from '../components/EventBus';
 
 export default {
     name: 'PageIndex',
@@ -96,11 +98,27 @@ export default {
     methods: {
         closeIntro() {
             localStorage.setItem('intro', true);
+        },
+        snoutProgress(progress) {
+            this.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-3")';
+            this.$refs.snoutLoader.$el.getElementById('gradient-3').children[0].setAttribute('offset', 1 - progress);
+            this.$refs.snoutLoader.$el.getElementById('gradient-3').children[1].setAttribute('offset', 1 - progress);
         }
     },
     mounted() {
         if (!localStorage.getItem('intro'))
             this.intro = true;
+
+        EventBus.$on('snout-loader-update-progress', this.snoutProgress);
+
+        let p = 0.1;
+        setInterval(() => {
+            EventBus.$emit('snout-loader-update-progress', p);
+            p += 0.1;
+        }, 5000);
+    },
+    beforeDestroy() {
+        EventBus.$off('snout-loader-update-progress', this.snoutProgress);
     }
 };
 </script>

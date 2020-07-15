@@ -1,5 +1,5 @@
 <template>
-    <div class="snout-loader" ref="snoutLoaderContainer">
+    <div class="snout-loader active" ref="snoutLoaderContainer">
         <div class="message" ref="message">{{ message }}</div>
         <div class="svg">
             <inline-svg
@@ -29,7 +29,8 @@ export default {
         return {
             loading: [],
             item: null,
-            interval: null
+            interval: null,
+            progress: false
         };
     },
     computed: {
@@ -68,7 +69,8 @@ export default {
         const self = this;
         EventBus.$on('snout-loader-start', (evt) => {
             self.loading.push(evt);
-            self.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-2")';
+            if (!this.progress)
+                self.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-2")';
             self.$refs.snoutLoader.$el.classList.add('loading');
 
             if (this.item === null) {
@@ -84,7 +86,8 @@ export default {
                 clearInterval(this.interval);
                 setTimeout(() => {
                     self.loading = self.loading.filter(e => e.code !== evtCode);
-                    self.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-1")';
+                    if (!this.progress)
+                        self.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-1")';
                     self.$refs.snoutLoader.$el.classList.remove('loading');
                     this.item = null;
                     this.$refs.message.style.width = `0px`;
@@ -105,6 +108,18 @@ export default {
             self.$refs.snoutLoader.$el.classList.remove('bounce-in');
             self.$refs.snoutLoader.$el.classList.add('bounce-out');
             self.$refs.snoutLoaderContainer.classList.remove('active');
+        });
+
+        EventBus.$on('snout-loader-update-progress', progress => {
+            self.progress = true;
+            self.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-3")';
+            self.$refs.snoutLoader.$el.getElementById('gradient-3').children[0].setAttribute('offset', 1 - progress);
+            self.$refs.snoutLoader.$el.getElementById('gradient-3').children[1].setAttribute('offset', 1 - progress);
+        });
+
+        EventBus.$on('snout-loader-finish-progress', () => {
+            self.progress = false;
+            self.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-1")';
         });
     }
 };

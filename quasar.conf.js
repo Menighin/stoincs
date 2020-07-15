@@ -173,6 +173,9 @@ module.exports = function(ctx) {
                         'deb'
                     ]
                 },
+                publish: {
+                    provider: 'github'
+                },
                 asar: true,
                 asarUnpack: 'node_modules/puppeteer/.local-chromium/**/*'
             },

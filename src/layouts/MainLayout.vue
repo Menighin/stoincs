@@ -135,7 +135,7 @@
             <router-view />
             <!-- <q-btn color="secondary" @click="notify">Notify</q-btn> -->
         </q-page-container>
-        <snout-loader class="snout-loader"></snout-loader>
+        <snout-loader class="snout-loader" ref="snoutLoader"></snout-loader>
     </q-layout>
 </template>
 
@@ -296,6 +296,14 @@ export default {
             this.$q.loading.show({
                 message: 'Atualizando <b>Google Drive</b>...'
             });
+        });
+
+        ipcRenderer.on('auto-update/progress-download', (event, response) => {
+            this.$snout.updateProgress(parseFloat(response.percent / 100));
+        });
+
+        ipcRenderer.on('auto-update/finish-download', (event, response) => {
+            this.$snout.finishProgress();
         });
 
         ipcRenderer.send('google-drive/auto-login');

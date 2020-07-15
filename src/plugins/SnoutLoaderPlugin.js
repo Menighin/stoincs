@@ -8,6 +8,12 @@ export default {
             },
             finish(evtCode) {
                 EventBus.$emit('snout-loader-finish', evtCode);
+            },
+            updateProgress(currentProgress) {
+                EventBus.$emit('snout-loader-update-progress', currentProgress);
+            },
+            finishProgress() {
+                EventBus.$emit('snout-loader-finish-progress');
             }
         };
     }
