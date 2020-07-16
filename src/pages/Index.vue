@@ -103,6 +103,9 @@ export default {
             this.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-3")';
             this.$refs.snoutLoader.$el.getElementById('gradient-3').children[0].setAttribute('offset', 1 - progress);
             this.$refs.snoutLoader.$el.getElementById('gradient-3').children[1].setAttribute('offset', 1 - progress);
+        },
+        finishDownload() {
+            this.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-1")';
         }
     },
     mounted() {
@@ -110,15 +113,11 @@ export default {
             this.intro = true;
 
         EventBus.$on('snout-loader-update-progress', this.snoutProgress);
-
-        let p = 0.1;
-        setInterval(() => {
-            EventBus.$emit('snout-loader-update-progress', p);
-            p += 0.1;
-        }, 5000);
+        EventBus.$on('snout-loader-finish-progress', this.finishDownload);
     },
     beforeDestroy() {
         EventBus.$off('snout-loader-update-progress', this.snoutProgress);
+        EventBus.$off('snout-loader-finish-progress', this.finishDownload);
     }
 };
 </script>

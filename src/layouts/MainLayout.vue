@@ -136,6 +136,24 @@
             <!-- <q-btn color="secondary" @click="notify">Notify</q-btn> -->
         </q-page-container>
         <snout-loader class="snout-loader" ref="snoutLoader"></snout-loader>
+
+        <q-dialog v-model="newVersionDialog" persistent>
+            <q-card style="min-width: 400px">
+                <q-card-section class="row q-ma-sm justify-between items-center">
+                    <inline-svg
+                        src="img/snout.svg"
+                        fill="black"
+                        style="transform: scale(1)"
+                        aria-label="Porquinho Digital Logo"
+                    ></inline-svg>
+                </q-card-section>
+                <q-card-section class="row q-ma-sm justify-between items-center">
+                    <div class="q-mt-md text-center">
+                        Bem-vindo ao <strong>Porquinho Digital</strong>!
+                    </div>
+                </q-card-section>
+            </q-card>
+        </q-dialog>
     </q-layout>
 </template>
 
@@ -145,6 +163,7 @@ import { ipcRenderer } from 'electron';
 import DateUtils from '../../src-electron/utils/DateUtils';
 import SnoutLoader from '../components/SnoutLoader';
 import EventBus from '../components/EventBus';
+import InlineSvg from 'vue-inline-svg';
 
 let notifyId = 0;
 
@@ -152,7 +171,8 @@ export default {
     name: 'MainLayout',
     components: {
         NotificationPopup,
-        SnoutLoader
+        SnoutLoader,
+        InlineSvg
     },
     data() {
         return {
@@ -162,7 +182,8 @@ export default {
             userInfo: null,
             isUploadingToGoogle: false,
             lastGoogleUpload: null,
-            notifications: []
+            notifications: [],
+            newVersionDialog: true
         };
     },
     methods: {
@@ -303,6 +324,7 @@ export default {
         });
 
         ipcRenderer.on('auto-update/finish-download', (event, response) => {
+            this.newVersionDialog = true;
             this.$snout.finishProgress();
         });
 

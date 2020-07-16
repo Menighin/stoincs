@@ -1,5 +1,5 @@
 <template>
-    <div class="snout-loader active" ref="snoutLoaderContainer">
+    <div class="snout-loader" ref="snoutLoaderContainer">
         <div class="message" ref="message">{{ message }}</div>
         <div class="svg">
             <inline-svg

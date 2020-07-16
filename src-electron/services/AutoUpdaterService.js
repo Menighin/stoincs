@@ -42,6 +42,23 @@ class AutoUpdaterService {
         autoUpdater.checkForUpdates();
     }
 
+    fakeUpdate() {
+        let percent = 5;
+        let finish = false;
+        setInterval(() => {
+            if (percent <= 100)
+                this._browserWindow.webContents.send('auto-update/progress-download', { percent: percent });
+            percent += 5;
+        }, 750);
+
+        setInterval(() => {
+            if (percent > 100 && !finish) {
+                this._browserWindow.webContents.send('auto-update/finish-download');
+                finish = true;
+            }
+        }, 500);
+    }
+
 }
 
 export default new AutoUpdaterService();
