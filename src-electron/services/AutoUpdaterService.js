@@ -7,6 +7,8 @@ class AutoUpdaterService {
     /** @type {BrowserWindow} */
     _browserWindow;
 
+    _downloadingVersion = null;
+
     setup(window) {
         this._browserWindow = window;
 
@@ -16,7 +18,8 @@ class AutoUpdaterService {
         });
         autoUpdater.on('update-available', (info) => {
             console.log('[AUTO UPDATER] Update available ' + JSON.stringify(info));
-            NotificationService.notifyMessage('Porquinho Digital', 'Nova versão disponível!', 'fas fa-exclamation');
+            this._downloadingVersion = info.version;
+            NotificationService.notifyMessage('Porquinho Digital', `Baixando nova versão ${info.version}!`, 'fas fa-exclamation');
         });
         autoUpdater.on('update-not-available', (info) => {
             console.log('[AUTO UPDATER] Update not available');
@@ -34,12 +37,16 @@ class AutoUpdaterService {
         });
         autoUpdater.on('update-downloaded', info => {
             console.log('[AUTO UPDATER] Update downloaded ' + JSON.stringify(info));
-            this._browserWindow.webContents.send('auto-update/finish-download');
+            this._browserWindow.webContents.send('auto-update/finish-download', this._downloadingVersion);
         });
     }
 
     checkForUpdates() {
         autoUpdater.checkForUpdates();
+    }
+
+    install() {
+        autoUpdater.quitAndInstall();
     }
 
     fakeUpdate() {

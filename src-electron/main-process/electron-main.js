@@ -60,7 +60,7 @@ function createWindow() {
     AutoUpdaterService.setup(mainWindow);
     setTimeout(() => {
         AutoUpdaterService.checkForUpdates();
-        AutoUpdaterService.fakeUpdate();
+        // AutoUpdaterService.fakeUpdate();
     }, 5000);
 }
 

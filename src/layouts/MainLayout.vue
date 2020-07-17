@@ -138,20 +138,25 @@
         <snout-loader class="snout-loader" ref="snoutLoader"></snout-loader>
 
         <q-dialog v-model="newVersionDialog" persistent>
-            <q-card style="min-width: 400px">
-                <q-card-section class="row q-ma-sm justify-between items-center">
+            <q-card style="min-width: 450px;">
+                <q-card-section class="row q-ma-sm flex flex-center" style="padding-bottom: 0">
                     <inline-svg
                         src="img/snout.svg"
                         fill="black"
-                        style="transform: scale(1)"
+                        style="transform: scale(1);"
                         aria-label="Porquinho Digital Logo"
                     ></inline-svg>
                 </q-card-section>
-                <q-card-section class="row q-ma-sm justify-between items-center">
+                <q-card-section class="row q-ma-sm flex flex-center" style="padding-top: 0">
                     <div class="q-mt-md text-center">
-                        Bem-vindo ao <strong>Porquinho Digital</strong>!
+                        Nova versão do <strong>Porquinho Digital</strong> baixada! Deseja instalar agora?
                     </div>
                 </q-card-section>
+                <q-separator />
+                <q-card-actions align="right">
+                    <q-btn flat @click="newVersionDialog = false">Não</q-btn>
+                    <q-btn flat @click="installUpdate">Sim</q-btn>
+                </q-card-actions>
             </q-card>
         </q-dialog>
     </q-layout>
@@ -183,7 +188,8 @@ export default {
             isUploadingToGoogle: false,
             lastGoogleUpload: null,
             notifications: [],
-            newVersionDialog: true
+            newVersionDialog: false,
+            newVersion: ''
         };
     },
     methods: {
@@ -248,6 +254,9 @@ export default {
             } else {
                 this.$router.push(path);
             }
+        },
+        installUpdate() {
+            ipcRenderer.send('auto-update/install');
         }
     },
     mounted() {
@@ -324,8 +333,11 @@ export default {
         });
 
         ipcRenderer.on('auto-update/finish-download', (event, response) => {
-            this.newVersionDialog = true;
+            this.newVersion = response;
             this.$snout.finishProgress();
+            setTimeout(() => {
+                this.newVersionDialog = true;
+            }, 500);
         });
 
         ipcRenderer.send('google-drive/auto-login');
