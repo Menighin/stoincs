@@ -1,11 +1,11 @@
 <template>
     <div class="snout-loader" ref="snoutLoaderContainer">
         <div class="message" ref="message">{{ message }}</div>
-        <div class="svg">
+        <div class="svg" @click="clickSnout" :class="{ 'clickable': snoutScale > 0 }">
             <inline-svg
                 src="img/snout.svg"
                 fill="black"
-                style="transform: scale(0)"
+                :style="`transform: scale(${snoutScale})`"
                 viewBox="0 0 128 128"
                 width="32"
                 height="32"
@@ -30,7 +30,8 @@ export default {
             loading: [],
             item: null,
             interval: null,
-            progress: false
+            progress: false,
+            snoutScale: 0
         };
     },
     computed: {
@@ -41,6 +42,10 @@ export default {
         }
     },
     methods: {
+        clickSnout(e) {
+            if (this.snoutScale > 0)
+                this.$emit('touchSnout', e);
+        },
         tickMessage() {
             if (this.item === null) return;
             this.item = (this.item + 1) % this.loading.length;
@@ -102,12 +107,17 @@ export default {
             self.$refs.snoutLoader.$el.classList.remove('bounce-out');
             self.$refs.snoutLoader.$el.classList.add('bounce-in');
             self.$refs.snoutLoaderContainer.classList.add('active');
+            setTimeout(() => { self.snoutScale = 1 }, 700);
         });
 
         EventBus.$on('snout-loader-hide', () => {
             self.$refs.snoutLoader.$el.classList.remove('bounce-in');
             self.$refs.snoutLoader.$el.classList.add('bounce-out');
-            self.$refs.snoutLoaderContainer.classList.remove('active');
+            self.loading = [];
+            setTimeout(() => {
+                self.$refs.snoutLoaderContainer.classList.remove('active');
+                self.snoutScale = 0;
+            }, 700);
         });
 
         EventBus.$on('snout-loader-update-progress', progress => {
@@ -159,6 +169,10 @@ export default {
             vertical-align: middle;
         }
 
+        .clickable {
+            cursor: pointer;
+        }
+
         .bounce-out {
             animation: bounce-out .7s ease-in forwards;
         }
@@ -169,7 +183,7 @@ export default {
 
         @keyframes bounce-out {
             20% {
-                transform: scale(3);
+                transform: scale(1.5);
             }
 
             100% {
@@ -183,7 +197,7 @@ export default {
             }
 
             80% {
-                transform: scale(1.2);
+                transform: scale(1.5);
             }
 
             100% {

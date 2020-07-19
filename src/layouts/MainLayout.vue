@@ -135,7 +135,7 @@
             <router-view />
             <!-- <q-btn color="secondary" @click="notify">Notify</q-btn> -->
         </q-page-container>
-        <snout-loader class="snout-loader" ref="snoutLoader"></snout-loader>
+        <snout-loader @touchSnout="touchSnout" class="snout-loader" ref="snoutLoader"></snout-loader>
 
         <q-dialog v-model="newVersionDialog" persistent>
             <q-card style="min-width: 450px;">
@@ -250,6 +250,7 @@ export default {
             if (currentPath === '/') {
                 setTimeout(() => this.$router.push(path), 700);
                 setTimeout(() => EventBus.$emit('snout-loader-show'), 700);
+                document.getElementById('logo-svg').classList.remove('bounce-in');
                 document.getElementById('logo-svg').classList.add('bounce-out');
             } else {
                 this.$router.push(path);
@@ -257,6 +258,11 @@ export default {
         },
         installUpdate() {
             ipcRenderer.send('auto-update/install');
+        },
+        touchSnout() {
+            console.log('oinc');
+            this.$router.push('/?snoutState=hidden');
+            EventBus.$emit('snout-loader-hide');
         }
     },
     mounted() {
@@ -347,7 +353,7 @@ export default {
 
 <style lang="scss" scoped>
     .snout-loader {
-        position: absolute;
+        position: fixed;
         bottom: 8px;
         right: 16px;
     }

@@ -1,14 +1,16 @@
 <template>
-    <q-page class="flex flex-center">
+    <q-page class="flex flex-center page-index">
         <img alt="Quasar logo" src="~assets/snout.svg" v-show="false">
-        <inline-svg
-            ref="snoutLoader"
-            src="img/snout.svg"
-            fill="black"
-            id="logo-svg"
-            style="transform: scale(2)"
-            aria-label="Porquinho Digital Logo"
-        ></inline-svg>
+        <div class="index-logo-container active" ref="indexLogoContainer">
+            <inline-svg
+                ref="indexLogo"
+                src="img/snout.svg"
+                fill="black"
+                id="logo-svg"
+                :style="`transform: scale(${logoScale})`"
+                aria-label="Porquinho Digital Logo"
+            ></inline-svg>
+        </div>
 
         <q-dialog v-model="intro" persistent>
             <div style="width: 800px; position: relative">
@@ -92,7 +94,8 @@ export default {
         return {
             intro: false,
             lorem: 'Lorem ipsum dolor sit amet consectetur, adipisicing elit. Natus, ratione eum minus fuga, quasi dicta facilis corporis magnam, suscipit at quo nostrum!',
-            slide: 1
+            slide: 1,
+            logoScale: 2
         };
     },
     methods: {
@@ -100,15 +103,23 @@ export default {
             localStorage.setItem('intro', true);
         },
         snoutProgress(progress) {
-            this.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-3")';
-            this.$refs.snoutLoader.$el.getElementById('gradient-3').children[0].setAttribute('offset', 1 - progress);
-            this.$refs.snoutLoader.$el.getElementById('gradient-3').children[1].setAttribute('offset', 1 - progress);
+            this.$refs.indexLogo.$el.getElementById('snout-fill').style.fill = 'url("#gradient-3")';
+            this.$refs.indexLogo.$el.getElementById('gradient-3').children[0].setAttribute('offset', 1 - progress);
+            this.$refs.indexLogo.$el.getElementById('gradient-3').children[1].setAttribute('offset', 1 - progress);
         },
         finishDownload() {
-            this.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-1")';
+            this.$refs.indexLogo.$el.getElementById('snout-fill').style.fill = 'url("#gradient-1")';
         }
     },
     mounted() {
+        if (this.$route.query.snoutState === 'hidden') {
+            this.logoScale = 0;
+            setTimeout(() => {
+                this.$refs.indexLogo.$el.classList.add('bounce-in');
+                setTimeout(() => { this.logoScale = 2 }, 700);
+            }, 700);
+        }
+
         if (!localStorage.getItem('intro'))
             this.intro = true;
 
@@ -124,27 +135,58 @@ export default {
 
 <style lang="scss">
 
-    a {
-        color: $primary;
-        text-decoration: none;
-        font-weight: bold;
+    .page-index {
+        a {
+            color: $primary;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .index-logo-container {
+            opacity: 0;
+            &.active {
+                opacity: 1;
+            }
+
+            #logo-svg {
+                transition: all .5ms;
+            }
+        }
+
+        .bounce-out {
+            animation: bounce-out .7s ease-in forwards;
+        }
+
+        .bounce-in {
+            animation: bounce-in .7s ease-out forwards;
+        }
+
+        @keyframes bounce-out {
+            20% {
+                transform: scale(2.5);
+            }
+
+            50% {
+                transform: scale(0);
+            }
+
+            100% {
+                transform: scale(0);
+            }
+        }
+
+        @keyframes bounce-in {
+            20% {
+                transform: scale(0);
+            }
+
+            80% {
+                transform: scale(2.5);
+            }
+
+            100% {
+                transform: scale(2);
+            }
+        }
     }
-
-    .bounce-out {
-        animation: bounce-out .7s ease-in forwards;
-    }
-
-    @keyframes bounce-out {
-        20% {
-            transform: scale(2.5);
-        }
-
-        50% {
-            transform: scale(0);
-        }
-
-        100% {
-            transform: scale(0);
-        }
-      }
 </style>

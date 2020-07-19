@@ -6,5 +6,6 @@ import StockPriceController from './StockPriceController';
 import FileController from './FileController';
 import TreasuryDirectController from './TreasuryDirectController';
 import AutoUpdaterController from './AutoUpdaterController';
+import AboutController from './AboutController';
 
 export default {};
