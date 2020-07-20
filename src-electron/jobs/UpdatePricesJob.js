@@ -26,7 +26,8 @@ class UpdatePricesJob {
         this._browserWindow = browserWindow;
 
         await this.init();
-
+        
+        console.log('WAAAAT' + JSON.stringify(this._configuration));
         if (this._configuration && this._configuration.when > 0) {
             setTimeout(() => {
                 this.run();
@@ -78,7 +79,8 @@ class UpdatePricesJob {
         await this.init();
 
         console.log(`Updating prices job to run every ${this._configuration.when} minute(s)`);
-        this._interval = setInterval(() => { this.run() }, this._configuration.when * 1000 * 60);
+        if (this._configuration.when > 0)
+            this._interval = setInterval(() => { this.run() }, this._configuration.when * 1000 * 60);
     }
 
     inWorkingHours() {

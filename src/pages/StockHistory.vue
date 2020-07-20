@@ -68,6 +68,15 @@
                 <q-btn flat icon="eva-edit-2-outline" @click="editRow(props.row)" color="primary" />
                 <q-btn flat icon="eva-trash-2-outline" @click="deleteRow(props.row)" color="primary" />
             </q-td>
+
+            <template v-slot:no-data="">
+                <div class="full-width row flex-center text-primary q-gutter-sm" style="padding: 60px 0">
+                    <q-icon size="2em" name="sentiment_dissatisfied" />
+                    <span>
+                        Você ainda não possui dados para esta tabela. Configure seu acesso ao CEI para integração automática ou insira operações manualmente para que apareçam aqui.
+                    </span>
+                </div>
+            </template>
         </q-table>
 
         <q-dialog v-model="showCreateForm" persistent>

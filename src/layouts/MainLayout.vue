@@ -267,6 +267,7 @@ export default {
     },
     mounted() {
         ipcRenderer.on('notification/message', (event, response) => {
+            console.log(JSON.stringify(response));
             this.notifications.push(response.data);
         });
 

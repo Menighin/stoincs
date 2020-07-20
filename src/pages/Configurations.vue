@@ -239,7 +239,7 @@ export default {
                 this.username = response.data.username || '';
                 this.password = response.data.password || '';
                 this.alphaVantageKey = response.data.alphaVantageKey || '';
-                this.priceUpdate = response.data.priceUpdate;
+                this.priceUpdate = response.data.priceUpdate || {};
 
                 if (!this.priceUpdate.auto) this.priceUpdate.auto = true;
                 if (!this.priceUpdate.many) this.priceUpdate.many = 1;

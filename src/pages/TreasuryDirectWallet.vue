@@ -82,6 +82,15 @@
                     <div class="variation">{{ NumberUtils.formatPercentage(props.row.netProfitPercentage) }}</div>
                 </div>
             </q-td>
+
+            <template v-slot:no-data="">
+                <div class="full-width row flex-center text-primary q-gutter-sm" style="padding: 60px 0">
+                    <q-icon size="2em" name="sentiment_dissatisfied" />
+                    <span>
+                        Você ainda não possui dados para esta tabela. Configure seu acesso ao CEI para integração automática.
+                    </span>
+                </div>
+            </template>
         </q-table>
     </q-page>
 </template>

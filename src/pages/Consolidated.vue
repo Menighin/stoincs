@@ -79,6 +79,15 @@
             <q-td auto-width slot="body-cell-profitLoss" slot-scope="props" :props="props" :class="{ 'value-up': props.row.profitLoss > 0, 'value-down': props.row.profitLoss < 0 }">
                 {{ NumberUtils.formatCurrency(props.row.profitLoss) }}
             </q-td>
+
+            <template v-slot:no-data="">
+                <div class="full-width row flex-center text-primary q-gutter-sm" style="padding: 60px 0">
+                    <q-icon size="2em" name="sentiment_dissatisfied" />
+                    <span>
+                        Você ainda não possui dados para esta tabela. Configure seu acesso ao CEI para integração automática ou insira operações manualmente na tela de histórico para que elas sejam consolidadas aqui.
+                    </span>
+                </div>
+            </template>
         </q-table>
     </q-page>
 </template>

@@ -13,8 +13,12 @@
             <q-btn round color="primary" class="q-mx-sm q-my-lg" icon="eva-plus-outline" @click="addStock"/>
         </div>
 
-        <transition-group class="stock-cards q-pa-md row items-start q-gutter-lg" name="list-complete">
+        <div class="no-data" v-if="pricesCard.length === 0">
+            <h5>Não há ativos cadastrados para acompanhamento de preços</h5>
+            <span>Adicione ativos no botão "+" acima e configure sua chave da Alpha Vantage para acompanhar os preços de um ativo</span>
+        </div>
 
+        <transition-group class="stock-cards q-pa-md row items-start q-gutter-lg" name="list-complete">
             <q-card v-for="sp in pricesCard" :key="`price-${sp.code}`" class="stock-card" :class="{'new': sp.isNew}">
                 <q-card-section class="stock-title q-py-sm">
                     <div class="row">
@@ -321,6 +325,22 @@ export default {
 
         .list-complete-leave-active {
             position: absolute;
+        }
+
+        .no-data {
+            border: 1px solid #ddd;
+            background: #fdfdfd;
+            text-align: center;
+            margin: 0 60px;
+            padding: 60px 0 100px;
+
+            h5 {
+                color: #444;
+            }
+
+            span {
+                color: #aaa;
+            }
         }
 
         .stock-cards {

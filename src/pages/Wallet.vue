@@ -97,6 +97,15 @@
                 <q-btn flat icon="eva-sync-outline" @click="syncRow(props.row)" title="Atualizar" color="primary" />
                 <q-btn flat icon="eva-pricetags-outline" @click="editLabelDialog = true; editLabelCode = props.row.code; editLabel = props.row.label; partialEditLabel = ''" title="Editar label" color="primary" />
             </q-td>
+
+            <template v-slot:no-data="">
+                <div class="full-width row flex-center text-primary q-gutter-sm" style="padding: 60px 0">
+                    <q-icon size="2em" name="sentiment_dissatisfied" />
+                    <span>
+                        Você ainda não possui dados para esta tabela. Sincronize com o seu histórico para processar sua carteira.
+                    </span>
+                </div>
+            </template>
         </q-table>
 
         <q-dialog v-model="editLabelDialog">
