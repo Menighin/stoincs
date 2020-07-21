@@ -273,6 +273,7 @@ class StockHistoryService {
         let found = false;
         stockOperation.id = StockUtils.generateId(stockOperation, stockOperation.account);
         stockOperation.source = 'Manual';
+        let result = { ...stockOperation };
         for (const account of stockHistory) {
             if (account.account === stockOperation.account && account.institution === stockOperation.institution) {
                 for (const s of account.stockHistory) {
@@ -302,7 +303,7 @@ class StockHistoryService {
 
         this.saveStockHistory(stockHistory, true);
 
-        return stockOperation;
+        return result;
     }
 
     async refreshHistory() {

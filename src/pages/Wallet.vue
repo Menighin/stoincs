@@ -340,11 +340,16 @@ export default {
         },
         async editPrice(code) {
             this.$set(this.editingStockPrice, code, 1);
-            this.newPrice = this.stockPrices[code].price.toFixed(2).toString().replace('.', ',');
+            if (this.stockPrices[code])
+                this.newPrice = this.stockPrices[code].price.toFixed(2).toString().replace('.', ',');
+            else
+                this.newPrice = '0,00';
             await this.$nextTick();
             this.$refs.editPriceRef.select();
         },
         saveStockPrice(code) {
+            if (!this.stockPrices[code])
+                this.$set(this.stockPrices, code, {});
             this.stockPrices[code].price = NumberUtils.getNumberFromCurrency(this.newPrice);
             this.stockPrices[code].changePrice = null;
             this.stockPrices[code].changePercent = null;

@@ -33,7 +33,7 @@ class StockPriceService {
     }
 
     async autoUpdateStockPrices(stocks) {
-        console.log(`Updating stocks ${stocks.join(', ')}...`);
+        console.log(`[STOCK PRICE SERVICE] Updating stocks ${stocks.join(', ')}...`);
 
         const promises = stocks.map(s => AlphaVantageService.getLastValue(s));
 

@@ -9,11 +9,11 @@
 
         <q-tab-panels v-model="tab" animated class="chart-panel" ref="chartPanel">
             <q-tab-panel name="treemap">
-                <highcharts ref="treemapChart" class="chart" :options="treemapOptions" v-if="data.length > 0" />
+                <highcharts ref="treemapChart" class="chart" :options="treemapOptions" v-if="data.length > 0 && treemapOptions != null" />
                 <div class="no-data" v-else>
                     <h5>Não há dados para este gráfico <q-icon size="2em" name="sentiment_dissatisfied" /></h5><br/>
                     <span>
-                        Configure seu acesso ao CEI ou insira negociações manualmente.
+                        Configure seu acesso ao CEI ou insira negociações manualmente. É necessário ter preços atualizados na sua Carteira para plotar este gráfico.
                     </span>
                 </div>
             </q-tab-panel>
@@ -128,6 +128,9 @@ export default {
                 leaf: true,
                 percentage: (o.quantityBought - o.quantitySold) * o.price / totalValue
             }));
+
+            if (!data.reduce((p, c) => p || c.value > 0, false))
+                return null;
 
             return {
                 series: [{

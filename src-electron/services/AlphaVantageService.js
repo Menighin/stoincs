@@ -21,6 +21,14 @@ class AlphaVantageService {
 
     async getLastValue(code) {
         const key = await this.getKey();
+
+        if (!key)
+            return {
+                status: 'error',
+                code: code,
+                errorMessage: 'A chave da Alpha Vantage não está configurada'
+            };
+
         const res = await axios.get('https://www.alphavantage.co/query', {
             params: {
                 function: ALPHA_VANTAGE_FUNCTIONS.GLOBAL_QUOTE,

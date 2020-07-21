@@ -331,8 +331,6 @@ export default {
             delete payload.partialAccount;
             delete payload.partialInstitution;
 
-            console.log(payload);
-
             if (!this.isEdit)
                 ipcRenderer.send('stockHistory/create', payload);
             else
