@@ -81,10 +81,10 @@
             </q-td>
 
             <template v-slot:no-data="">
-                <div class="full-width row flex-center text-primary q-gutter-sm" style="padding: 60px 0">
-                    <q-icon size="2em" name="sentiment_dissatisfied" />
+                <div class="full-width text-center q-gutter-sm no-data" style="padding: 60px 0">
+                    <h5> Você ainda não possui dados para esta tabela <q-icon size="2em" name="sentiment_dissatisfied" /></h5><br/>
                     <span>
-                        Você ainda não possui dados para esta tabela. Configure seu acesso ao CEI para integração automática ou insira operações manualmente na tela de histórico para que elas sejam consolidadas aqui.
+                        Configure seu acesso ao CEI para integração automática ou insira operações manualmente na tela de extrato para que elas sejam consolidadas aqui.
                     </span>
                 </div>
             </template>

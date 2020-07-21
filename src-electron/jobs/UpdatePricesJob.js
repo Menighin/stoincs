@@ -27,7 +27,6 @@ class UpdatePricesJob {
 
         await this.init();
         
-        console.log('WAAAAT' + JSON.stringify(this._configuration));
         if (this._configuration && this._configuration.when > 0) {
             setTimeout(() => {
                 this.run();

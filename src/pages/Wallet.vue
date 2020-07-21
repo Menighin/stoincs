@@ -99,10 +99,10 @@
             </q-td>
 
             <template v-slot:no-data="">
-                <div class="full-width row flex-center text-primary q-gutter-sm" style="padding: 60px 0">
-                    <q-icon size="2em" name="sentiment_dissatisfied" />
+                <div class="full-width text-center q-gutter-sm no-data" style="padding: 60px 0">
+                    <h5> Você ainda não possui dados para esta tabela <q-icon size="2em" name="sentiment_dissatisfied" /></h5><br/>
                     <span>
-                        Você ainda não possui dados para esta tabela. Sincronize com o seu histórico para processar sua carteira.
+                        Sincronize com o seu histórico para processar sua carteira.
                     </span>
                 </div>
             </template>
@@ -457,7 +457,7 @@ export default {
 
             // Update successfull updates
             for (const r of response.data.filter(o => o.status === 'success')) {
-                if (!this.stockPrices[r.code]) this.stockPrices[r.code] = {};
+                if (!this.stockPrices[r.code]) this.$set(this.stockPrices, r.code, {});
                 this.stockPrices[r.code].price = r.price;
                 this.stockPrices[r.code].changePrice = r.changePrice;
                 this.stockPrices[r.code].changePercent = r.changePercent;

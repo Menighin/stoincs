@@ -1,1 +1,23 @@
 // app global css in SCSS form
+.no-data {
+    h5 {
+        padding: 0;
+        margin: 0;
+        color: $label-accent;
+    }
+    span {
+        color: $label;
+    }
+}
+
+.chart-panel {
+    border: 1px solid #ddd;
+    background: #fdfdfd;
+    text-align: center;
+    .chart {
+        margin: 0 auto;
+        width: 100%;
+        min-height: 600px;
+        height: 100%;
+    }
+}

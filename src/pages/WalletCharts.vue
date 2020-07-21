@@ -9,20 +9,38 @@
 
         <q-tab-panels v-model="tab" animated class="chart-panel" ref="chartPanel">
             <q-tab-panel name="treemap">
-                <highcharts ref="treemapChart" class="chart" :options="treemapOptions" />
+                <highcharts ref="treemapChart" class="chart" :options="treemapOptions" v-if="data.length > 0" />
+                <div class="no-data" v-else>
+                    <h5>Não há dados para este gráfico <q-icon size="2em" name="sentiment_dissatisfied" /></h5><br/>
+                    <span>
+                        Configure seu acesso ao CEI ou insira negociações manualmente.
+                    </span>
+                </div>
             </q-tab-panel>
 
             <q-tab-panel name="bars">
                 <q-checkbox label="Somente ações na carteira" v-model="barChartInWallet" />
                 <q-checkbox label="Mostrar coluna de total" v-model="barChartShowTotal" />
                 <div style="height: 90%">
-                    <highcharts ref="barChart" class="chart" :options="barOptions" />
+                    <highcharts ref="barChart" class="chart" :options="barOptions" v-if="data.length > 0" />
+                    <div class="no-data" v-else>
+                        <h5>Não há dados para este gráfico <q-icon size="2em" name="sentiment_dissatisfied" /></h5><br/>
+                        <span>
+                            Configure seu acesso ao CEI ou insira negociações manualmente.
+                        </span>
+                    </div>
                 </div>
             </q-tab-panel>
             <q-tab-panel name="waterfall">
                 <q-select :options="waterfallOptions" v-model="waterfallSelected" filled dense style="width: 200px; margin: 0 0 0 auto;" />
                 <div style="height: 90%">
-                    <highcharts ref="waterfallChart" class="chart" :options="waterfallChartOptions" />
+                    <highcharts ref="waterfallChart" class="chart" :options="waterfallChartOptions" v-if="data.length > 0" />
+                    <div class="no-data" v-else>
+                        <h5>Não há dados para este gráfico <q-icon size="2em" name="sentiment_dissatisfied" /></h5><br/>
+                        <span>
+                            Configure seu acesso ao CEI ou insira negociações manualmente.
+                        </span>
+                    </div>
                 </div>
             </q-tab-panel>
         </q-tab-panels>
@@ -356,7 +374,9 @@ export default {
             this.tab = 'treemap';
             this.$refs.chartPanel.$el.style.height = `${this.$refs.chartPage.$el.clientHeight - 100}px`;
 
-            setTimeout(() => { this.$refs.treemapChart.chart.reflow() }, 200);
+            setTimeout(() => {
+                if (this.$refs.treemapChart) this.$refs.treemapChart.chart.reflow();
+            }, 200);
         }, 200);
     }
 };
@@ -364,16 +384,10 @@ export default {
 
 <style lang="scss" scoped>
     .chart-page {
-        padding: 10px 20px;
+        padding: 10px 60px;
 
-        .chart-panel {
-            text-align: center;
-            .chart {
-                margin: 0 auto;
-                width: 100%;
-                min-height: 600px;
-                height: 100%;
-            }
+        .no-data {
+            padding-top: 100px;
         }
     }
 </style>
