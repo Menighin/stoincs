@@ -1,76 +1,38 @@
-// Configuration for your app
-// https://quasar.dev/quasar-cli/quasar-conf-js
+const fs = require('fs');
+const os = require('os');
+
+const beforeBuild = async () => {
+    const about = {
+        buildDate: new Date(),
+        machine: os.hostname()
+    };
+    await fs.promises.writeFile('./src-electron/resources/AboutPorquinho.js', `export default ${JSON.stringify(about)}`);
+};
 
 module.exports = function(ctx) {
     return {
-
-        // https://quasar.dev/quasar-cli/supporting-ts
         supportTS: false,
-
-        // https://quasar.dev/quasar-cli/prefetch-feature
-        // preFetch: true,
-
-        // app boot file (/src/boot)
-        // --> boot files are part of "main.js"
-        // https://quasar.dev/quasar-cli/cli-documentation/boot-files
         boot: [
         ],
-
-        // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
         css: [
             'app.scss'
         ],
-
-        // https://github.com/quasarframework/quasar/tree/dev/extras
         extras: [
-            // 'ionicons-v4',
-            // 'mdi-v4',
             'fontawesome-v5',
             'eva-icons',
-            // 'themify',
-            // 'roboto-font-latin-ext', // this or either 'roboto-font', NEVER both!
-
-            'roboto-font', // optional, you are not bound to it
-            'material-icons' // optional, you are not bound to it
+            'roboto-font',
+            'material-icons'
         ],
-
-        // https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-framework
         framework: {
-            iconSet: 'material-icons', // Quasar icon set
-            lang: 'en-us', // Quasar language pack
-
-            // Possible values for "importStrategy":
-            // * 'auto' - (DEFAULT) Auto-import needed Quasar components & directives
-            // * 'all'  - Manually specify what to import
+            iconSet: 'material-icons',
+            lang: 'en-us',
             importStrategy: 'auto',
-
-            // Quasar plugins
             plugins: [
                 'Notify', 'Dialog', 'Loading'
             ]
         },
-
-        // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
         build: {
-            vueRouterMode: 'hash', // available values: 'hash', 'history'
-
-            // transpile: false,
-
-            // Add dependencies for transpiling with Babel (Array of string/regex)
-            // (from node_modules, which are by default not transpiled).
-            // Applies only if "transpile" is set to true.
-            // transpileDependencies: [],
-
-            // rtl: false, // https://quasar.dev/options/rtl-support
-            // preloadChunks: true,
-            // showProgress: false,
-            // gzip: true,
-            // analyze: true,
-
-            // Options below are automatically set depending on the env, set them if you want to override
-            // extractCSS: false,
-
-            // https://quasar.dev/quasar-cli/handling-webpack
+            vueRouterMode: 'hash',
             extendWebpack(cfg) {
                 cfg.module.rules.push({
                     enforce: 'pre',
@@ -78,29 +40,26 @@ module.exports = function(ctx) {
                     loader: 'eslint-loader',
                     exclude: /node_modules/
                 });
+            },
+            async beforeDev() {
+                await beforeBuild();
+            },
+            async beforeBuild() {
+                await beforeBuild();
             }
         },
-
-        // Full list of options: https://quasar.dev/quasar-cli/quasar-conf-js#Property%3A-devServer
         devServer: {
             https: false,
             port: 8080,
-            open: true // opens browser window automatically
+            open: true
         },
-
-        // animations: 'all', // --- includes all animations
-        // https://quasar.dev/options/animations
         animations: 'all',
-
-        // https://quasar.dev/quasar-cli/developing-ssr/configuring-ssr
         ssr: {
             pwa: false
         },
-
-        // https://quasar.dev/quasar-cli/developing-pwa/configuring-pwa
         pwa: {
-            workboxPluginMode: 'GenerateSW', // 'GenerateSW' or 'InjectManifest'
-            workboxOptions: {}, // only for GenerateSW
+            workboxPluginMode: 'GenerateSW',
+            workboxOptions: {},
             manifest: {
                 name: 'Porquinho Digital',
                 short_name: 'Porquinho Digital',
@@ -138,28 +97,14 @@ module.exports = function(ctx) {
                 ]
             }
         },
-
-        // Full list of options: https://quasar.dev/quasar-cli/developing-cordova-apps/configuring-cordova
         cordova: {
-            // noIosLegacyBuildFlag: true, // uncomment only if you know what you are doing
         },
-
-        // Full list of options: https://quasar.dev/quasar-cli/developing-capacitor-apps/configuring-capacitor
         capacitor: {
             hideSplashscreen: true
         },
-
-        // Full list of options: https://quasar.dev/quasar-cli/developing-electron-apps/configuring-electron
         electron: {
-            bundler: 'builder', // 'packager' or 'builder'
-
-            packager: {
-                // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
-            },
-
+            bundler: 'builder',
             builder: {
-                // https://www.electron.build/configuration/configuration
-
                 appId: 'porquinho-digital',
                 copyright: 'Copyright © 2020 Porquinho Digital',
                 productName: 'Porquinho Digital',
@@ -179,15 +124,8 @@ module.exports = function(ctx) {
                 asar: true,
                 asarUnpack: 'node_modules/puppeteer/.local-chromium/**/*'
             },
-
-            // keep in sync with /src-electron/main-process/electron-main
-            // > BrowserWindow > webPreferences > nodeIntegration
-            // More info: https://quasar.dev/quasar-cli/developing-electron-apps/node-integration
             nodeIntegration: true,
-
             extendWebpack(cfg) {
-                // do something with Electron main process Webpack cfg
-                // chainWebpack also available besides this extendWebpack
             }
         }
     };

@@ -99,7 +99,7 @@
             </q-td>
 
             <template v-slot:no-data="">
-                <div class="full-width text-center q-gutter-sm no-data" style="padding: 60px 0">
+                <div class="full-width text-center q-gutter-sm no-data" style="padding: 60px 0" v-if="!tableLoading">
                     <h5> Você ainda não possui dados para esta tabela <q-icon size="2em" name="sentiment_dissatisfied" /></h5><br/>
                     <span>
                         Sincronize com o seu histórico para processar sua carteira.
@@ -183,7 +183,7 @@ export default {
             configuration: {
                 variation: 'percentage'
             },
-            tableLoading: false,
+            tableLoading: true,
             showCreateForm: false,
             configDialog: false,
             editLabelDialog: false,
@@ -404,6 +404,7 @@ export default {
     },
     mounted() {
         ipcRenderer.on('wallet/get', (event, response) => {
+            this.tableLoading = false;
             if (response.status === 'success') {
                 this.wallet = response.data;
             } else {

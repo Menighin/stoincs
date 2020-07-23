@@ -133,6 +133,7 @@ class GoogleDriveService {
             try {
                 const fullPath = `${rootPath}/${file}`;
                 if (!fs.existsSync(fullPath)) continue;
+                if (fs.readFileSync(fullPath).toString().length === 0) continue; // Don't update empty files to google
 
                 const fileMetadata = {
                     'name': file,
@@ -217,24 +218,21 @@ class GoogleDriveService {
 
     async downloadFile(drive, file) {
         const rootPath = await FileSystemUtils.getDataPath();
-        const dest = fs.createWriteStream(`${rootPath}/${file.name}`);
-
         try {
             drive.files.get({ fileId: file.id, alt: 'media' },
-                { responseType: 'stream' },
+                { responseType: 'text' },
                 (err, res) => {
                     if (err) {
                         console.log(err);
                         return;
                     }
-                    res.data
-                        .on('end', () => {
-                            console.log(`Done ${file.name}`);
-                        })
-                        .on('error', err => {
-                            console.log('Error', err);
-                        })
-                        .pipe(dest);
+
+                    if (res.data.length > 0) {
+                        fs.promises.writeFile(`${rootPath}/${file.name}`, res.data);
+                        console.log(`[GOOGLE DRIVE] ${file.name} downloaded`);
+                    } else {
+                        console.log(`[GOOGLE DRIVE] ${file.name} not downloaded because its empty`);
+                    }
                 });
         } catch (e) {
             console.log(e);

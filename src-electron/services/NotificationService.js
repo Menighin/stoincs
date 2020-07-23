@@ -33,6 +33,12 @@ class NotificationService {
         } });
     }
 
+    notifyLog(msg) {
+        this._browserWindow.webContents.send('notification/log', { data: {
+            message: msg
+        } });
+    }
+
 }
 
 export default new NotificationService();

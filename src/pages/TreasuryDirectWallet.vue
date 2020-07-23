@@ -84,7 +84,7 @@
             </q-td>
 
             <template v-slot:no-data="">
-                <div class="full-width text-center q-gutter-sm no-data" style="padding: 60px 0">
+                <div class="full-width text-center q-gutter-sm no-data" style="padding: 60px 0" v-if="!tableLoading">
                     <h5> Você ainda não possui dados para esta tabela <q-icon size="2em" name="sentiment_dissatisfied" /></h5><br/>
                     <span>
                         Configure seu acesso ao CEI para integração automática.
@@ -182,7 +182,8 @@ export default {
                 }
             ],
             NumberUtils: NumberUtils,
-            DateUtils: DateUtils
+            DateUtils: DateUtils,
+            tableLoading: true
         };
     },
     methods: {
@@ -225,6 +226,7 @@ export default {
     },
     mounted() {
         ipcRenderer.on('treasury-direct/get', (event, response) => {
+            this.tableLoading = false;
             if (response.status === 'success') {
                 this.treasuryDirect = response.data;
                 this.treasuryDirect.forEach(t => {

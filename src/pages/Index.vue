@@ -11,6 +11,13 @@
                 aria-label="Porquinho Digital Logo"
             ></inline-svg>
         </div>
+        <div class="about" v-if="about != null">
+            <ul>
+                <li>Version: <strong>{{ about.version }}</strong></li>
+                <li>Build date: <strong>{{ about.buildDate }}</strong></li>
+                <li>Build Machine: <strong>{{ about.machine }}</strong></li>
+            </ul>
+        </div>
 
         <q-dialog v-model="intro" persistent>
             <div style="width: 800px; position: relative">
@@ -48,7 +55,7 @@
                     <q-carousel-slide :name="4" class="column no-wrap flex-center">
                         <q-icon name="eva-file-text-outline" color="primary" size="72px"></q-icon>
                         <div class="q-mt-md text-center">
-                            No <strong>Porquinho Digital</strong> você é dono dos seus dados. Eles ficam salvos no seu computador e você pode sincronizá-los através do seu Google Drive.
+                            No <strong>Porquinho Digital</strong> você é dono dos seus dados. Eles ficam salvos localmente no seu computador!
                         </div>
                     </q-carousel-slide>
                     <q-carousel-slide :name="5" class="column no-wrap flex-center">
@@ -60,7 +67,7 @@
                     <q-carousel-slide :name="6" class="column no-wrap flex-center">
                         <q-icon name="eva-settings-2-outline" color="primary" size="72px"></q-icon>
                         <div class="q-mt-md text-center">
-                            Para iniciar o acompanhamento dos seus investimentos, acesse a página de <strong>Configurações</strong> no menu lateral e configure os dados da sua conta no CEI e no Alpha Vantage.
+                            Para iniciar o acompanhamento dos seus investimentos, acesse a página de <strong>Configurações</strong> no menu lateral e configure os dados da sua conta no CEI e da Alpha Vantage.
                         </div>
                     </q-carousel-slide>
                     <q-carousel-slide :name="7" class="column no-wrap flex-center">
@@ -84,6 +91,7 @@
 <script>
 import InlineSvg from 'vue-inline-svg';
 import EventBus from '../components/EventBus';
+import { ipcRenderer } from 'electron';
 
 export default {
     name: 'PageIndex',
@@ -95,7 +103,8 @@ export default {
             intro: false,
             lorem: 'Lorem ipsum dolor sit amet consectetur, adipisicing elit. Natus, ratione eum minus fuga, quasi dicta facilis corporis magnam, suscipit at quo nostrum!',
             slide: 1,
-            logoScale: 2
+            logoScale: 2,
+            about: null
         };
     },
     methods: {
@@ -125,6 +134,11 @@ export default {
 
         EventBus.$on('snout-loader-update-progress', this.snoutProgress);
         EventBus.$on('snout-loader-finish-progress', this.finishDownload);
+
+        ipcRenderer.on('about/get', (event, response) => {
+            this.about = response.data;
+        });
+        ipcRenderer.send('about/get');
     },
     beforeDestroy() {
         EventBus.$off('snout-loader-update-progress', this.snoutProgress);
@@ -150,6 +164,18 @@ export default {
 
             #logo-svg {
                 transition: all .5ms;
+            }
+        }
+
+        .about {
+            position: fixed;
+            bottom: 10px;
+            right: 25px;
+            color: #888;
+            font-size: 10px;
+            text-align: right;
+            ul {
+                list-style: none;
             }
         }
 

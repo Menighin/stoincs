@@ -1,16 +1,16 @@
-import { ipcMain } from 'electron';
+import { ipcMain, app } from 'electron';
 import AutoUpdaterService from '../services/AutoUpdaterService';
+import AboutPorquinho from '../resources/AboutPorquinho';
 
 const METHODS = {
-    INSTALL: 'auto-update/install'
+    GET: 'about/get'
 };
 
-ipcMain.on(METHODS.INSTALL, async (event, arg) => {
+ipcMain.on(METHODS.GET, async (event, arg) => {
     try {
-        AutoUpdaterService.install();
-        event.reply(METHODS.INSTALL, { status: 'success' });
+        event.reply(METHODS.GET, { status: 'success', data: { ...AboutPorquinho, version: app.getVersion() } });
     } catch (e) {
-        event.reply(METHODS.INSTALL, { status: 'error', message: e.message });
+        event.reply(METHODS.GET, { status: 'error', message: e.message });
     }
 });
 

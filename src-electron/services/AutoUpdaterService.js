@@ -26,7 +26,7 @@ class AutoUpdaterService {
         });
         autoUpdater.on('error', (err) => {
             console.log('[AUTO UPDATER] Error on update: ' + err.message);
-            NotificationService.notifyMessage('Porquinho Digital', 'Erro ao baixar nova versão:', 'fas fa-times');
+            NotificationService.notifyMessage('Porquinho Digital', 'Erro ao baixar nova versão: ' + err.message, 'fas fa-times');
         });
         autoUpdater.on('download-progress', (progressObj) => {
             let logMessage = 'Download speed: ' + progressObj.bytesPerSecond;

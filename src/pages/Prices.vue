@@ -13,7 +13,7 @@
             <q-btn round color="primary" class="q-mx-sm q-my-lg" icon="eva-plus-outline" @click="addStock"/>
         </div>
 
-        <div class="no-data no-data" v-if="pricesCard.length === 0">
+        <div class="no-data no-data" v-if="pricesCard.length === 0 && !loadingPrices">
             <h5> Não há ativos cadastrados para acompanhamento de preços <q-icon size="2em" name="sentiment_dissatisfied" /></h5><br/>
             <span>
                 Adicione ativos no botão "+" acima e configure sua chave da Alpha Vantage para acompanhar os preços de um ativo
@@ -105,6 +105,7 @@ export default {
     name: 'PageWallet',
     data() {
         return {
+            loadingPrices: true,
             loadingStocks: {},
             wallet: {},
             stockPrices: {},
@@ -241,6 +242,7 @@ export default {
         });
 
         ipcRenderer.on('stock-prices/get', (event, response) => {
+            this.loadingPrices = false;
             if (response.status === 'success') {
                 this.stockPrices = response.data;
             } else {

@@ -33,5 +33,6 @@ yarn-error.log*
 *.njsproj
 *.sln
 
-# Google Drive
+# Resources
 /src-electron/resources/GoogleCredentials.js
+/src-electron/resources/AboutPorquinho.js

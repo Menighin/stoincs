@@ -81,7 +81,7 @@
             </q-td>
 
             <template v-slot:no-data="">
-                <div class="full-width text-center q-gutter-sm no-data" style="padding: 60px 0">
+                <div class="full-width text-center q-gutter-sm no-data" style="padding: 60px 0" v-if="!tableLoading">
                     <h5> Você ainda não possui dados para esta tabela <q-icon size="2em" name="sentiment_dissatisfied" /></h5><br/>
                     <span>
                         Configure seu acesso ao CEI para integração automática ou insira operações manualmente na tela de extrato para que elas sejam consolidadas aqui.
@@ -102,7 +102,7 @@ export default {
     name: 'PageConsolidated',
     data() {
         return {
-            tableLoading: false,
+            tableLoading: true,
             Math: Math,
             NumberUtils: NumberUtils,
             pagination: {
@@ -204,6 +204,7 @@ export default {
     },
     mounted() {
         ipcRenderer.on('stockHistory/consolidated', (event, arg) => {
+            this.tableLoading = false;
             if (arg.status === 'success')
                 this.dataTable = arg.data;
             else {

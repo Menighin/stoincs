@@ -270,6 +270,10 @@ export default {
             this.notifications.push(response.data);
         });
 
+        ipcRenderer.on('notification/log', (event, response) => {
+            console.log('Log', response);
+        });
+
         ipcRenderer.on('notification/start-loading', (event, response) => {
             this.$snout.start(response.data);
         });

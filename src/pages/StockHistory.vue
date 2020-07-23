@@ -70,7 +70,7 @@
             </q-td>
 
             <template v-slot:no-data="">
-                <div class="full-width text-center q-gutter-sm no-data" style="padding: 60px 0">
+                <div class="full-width text-center q-gutter-sm no-data" style="padding: 60px 0" v-if="!tableLoading">
                     <h5> Você ainda não possui dados para esta tabela <q-icon size="2em" name="sentiment_dissatisfied" /></h5><br/>
                     <span>
                         Configure seu acesso ao CEI para integração automática ou insira operações manualmente para que apareçam aqui.
@@ -198,7 +198,7 @@ export default {
             months: ['Todos', '08/2018', '09/2018'],
             selectedMonth: 'Todos',
             filterStock: '',
-            tableLoading: false,
+            tableLoading: true,
             showCreateForm: false,
             showSplitDialog: false,
             isEdit: false,
@@ -433,6 +433,7 @@ export default {
     },
     mounted() {
         ipcRenderer.on('stockHistory/get', (event, arg) => {
+            this.tableLoading = false;
             this.dataTable = arg.reduce((p, c, i) => {
                 p = [...p, ...c.stockHistory.map(s => ({
                     ...s,
