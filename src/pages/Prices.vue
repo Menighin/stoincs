@@ -129,7 +129,14 @@ export default {
             this.$q.dialog({
                 title: 'Confirmação',
                 message: `Tem certeza que deseja remover <strong>${code}</strong>?`,
-                cancel: true,
+                cancel: {
+                    label: 'Não',
+                    flat: true
+                },
+                ok: {
+                    label: 'Sim',
+                    flat: true
+                },
                 html: true,
                 persistent: true
             }).onOk(() => {

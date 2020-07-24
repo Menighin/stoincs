@@ -299,7 +299,14 @@ export default {
             this.$q.dialog({
                 title: 'Confirmação',
                 message: 'Tem certeza que deseja remover esta operação?',
-                cancel: true,
+                cancel: {
+                    label: 'Não',
+                    flat: true
+                },
+                ok: {
+                    label: 'Sim',
+                    flat: true
+                },
                 persistent: true
             }).onOk(() => {
                 ipcRenderer.send('stockHistory/delete', row.id);
@@ -350,7 +357,14 @@ export default {
             this.$q.dialog({
                 title: 'Confirmação',
                 message: 'Essa ação irá remover todo o histórico do CEI e importá-lo novamente do site. Tem certeza que deseja continuar?',
-                cancel: true,
+                cancel: {
+                    label: 'Não',
+                    flat: true
+                },
+                ok: {
+                    label: 'Sim',
+                    flat: true
+                },
                 persistent: true
             }).onOk(() => {
                 ipcRenderer.send('stockHistory/refresh');

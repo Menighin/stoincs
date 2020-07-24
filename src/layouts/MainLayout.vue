@@ -154,8 +154,8 @@
                 </q-card-section>
                 <q-separator />
                 <q-card-actions align="right">
-                    <q-btn flat @click="newVersionDialog = false">Não</q-btn>
-                    <q-btn flat @click="installUpdate">Sim</q-btn>
+                    <q-btn color="primary" flat @click="newVersionDialog = false">Não</q-btn>
+                    <q-btn color="primary" flat @click="installUpdate">Sim</q-btn>
                 </q-card-actions>
             </q-card>
         </q-dialog>
@@ -221,7 +221,14 @@ export default {
                         { label: 'Apagar arquivos da nuvem', value: 'clearData' }
                     ]
                 },
-                cancel: true,
+                cancel: {
+                    label: 'Não',
+                    flat: true
+                },
+                ok: {
+                    label: 'Sim',
+                    flat: true
+                },
                 persistent: false
             }).onOk(data => {
                 ipcRenderer.send('google-drive/logout', { clearData: data.length > 0 });
@@ -325,7 +332,14 @@ export default {
             this.$q.dialog({
                 title: 'Baixar do Google Drive?',
                 message: 'Existem arquivos no Google Drive. Deseja substituir seus arquivos locais pelos que estão na nuvem? CUIDADO! Caso você opte por não baixar os arquivos da nuvem, estes podem ser apagados quando sincronizados automaticamente',
-                cancel: true,
+                cancel: {
+                    label: 'Não',
+                    flat: true
+                },
+                ok: {
+                    label: 'Sim',
+                    flat: true
+                },
                 persistent: true
             }).onOk(() => {
                 ipcRenderer.send('google-drive/download');

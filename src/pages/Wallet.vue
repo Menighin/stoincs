@@ -285,7 +285,14 @@ export default {
             this.$q.dialog({
                 title: 'Confirmação',
                 message: 'Tem certeza que deseja continuar?',
-                cancel: true,
+                cancel: {
+                    label: 'Não',
+                    flat: true
+                },
+                ok: {
+                    label: 'Sim',
+                    flat: true
+                },
                 persistent: true
             }).onOk(() => {
                 ipcRenderer.send('wallet/refresh-from-history');
