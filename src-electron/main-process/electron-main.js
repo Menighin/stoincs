@@ -2,11 +2,13 @@ import { app, BrowserWindow, nativeTheme, globalShortcut } from 'electron';
 import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
 import UpdatePricesJob from '../jobs/UpdatePricesJob';
 import UpdateTreasuryDirectJob from '../jobs/UpdateTreasuryDirectJob';
+import UpdateDividendsJob from '../jobs/UpdateDividendsJob';
 import SyncGoogleDriveJob from '../jobs/SyncGoogleDriveJob';
 import NotificationService from '../services/NotificationService';
 import Controllers from '../controllers/main';
 import GoogleDriveService from '../services/GoogleDriveService';
 import AutoUpdaterService from '../services/AutoUpdaterService';
+import ArrayPrototypes from '../../src-shared/utils/ArrayPrototype';
 
 try {
     if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
@@ -56,6 +58,7 @@ function createWindow() {
     UpdateStockHistoryJob.setup();
     UpdatePricesJob.setup(mainWindow);
     UpdateTreasuryDirectJob.setup();
+    UpdateDividendsJob.setup();
     SyncGoogleDriveJob.setup(mainWindow);
     AutoUpdaterService.setup(mainWindow);
     setTimeout(() => {

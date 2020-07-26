@@ -26,7 +26,7 @@ class UpdatePricesJob {
         this._browserWindow = browserWindow;
 
         await this.init();
-        
+
         if (this._configuration && this._configuration.when > 0) {
             setTimeout(() => {
                 this.run();

@@ -54,6 +54,7 @@ module.exports = {
     'space-before-function-paren': ['error', { anonymous: 'never', named: 'never', asyncArrow: 'always' }],
     'padded-blocks': ['error', { blocks: 'never', classes: 'always', switches: 'never' }],
     'no-unused-vars': ['off', { vars: 'local', args: 'after-used', ignoreRestSiblings: false }],
+    'no-extend-native': 'off',
     'no-labels': 'off',
     'curly': 'off',
 

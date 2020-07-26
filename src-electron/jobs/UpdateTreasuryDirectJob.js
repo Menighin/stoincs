@@ -10,12 +10,8 @@ const NOTIFICATION = {
 
 class UpdateTreasuryDirectJob {
 
-    /** @type {StockHistoryService} */
-    _treasureDirectService;
-
     /**
      * Setup the job to run from time to time
-     * @param {TreasuryDirectService} treasuryDirectService - Service to handle the treasury direct
      */
     setup() {
         setTimeout(() => this.run(), 15000);

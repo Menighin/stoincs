@@ -97,6 +97,19 @@ class CeiCrawlerService {
         }
     }
 
+    async getDividends() {
+        const ceiCrawler = await this._getFreeInstance();
+        console.log('[CEI CRAWLER SERVICE] Getting dividends...');
+        try {
+            const result = await ceiCrawler.getDividends();
+            await this.freeUpInstance();
+            return result;
+        } catch (e) {
+            await this.freeUpInstance();
+            throw e;
+        }
+    }
+
 }
 
 export default new CeiCrawlerService();
