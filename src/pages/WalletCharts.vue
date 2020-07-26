@@ -9,12 +9,16 @@
 
         <q-tab-panels v-model="tab" animated class="chart-panel" ref="chartPanel">
             <q-tab-panel name="treemap">
-                <highcharts ref="treemapChart" class="chart" :options="treemapOptions" v-if="data.length > 0 && treemapOptions != null" />
-                <div class="no-data" v-else>
-                    <h5>Não há dados para este gráfico <q-icon size="2em" name="sentiment_dissatisfied" /></h5><br/>
-                    <span>
-                        Configure seu acesso ao CEI ou insira negociações manualmente. É necessário ter preços atualizados na sua Carteira para plotar este gráfico.
-                    </span>
+                <q-radio label="Valor investido" v-model="treemapRadio" val="invested" />
+                <q-radio label="Valor atual" v-model="treemapRadio" val="actual" />
+                <div style="height: 90%">
+                    <highcharts ref="treemapChart" class="chart" :options="treemapOptions" v-if="data.length > 0 && treemapOptions != null" />
+                    <div class="no-data" v-else>
+                        <h5>Não há dados para este gráfico <q-icon size="2em" name="sentiment_dissatisfied" /></h5><br/>
+                        <span>
+                            Configure seu acesso ao CEI ou insira negociações manualmente. É necessário ter preços atualizados na sua Carteira para plotar este gráfico.
+                        </span>
+                    </div>
                 </div>
             </q-tab-panel>
 
@@ -72,6 +76,7 @@ export default {
             consolidated: [],
             walletLabels: {},
             tab: null,
+            treemapRadio: 'invested',
             barChartInWallet: true,
             barChartShowTotal: false,
             waterfallSelected: null,
@@ -85,10 +90,12 @@ export default {
             return this.consolidated.map(c => {
                 const price = this.stockPrices[c.code] ? (this.stockPrices[c.code].price || 0) : 0;
                 const actualValue = (c.quantityBought - c.quantitySold) * price;
+                const averageValueBought = (c.quantityBought - c.quantitySold) * c.averageBuyPrice;
                 const historicPosition = c.valueSold + actualValue - c.valueBought;
                 return {
                     ...c,
                     actualValue: actualValue,
+                    averageValueBought: averageValueBought,
                     historicPosition: historicPosition,
                     price: price,
                     label: this.walletLabels[c.code]
@@ -97,9 +104,11 @@ export default {
         },
         treemapOptions() {
             const rawData = this.data.filter(o => o.quantityBought - o.quantitySold > 0);
+            const investedOnly = this.treemapRadio === 'invested';
+            console.log(rawData);
 
             const totalValue = rawData.reduce((prev, curr) => {
-                return prev + curr.actualValue;
+                return prev + (investedOnly ? curr.averageValueBought : curr.actualValue);
             }, 0);
 
             const groups = [...new Set(rawData.map(o => o.label))]
@@ -110,7 +119,7 @@ export default {
                     ...rawData.filter(r => r.label === o).reduce((prev, curr) => {
                         const quantity = curr.quantityBought - curr.quantitySold;
                         prev.quantity += quantity;
-                        prev.value += curr.actualValue;
+                        prev.value += (investedOnly ? curr.averageValueBought : curr.actualValue);
                         return prev;
                     }, { quantity: 0, value: 0 })
                 }));
@@ -121,12 +130,13 @@ export default {
 
             const data = rawData.map(o => ({
                 name: o.code,
-                value: (o.quantityBought - o.quantitySold) * o.price,
-                quantity: (o.quantityBought - o.quantitySold),
+                value: investedOnly ? o.averageValueBought : o.actualValue,
+                quantity: o.quantityBought - o.quantitySold,
                 price: o.price,
+                averageBuyPrice: o.averageBuyPrice,
                 parent: o.label && o.label.length > 0 ? o.label : 'Sem label',
                 leaf: true,
-                percentage: (o.quantityBought - o.quantitySold) * o.price / totalValue
+                percentage: (investedOnly ? o.averageValueBought : o.actualValue) / totalValue
             }));
 
             if (!data.reduce((p, c) => p || c.value > 0, false))
@@ -185,12 +195,19 @@ export default {
                             }
                         ];
 
-                        if (this.leaf)
+                        if (this.leaf) {
                             items.push({
                                 name: 'Preço atual',
                                 value: NumberUtils.formatCurrency(this.price),
                                 color: SeriesColors[3 % SeriesColors.length]
                             });
+
+                            items.push({
+                                name: 'Preço médio de compra',
+                                value: NumberUtils.formatCurrency(this.averageBuyPrice),
+                                color: SeriesColors[4 % SeriesColors.length]
+                            });
+                        }
 
                         return HighchartUtils.getTooltipContent(this.name, items);
                     }
@@ -203,17 +220,20 @@ export default {
             let categories = [];
             let seriesBoughtValue = [];
             let seriesActualValue = [];
+            let seriesDividends = [];
 
             for (const d of rawData) {
                 categories.push(d.code);
                 seriesBoughtValue.push(d.valueBought);
                 seriesActualValue.push(d.valueSold + Math.max(d.quantityBought - d.quantitySold, 0) * d.price);
+                seriesDividends.push(d.dividends);
             }
 
             if (this.barChartShowTotal) {
                 categories = ['Total', ...categories];
                 seriesBoughtValue = [seriesBoughtValue.reduce((p, c) => p + c), ...seriesBoughtValue];
                 seriesActualValue = [seriesActualValue.reduce((p, c) => p + c), ...seriesActualValue];
+                seriesDividends = [seriesDividends.reduce((p, c) => p + c), ...seriesDividends];
             }
 
             return {
@@ -244,7 +264,7 @@ export default {
                         // The result
                         items.push({
                             name: 'Balanço',
-                            value: NumberUtils.formatCurrency(this.points[1].y - this.points[0].y, true),
+                            value: NumberUtils.formatCurrency(this.points[1].y + this.points[2].y - this.points[0].y, true),
                             color: SeriesColors[3]
                         });
 
@@ -254,7 +274,8 @@ export default {
                 plotOptions: {
                     column: {
                         grouping: false,
-                        borderWidth: 0
+                        borderWidth: 0,
+                        stacking: 'normal'
                     }
                 },
                 series: [{
@@ -266,13 +287,23 @@ export default {
                     },
                     pointPadding: 0
                 }, {
+                    name: 'Dividendos',
+                    color: SeriesColors[2],
+                    data: seriesDividends,
+                    tooltip: {
+                        valuePrefix: 'R$'
+                    },
+                    pointPadding: 0.25,
+                    stack: 'profit'
+                }, {
                     name: 'Valor Atual',
                     color: SeriesColors[1],
                     data: seriesActualValue,
                     tooltip: {
                         valuePrefix: 'R$'
                     },
-                    pointPadding: 0.25
+                    pointPadding: 0.25,
+                    stack: 'profit'
                 }]
             };
         },
@@ -323,6 +354,9 @@ export default {
                     }, {
                         name: 'Ativo',
                         y: (data.quantityBought - data.quantitySold) * data.price
+                    }, {
+                        name: 'Dividendos',
+                        y: data.dividends
                     }, {
                         name: 'Balanço',
                         isSum: true,

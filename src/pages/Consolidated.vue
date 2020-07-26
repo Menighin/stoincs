@@ -21,7 +21,7 @@
 
         <q-table
             class="table-container q-mx-lg"
-            table-class="consolidated-table"
+            table-class="data-table"
             title="Histórico"
             :data="dataTable"
             :columns="columns"
@@ -68,6 +68,7 @@
                     :display-value="`Colunas (${visibleColumns.length}/${columns.length})`"
                     emit-value
                     map-options
+                    @input="changeVisibleColumns"
                     :options="columns"
                     option-value="name"
                     options-cover
@@ -78,6 +79,10 @@
 
             <q-td auto-width slot="body-cell-profitLoss" slot-scope="props" :props="props" :class="{ 'value-up': props.row.profitLoss > 0, 'value-down': props.row.profitLoss < 0 }">
                 {{ NumberUtils.formatCurrency(props.row.profitLoss) }}
+            </q-td>
+
+            <q-td auto-width slot="body-cell-dividends" slot-scope="props" :props="props" :class="{ 'value-up': props.row.dividends > 0, 'value-down': props.row.dividends < 0 }">
+                {{ NumberUtils.formatCurrency(props.row.dividends) }}
             </q-td>
 
             <template v-slot:no-data="">
@@ -112,7 +117,7 @@ export default {
             kpis: {},
             startDate: null,
             endDate: null,
-            visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'averageBuyPrice', 'valueSold', 'averageSellPrice', 'valueBalance', 'profitLoss' ],
+            visibleColumns: [ 'code', 'quantityBought', 'quantitySold', 'quantityBalance', 'valueBought', 'averageBuyPrice', 'valueSold', 'averageSellPrice', 'valueBalance', 'profitLoss', 'dividends' ],
             columns: [
                 {
                     name: 'code',
@@ -188,6 +193,13 @@ export default {
                     label: 'Lucro/Prejuízo na venda',
                     field: 'profitLoss',
                     sortable: true
+                },
+                {
+                    name: 'dividends',
+                    align: 'right',
+                    label: 'Dividendos pagos',
+                    field: 'dividends',
+                    sortable: true
                 }
             ]
         };
@@ -198,6 +210,12 @@ export default {
             const endDate = DateUtils.fromDateStr(this.endDate);
             ipcRenderer.send('stockHistory/consolidated', { startDate: startDate, endDate: endDate });
             ipcRenderer.send('stockHistory/kpis', { startDate: startDate, endDate: endDate });
+
+            if (localStorage.getItem('consolidated/columns'))
+                this.visibleColumns = JSON.parse(localStorage.getItem('consolidated/columns'));
+        },
+        changeVisibleColumns() {
+            localStorage.setItem('consolidated/columns', JSON.stringify(this.visibleColumns));
         }
     },
     computed: {
@@ -230,14 +248,6 @@ export default {
 <style lang="scss">
 
     .stock-history-consolidated {
-        .value-up {
-            color: #21BA45;
-        }
-
-        .value-down {
-            color: #C10015;
-        }
-
         .filter {
             text-align: right;
         }
@@ -256,30 +266,8 @@ export default {
         }
 
         .table-container {
-
             .q-table__middle {
                 max-height: 620px;
-            }
-
-            thead tr th {
-                position: sticky;
-                z-index: 1;
-            }
-
-            thead tr:first-child th {
-                top: 0;
-                background: #FFF;
-            }
-
-            .consolidated-table {
-                table {
-                    tbody {
-                        tr:nth-child(odd) {
-                            background: #f7f7f7;
-                        }
-                    }
-                }
-
             }
         }
     }

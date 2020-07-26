@@ -2,6 +2,7 @@ import fs from 'fs';
 import StockUtils from '../utils/StockUtils';
 import FileSystemUtils from '../utils/FileSystemUtils';
 import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
+import DividendsService from './DividendsService';
 
 const FILES = {
     JOB_METADATA: 'stock_history_job',
@@ -91,7 +92,9 @@ class StockHistoryService {
             .reduce((p, c) => {
                 p = [...p, ...c.stockHistory.map(s => ({
                     ...s,
-                    date: new Date(s.date)
+                    date: new Date(s.date),
+                    institution: s.institution,
+                    account: s.account
                 }))];
                 return p;
             }, []);
@@ -102,6 +105,14 @@ class StockHistoryService {
         const profitLoss = await this.getProfitLoss(startDate, endDate);
         const stockHistoryFiltered = (await this.getStockHistoryOperations())
             .filter(o => (startDate === null || startDate <= o.date) && (endDate === null || o.date <= endDate));
+
+        const dividendsByStock = (await DividendsService.getDividendsEvents())
+            .filter(d => (startDate === null || startDate <= d.date) && (endDate === null || d.date <= endDate))
+            .reduce((p, c) => {
+                if (!p[c.code]) p[c.code] = 0;
+                p[c.code] += c.netValue;
+                return p;
+            }, {});
 
         const consolidatedByStock = stockHistoryFiltered.reduce((p, c) => {
             const key = StockUtils.getStockCode(c.code);
@@ -131,6 +142,7 @@ class StockHistoryService {
             consolidatedByStock[code].averageSellPrice = averagePrices[code] ? averagePrices[code].averageSellPrice : 0;
             consolidatedByStock[code].profitLoss = profitLoss[code] || 0;
             consolidatedByStock[code].valueBalance = consolidatedByStock[code].quantityBalance * consolidatedByStock[code].averageBuyPrice;
+            consolidatedByStock[code].dividends = dividendsByStock[code] || 0;
         });
 
         return Object.values(consolidatedByStock).sort((a, b) => (a.code > b.code) ? 1 : ((b.code > a.code) ? -1 : 0));

@@ -106,6 +106,7 @@
                         <q-item clickable @click="navigate('/wallet', $event)">Carteira</q-item>
                         <q-item clickable @click="navigate('/consolidated', $event)">Consolidado</q-item>
                         <q-item clickable @click="navigate('/stock-history', $event)">Extrato</q-item>
+                        <q-item clickable @click="navigate('/dividends', $event)">Dividendos</q-item>
                         <q-item clickable @click="navigate('/wallet-charts', $event)">Gráficos</q-item>
                     </q-list>
                 </q-expansion-item>

@@ -7,7 +7,7 @@
 
         <q-table
             class="table-container q-mx-lg"
-            table-class="stock-table"
+            table-class="data-table"
             title="Carteira de ações"
             :data="dataTable"
             :columns="columns"
@@ -535,17 +535,7 @@ export default {
                 max-height: 700px;
             }
 
-            thead tr th {
-                position: sticky;
-                z-index: 1;
-            }
-
-            thead tr:first-child th {
-                top: 0;
-                background: #FFF;
-            }
-
-            .stock-table {
+            .data-table {
                 table {
                     tbody {
                         .price-cell {
@@ -572,18 +562,6 @@ export default {
 
                         .update-price {
                             margin: 12px;
-                        }
-
-                        .value-up {
-                            color: #21BA45;
-                        }
-
-                        .value-down {
-                            color: #C10015;
-                        }
-
-                        tr:nth-child(odd) {
-                            background: #f7f7f7;
                         }
                     }
                 }

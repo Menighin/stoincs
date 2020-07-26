@@ -8,7 +8,7 @@ import NotificationService from '../services/NotificationService';
 import Controllers from '../controllers/main';
 import GoogleDriveService from '../services/GoogleDriveService';
 import AutoUpdaterService from '../services/AutoUpdaterService';
-import ArrayPrototypes from '../../src-shared/utils/ArrayPrototype';
+import Prototypes from '../../src-shared/utils/Prototypes';
 
 try {
     if (process.platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {

@@ -1,4 +1,20 @@
 // app global css in SCSS form
+
+.table-container {
+    .data-table {
+        table {
+            tbody {
+                tr:nth-child(odd) {
+                    background: #f7f7f7;
+                }
+                tr:hover {
+                    background-color: #f0f0f0;
+                }
+            }
+        }
+    }
+}
+
 .no-data {
     h5 {
         padding: 0;
@@ -21,4 +37,12 @@
         min-height: 600px;
         height: 100%;
     }
+}
+
+.value-up {
+    color: $value-up;
+}
+
+.value-down {
+    color: $value-down;
 }

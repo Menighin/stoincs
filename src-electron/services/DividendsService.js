@@ -8,6 +8,12 @@ const FILES = {
 
 class DividendsService {
 
+    _compareDividendOrder = (a, b) => {
+        if (a.date === null) return -1;
+        if (b.date === null) return 1;
+        return b.date.getTime() - a.date.getTime();
+    };
+
     async getDividendsJobMetadata() {
         const rootPath = await FileSystemUtils.getDataPath();
         const path = `${rootPath}/${FILES.JOB_METADATA}`;
@@ -36,8 +42,13 @@ class DividendsService {
 
         const dividends = JSON.parse((await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || '[]');
         dividends.forEach(d => {
-            d.events.forEach(e => {
-                e.date = new Date(e.date);
+            d.pastEvents.forEach(e => {
+                if (e.date)
+                    e.date = new Date(e.date);
+            });
+            d.futureEvents.forEach(e => {
+                if (e.date)
+                    e.date = new Date(e.date);
             });
         });
         return dividends;
@@ -46,14 +57,26 @@ class DividendsService {
     async getDividendsEvents() {
         return (await this.getDividends())
             .reduce((p, c) => {
-                p = [...p, ...c.events.map(e => ({
-                    ...e,
-                    date: new Date(e.date),
-                    institution: c.institution,
-                    account: c.account
-                }))];
+                p = [
+                    ...p,
+                    ...c.pastEvents.map(e => ({
+                        ...e,
+                        date: e.date ? new Date(e.date) : null,
+                        institution: c.institution,
+                        account: c.account,
+                        isFuture: false
+                    })),
+                    ...c.futureEvents.map(e => ({
+                        ...e,
+                        date: e.date ? new Date(e.date) : null,
+                        institution: c.institution,
+                        account: c.account,
+                        isFuture: true
+                    }))
+                ];
                 return p;
-            }, []);
+            }, [])
+            .sort(this._compareDividendOrder);
     }
 
     async saveDividendsFromJob(dividendsCei) {
@@ -70,7 +93,8 @@ class DividendsService {
                 : {
                     institution: cei.institution,
                     account: cei.account,
-                    events: []
+                    pastEvents: [],
+                    futureEvents: []
                 };
 
             // If there's no dividend data for this account and institution, add it
@@ -78,19 +102,25 @@ class DividendsService {
 
             cei.pastEvents.forEach(e => {
                 const id = this.getEventId(e);
-                if (!savedDividend.events.any(o => o.id === id))
-                    savedDividend.events.push({
+                if (!savedDividend.pastEvents.any(o => o.id === id))
+                    savedDividend.pastEvents.push({
                         id: id,
                         ...e
                     });
             });
+            savedDividend.futureEvents = cei.futureEvents;
+        });
+
+        dividends.forEach(d => {
+            d.pastEvents.sort(this._compareDividendOrder);
+            d.futureEvents.sort(this._compareDividendOrder);
         });
 
         await fs.promises.writeFile(path, JSON.stringify(dividends));
     }
 
     getEventId(e) {
-        return `${e.code}_${e.quantity}_${e.date.getFullYear()}${e.date.getMonth()}${e.date.getDay()}`;
+        return `${e.code}_${e.quantity}_${e.date.getFullYear()}${e.date.getMonth()}${e.date.getDate()}`;
     }
 
 };

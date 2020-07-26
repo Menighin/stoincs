@@ -6,7 +6,7 @@
 
         <q-table
             class="table-container q-mx-lg"
-            table-class="stock-table"
+            table-class="data-table"
             title="Histórico"
             :data="filteredDataTable"
             :columns="columns"
@@ -448,15 +448,10 @@ export default {
     mounted() {
         ipcRenderer.on('stockHistory/get', (event, arg) => {
             this.tableLoading = false;
-            this.dataTable = arg.reduce((p, c, i) => {
-                p = [...p, ...c.stockHistory.map(s => ({
-                    ...s,
-                    date: new Date(s.date),
-                    institution: c.institution,
-                    account: c.account
-                }))];
-                return p;
-            }, []).sort((s1, s2) => s1.date - s2.date);
+            this.dataTable = arg.map(o => {
+                o.date = new Date(o.date);
+                return o;
+            }).sort((s1, s2) => s2.date - s1.date);
 
             const monthSet = new Set(this.dataTable.map(d => {
                 const date = d.date;
@@ -465,8 +460,8 @@ export default {
             const monthArray = [...monthSet].sort((a, b) => {
                 const sa = a.split('/').map(o => parseInt(o));
                 const sb = b.split('/').map(o => parseInt(o));
-                if (sa[1] === sb[1]) return sa[0] - sb[0];
-                return sa[1] - sb[1];
+                if (sa[1] === sb[1]) return sb[0] - sa[0];
+                return sb[1] - sa[1];
             });
             this.months = ['Todos', ...monthArray];
         });
@@ -542,30 +537,8 @@ export default {
     }
 
     .table-container {
-
         .q-table__middle {
             max-height: 700px;
-        }
-
-        thead tr th {
-            position: sticky;
-            z-index: 1;
-        }
-
-        thead tr:first-child th {
-            top: 0;
-            background: #FFF;
-        }
-
-        .stock-table {
-            table {
-                tbody {
-                    tr:nth-child(odd) {
-                        background: #f7f7f7;
-                    }
-                }
-            }
-
         }
     }
 

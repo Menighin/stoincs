@@ -20,7 +20,7 @@
         </div>
         <q-table
             class="table-container q-mx-lg"
-            table-class="stock-table"
+            table-class="data-table"
             title="Carteira de Tesouro Direto"
             :data="dataTable"
             :columns="columns"
@@ -60,6 +60,7 @@
                     options-dense
                     :display-value="`Colunas (${visibleColumns.length}/${columns.length})`"
                     emit-value
+                    @input="changeVisibleColumns"
                     map-options
                     :options="columns"
                     option-value="name"
@@ -189,6 +190,11 @@ export default {
     methods: {
         init() {
             ipcRenderer.send('treasury-direct/get');
+            if (localStorage.getItem('treasury-direct/columns'))
+                this.visibleColumns = JSON.parse(localStorage.getItem('treasury-direct/columns'));
+        },
+        changeVisibleColumns() {
+            localStorage.setItem('treasury-direct/columns', JSON.stringify(this.visibleColumns));
         }
     },
     computed: {
@@ -264,48 +270,9 @@ export default {
         }
 
         .table-container {
-
             .q-table__middle {
-                max-height: 700px;
+                max-height: 600px;
             }
-
-            thead tr th {
-                position: sticky;
-                z-index: 1;
-            }
-
-            thead tr:first-child th {
-                top: 0;
-                background: #FFF;
-            }
-
-            .stock-table {
-                table {
-                    tbody {
-                        .profit-cell {
-                            display: inline-block;
-                            vertical-align: middle;
-
-                            .variation {
-                                font-size: 10px;
-                            }
-                        }
-
-                        tr:nth-child(odd) {
-                            background: #f7f7f7;
-                        }
-                    }
-                }
-
-            }
-        }
-
-        .value-up {
-            color: #21BA45;
-        }
-
-        .value-down {
-            color: #C10015;
         }
     }
 

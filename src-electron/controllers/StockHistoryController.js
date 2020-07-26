@@ -15,7 +15,7 @@ const METHODS = {
 };
 
 ipcMain.on(METHODS.GET, async (event, arg) => {
-    const stockHistory = await StockHistoryService.getStockHistory();
+    const stockHistory = await StockHistoryService.getStockHistoryOperations();
 
     event.reply(METHODS.GET, stockHistory);
 });
