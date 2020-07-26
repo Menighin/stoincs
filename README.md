@@ -1,4 +1,7 @@
-# Porquinho Digital (porquinho-digital) 🐽
+# Porquinho Digital
+<p align="center">
+  <img src="./src/assets/snout.svg">
+</p>
 
 App desktop para acompanhamento da sua carteira de investimentos.
 
@@ -27,11 +30,11 @@ quasar dev -m electron
 Caso precise de alguns dados de teste, copie os arquivos da pasta `sample_data` para o diretório `.quasar/electron/data`, que é criado após o projeto ser executado uma vez
 
 ## Roadmap
-- [x] Integração com CEI - Histórico de negociações
+- [x] Integração com CEI
 - [x] Integração Alpha Vantage
 - [x] Integração Google Drive
 - [x] Gráficos
-- [ ] Tesouro direto
+- [x] Tesouro direto
 - [ ] Dividendos
 - [ ] Histórico de valorização da carteira
 - [ ] Alertas
