@@ -105,10 +105,26 @@ class DividendsService {
                 if (!savedDividend.pastEvents.any(o => o.id === id))
                     savedDividend.pastEvents.push({
                         id: id,
-                        ...e
+                        code: e.code,
+                        stockType: e.stockType,
+                        type: e.type,
+                        quantity: e.quantity,
+                        date: e.date,
+                        grossValue: e.grossValue,
+                        netValue: e.netValue,
+                        source: 'CEI'
                     });
             });
-            savedDividend.futureEvents = cei.futureEvents;
+            savedDividend.futureEvents = cei.futureEvents.map(e => ({
+                code: e.code,
+                stockType: e.stockType,
+                type: e.type,
+                quantity: e.quantity,
+                date: e.date,
+                grossValue: e.grossValue,
+                netValue: e.netValue,
+                source: 'CEI'
+            }));
         });
 
         dividends.forEach(d => {

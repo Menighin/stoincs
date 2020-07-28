@@ -21,33 +21,35 @@
         </div>
 
         <transition-group class="stock-cards q-pa-md row items-start q-gutter-lg" name="list-complete">
-            <q-card v-for="sp in pricesCard" :key="`price-${sp.code}`" class="stock-card" :class="{'new': sp.isNew}">
+            <q-card v-for="sp in pricesCard" :key="`price-${sp.code}`" class="stock-card" :class="{'new': sp.isEdit}">
                 <q-card-section class="stock-title q-py-sm">
                     <div class="row">
-                        <div class="col new-stock-code" :class="{ 'invalid': newStockError }" v-if="sp.isNew">
-                            <q-input
-                                borderless
-                                mask="AAAA##"
-                                type="text"
-                                ref="newStockInput"
-                                v-model="newStock"
-                                placeholder="Código"
-                                @input="newStockTooltip = false; newStockError = false;"
-                                @keydown.enter="saveNewStock"
-                                @keydown.esc="cancelNewStock"
-                                @blur="cancelNewStock">
-                                <q-tooltip :delay="1000" content-class="bg-primary tooltip" anchor="bottom left" self="top left" v-model="newStockTooltip" :target="newStockTooltip">
-                                    Pressione <strong>Enter</strong> para salvar, <strong>ESC</strong> para cancelar
-                                </q-tooltip>
-                                <q-tooltip content-class="tooltip bg-red" anchor="bottom left" self="top left" v-model="newStockError" :target="newStockError">
-                                    {{ errorMsg }}
-                                </q-tooltip>
-                            </q-input>
+                        <div class="col stock-code-container">
+                            <div class="new-stock-code" :class="{ 'invalid': newStockError }" v-if="sp.isEdit">
+                                <q-input
+                                    borderless
+                                    mask="AAAA##"
+                                    type="text"
+                                    ref="newStockInput"
+                                    v-model="newStock"
+                                    placeholder="Código"
+                                    @input="newStockTooltip = false; newStockError = false;"
+                                    @keydown.esc="cancelNewStock"
+                                    @keydown.enter="$refs.newStockValueInput[0].select();">
+                                    <q-tooltip :delay="1000" content-class="bg-primary tooltip" anchor="bottom left" self="top left" v-model="newStockTooltip" :target="newStockTooltip">
+                                        Pressione <strong>Enter</strong> para salvar, <strong>ESC</strong> para cancelar
+                                    </q-tooltip>
+                                    <q-tooltip content-class="tooltip bg-red" anchor="bottom left" self="top left" v-model="newStockError" :target="newStockError">
+                                        {{ errorMsg }}
+                                    </q-tooltip>
+                                </q-input>
+                            </div>
+                            <div class="code" v-else>
+                                {{ sp.code }}
+                            </div>
+                            <q-btn v-if="!sp.isEdit" class="col edit-btn" round flat color="primary" size="12px" icon="eva-edit-outline" @click="editPrice(sp)" />
                         </div>
-                        <div class="col code" v-else>
-                            {{ sp.code }}
-                        </div>
-                        <div class="col quantity">
+                        <div class="quantity">
                             {{ sp.quantity || '-' }}
                         </div>
                     </div>
@@ -60,10 +62,44 @@
                         <div class="col-10">
                             <div class="column" style="height: 100%">
                                 <div class="col price flex flex-center q-mx-lg q-py-sm">
-                                    {{ sp.price }}
+                                    <template v-if="!sp.isEdit">
+                                        {{ sp.price }}
+                                    </template>
+                                    <template v-else>
+                                        <q-input
+                                            borderless
+                                            mask="R$ #,##"
+                                            reverse-fill-mask
+                                            fill-mask="0"
+                                            type="text"
+                                            ref="newStockValueInput"
+                                            v-model="newStockValue"
+                                            @input="newStockTooltip = false; newStockError = false;"
+                                            @keydown.esc="cancelNewStock"
+                                            @keydown.enter="$refs.newStockValueVariation[0].select()" />
+                                    </template>
                                 </div>
                                 <div class="col variation flex flex-center">
-                                    <span>{{ sp.changePercent }}</span>
+                                    <template v-if="!sp.isEdit">
+                                        <span>{{ sp.changePercent }}</span>
+                                    </template>
+                                    <template v-else>
+                                        <span style="height: 27px">
+                                            <q-input
+                                                style="height: 27px"
+                                                borderless
+                                                :mask="variationMask"
+                                                reverse-fill-mask
+                                                fill-mask="0"
+                                                type="text"
+                                                ref="newStockValueVariation"
+                                                v-model="newStockValueVariation"
+                                                @keydown="variationChange"
+                                                @input="newStockTooltip = false; newStockError = false;"
+                                                @keydown.esc="cancelNewStock"
+                                                @keydown.enter="saveStockPrice(sp)" />
+                                        </span>
+                                    </template>
                                     <span>{{ sp.changePrice }}</span>
                                 </div>
                             </div>
@@ -111,7 +147,12 @@ export default {
             stockPrices: {},
             NumberUtils: NumberUtils,
             DateUtils: DateUtils,
+            editingStock: null,
+            cancelEdit: false,
             newStock: null,
+            newStockValue: '0,00',
+            newStockValueVariation: '+0,00',
+            variationMask: '+#,##%',
             newStockTooltip: false,
             newStockError: false,
             errorMsg: '',
@@ -165,7 +206,7 @@ export default {
                 changePercent: 0,
                 changePrice: 0,
                 lastUpdated: new Date(),
-                isNew: true
+                isEdit: true
             });
             await this.$nextTick();
             this.$refs.newStockInput[0].focus();
@@ -173,28 +214,64 @@ export default {
                 this.newStockTooltip = true;
             }, 500);
         },
-        saveNewStock() {
+        saveStockPrice(stock) {
             if (this.newStock === null || this.newStock.length < 5) {
                 this.newStockError = true;
                 this.errorMsg = 'Esse não é um código válido';
                 return;
             }
 
-            if (Object.keys(this.stockPrices).indexOf(this.newStock) !== -1) {
+            const alreadyExists = this.stockPrices[this.newStock];
+            if (alreadyExists && this.editingStock !== this.newStock) {
                 this.newStockError = true;
                 this.errorMsg = `${this.newStock} já está cadastrado`;
                 return;
             }
 
-            ipcRenderer.send('stock-prices/add-stock', { code: this.newStock });
-            this.newStockError = false;
-            this.$delete(this.stockPrices, 'new-stock');
-        },
-        cancelNewStock() {
+            ipcRenderer.send('stock-prices/add-stock', {
+                code: this.newStock,
+                price: NumberUtils.getNumberFromCurrency(this.newStockValue),
+                changePercent: NumberUtils.getNumberFromPercentage(this.newStockValueVariation)
+            });
+
+            if (this.editingStock !== null && this.editingStock !== this.newStock) {
+                this.$delete(this.stockPrices, this.editingStock);
+            }
+
             this.newStock = null;
             this.$delete(this.stockPrices, 'new-stock');
             this.newStockError = false;
             this.newStockTooltip = false;
+            this.editingStock = null;
+        },
+        cancelNewStock() {
+            if (this.stockPrices[this.newStock])
+                this.$set(this.stockPrices[this.newStock], 'isEdit', false);
+
+            this.newStock = null;
+            this.$delete(this.stockPrices, 'new-stock');
+            this.newStockError = false;
+            this.newStockTooltip = false;
+            this.editingStock = null;
+        },
+        variationChange(e) {
+            if (e.key === '-')
+                this.variationMask = '-#,##%';
+            if (e.key === '+')
+                this.variationMask = '+#,##%';
+        },
+        async editPrice(stock) {
+            this.editingStock = stock.code;
+            this.newStock = stock.code;
+            this.newStockValue = stock.price;
+            this.newStockValueVariation = stock.changePercent;
+
+            this.$set(this.stockPrices[stock.code], 'isEdit', true);
+            await this.$nextTick();
+            this.$refs.newStockInput[0].select();
+            setTimeout(() => {
+                this.newStockTooltip = true;
+            }, 500);
         },
         setupAlarm(code) {
             this.$q.notify({ type: 'positive', message: `Feature nao implementada ainda n_n'` });
@@ -215,7 +292,7 @@ export default {
                     lastUpdated: DateUtils.getDiffDateFormated(new Date(stockPrice.lastUpdated), new Date()),
                     quantity: quantity,
                     variation: stockPrice.changePrice > 0 ? 'up' : stockPrice.changePrice < 0 ? 'down' : 'unchanged',
-                    isNew: stockPrice.isNew || false
+                    isEdit: stockPrice.isEdit || false
                 };
             });
 
@@ -358,11 +435,15 @@ export default {
 
                 .stock-title {
                     .code {
+                        display: inline;
                         font-size: 24px;
                         vertical-align: middle;
                     }
 
                     .new-stock-code {
+                        width: 80px;
+                        display: inline-block;
+                        vertical-align: middle;
                         &.invalid {
                             input {
                                 color: red !important;
@@ -374,10 +455,15 @@ export default {
                         }
 
                         input {
+                            vertical-align: middle;
                             border: 0;
                             font-size: 24px;
-                            padding: 5px 0;
+                            padding: 4px 0;
                         }
+                    }
+
+                    .edit-btn {
+                        vertical-align: middle;
                     }
 
                     .quantity {
@@ -393,11 +479,30 @@ export default {
                     .price {
                         font-size: 36px;
                         border-bottom: 4px dotted #eee;
+
+                        input {
+                            text-align: center;
+                            vertical-align: middle;
+                            border: 0;
+                            font-size: 36px;
+                            padding: 3px 0;
+                        }
                     }
                     .variation {
                         font-size: 18px;
                         span:first-child {
                             margin-right: 20px;
+                        }
+
+                        input {
+                            color: #aaa;
+                            width: 70px;
+                            text-align: center;
+                            vertical-align: middle;
+                            border: 0;
+                            font-size: 18px;
+                            padding: 3px 0;
+                            margin-right: 10px;
                         }
                     }
                     .last-updated {

@@ -105,7 +105,6 @@ export default {
         treemapOptions() {
             const rawData = this.data.filter(o => o.quantityBought - o.quantitySold > 0);
             const investedOnly = this.treemapRadio === 'invested';
-            console.log(rawData);
 
             const totalValue = rawData.reduce((prev, curr) => {
                 return prev + (investedOnly ? curr.averageValueBought : curr.actualValue);

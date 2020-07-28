@@ -41,7 +41,7 @@ ipcMain.on(METHODS.DELETE_STOCK, async (event, arg) => {
 
 ipcMain.on(METHODS.ADD_STOCK, async (event, arg) => {
     try {
-        const stockPrice = await StockPriceService.addStockPrice(arg.code);
+        const stockPrice = await StockPriceService.addStockPrice(arg);
         await UpdatePricesJob.updateConfig();
         event.reply(METHODS.ADD_STOCK, { status: 'success', data: stockPrice });
     } catch (e) {

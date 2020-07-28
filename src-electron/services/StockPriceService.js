@@ -107,19 +107,19 @@ class StockPriceService {
         this.saveStockPrices(stockPrices);
     }
 
-    async addStockPrice(code) {
+    async addStockPrice(stockPrice) {
         const stockPrices = await this.getStockPrices();
-        stockPrices[code] = {
-            price: 0,
-            changePrice: 0,
-            changePercent: 0,
+        stockPrices[stockPrice.code] = {
+            price: stockPrice.price,
+            changePrice: Math.round((stockPrice.price * (stockPrice.changePercent / 100)) * 100) / 100,
+            changePercent: stockPrice.changePercent,
             lastTradingDay: new Date(),
             lastUpdated: new Date()
         };
         this.saveStockPrices(stockPrices);
 
         const result = {};
-        result[code] = stockPrices[code];
+        result[stockPrice.code] = stockPrices[stockPrice.code];
         return result;
     }
 

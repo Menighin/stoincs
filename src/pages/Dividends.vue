@@ -104,7 +104,7 @@ export default {
             pagination: {
                 rowsPerPage: 50
             },
-            visibleColumns: [ 'code', 'type', 'quantity', 'date', 'grossValue', 'netValue' ],
+            visibleColumns: [ 'code', 'type', 'quantity', 'date', 'grossValue', 'netValue', 'source' ],
             columns: [
                 {
                     name: 'broker',
@@ -163,6 +163,13 @@ export default {
                     field: 'netValue',
                     sortable: true,
                     format: val => NumberUtils.formatCurrency(val)
+                },
+                {
+                    name: 'source',
+                    align: 'center',
+                    label: 'Origem',
+                    field: 'source',
+                    sortable: true
                 }
             ],
             NumberUtils: NumberUtils,
@@ -212,7 +219,6 @@ export default {
     },
     mounted() {
         ipcRenderer.on('dividends/get', (event, response) => {
-            console.log(response);
             this.tableLoading = false;
             if (response.status === 'success') {
                 this.dividends = response.data;

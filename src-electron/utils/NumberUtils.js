@@ -29,12 +29,21 @@ class NumberUtils {
     }
 
     /**
-     * Format a currency number back to Number
+     * Format a currency number string back to Number
      * @param {String} n - The number with currency
      * @returns {Number} - The number from currency
      */
     static getNumberFromCurrency(n) {
         return parseFloat(n.replace(/[^0-9,]+/g, '').replace(',', '.'));
+    }
+
+    /**
+     * Format a percentage number string back to Number
+     * @param {String} n - The string with percentage
+     * @returns {Number} - The number from percentage
+     */
+    static getNumberFromPercentage(n) {
+        return parseFloat(n.replace(/[^0-9,-]+/g, '').replace(',', '.'));
     }
 
 }
