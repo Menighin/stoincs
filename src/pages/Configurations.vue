@@ -25,7 +25,7 @@
                     <q-icon name="help" class="cursor-pointer" size="24px" color="info">
                         <q-menu anchor="top right" self="bottom right" content-class="q-pa-sm">
                             Chave de acesso da API Alpha Vantage.<br />Essa API é utilizada para buscar os valores das ações em tempo real.<br />
-                            Para conseguir a sua chave, basta acessar o site da <a href="https://www.alphavantage.co/support/#api-key">Alpha Vantage</a> e criar seu usuário.
+                            Para conseguir a sua chave, basta acessar o site da <a href="#" @click="$event.preventDefault(); shell.openExternal('https://www.alphavantage.co/support/#api-key')">Alpha Vantage</a> e criar seu usuário.
                         </q-menu>
                     </q-icon>
                 </div>
@@ -121,7 +121,7 @@
 <script>
 
 import DateUtils from '../../src-electron/utils/DateUtils';
-import { ipcRenderer } from 'electron';
+import { ipcRenderer, shell } from 'electron';
 
 export default {
     name: 'PageConfigurations',
@@ -138,7 +138,8 @@ export default {
             historyStocks: [],
             Math: Math,
             wallet: [],
-            autoUpdate: false
+            autoUpdate: false,
+            shell: shell
         };
     },
     methods: {

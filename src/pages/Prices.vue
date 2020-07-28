@@ -21,7 +21,7 @@
         </div>
 
         <transition-group class="stock-cards q-pa-md row items-start q-gutter-lg" name="list-complete">
-            <q-card v-for="sp in pricesCard" :key="`price-${sp.code}`" class="stock-card" :class="{'new': sp.isEdit}">
+            <q-card v-for="sp in pricesCard" :key="`price-${sp.code}`" class="stock-card" :class="{'new': sp.isEdit}" :id="sp.code">
                 <q-card-section class="stock-title q-py-sm">
                     <div class="row">
                         <div class="col stock-code-container">
@@ -202,6 +202,7 @@ export default {
         },
         async addStock() {
             this.$set(this.stockPrices, 'new-stock', {
+                code: 'new-stock',
                 price: 0,
                 changePercent: 0,
                 changePrice: 0,
@@ -212,6 +213,7 @@ export default {
             this.$refs.newStockInput[0].focus();
             setTimeout(() => {
                 this.newStockTooltip = true;
+                document.body.addEventListener('click', this.clickElement);
             }, 500);
         },
         saveStockPrice(stock) {
@@ -243,6 +245,7 @@ export default {
             this.newStockError = false;
             this.newStockTooltip = false;
             this.editingStock = null;
+            document.body.removeEventListener('click', this.clickElement);
         },
         cancelNewStock() {
             if (this.stockPrices[this.newStock])
@@ -253,6 +256,7 @@ export default {
             this.newStockError = false;
             this.newStockTooltip = false;
             this.editingStock = null;
+            document.body.removeEventListener('click', this.clickElement);
         },
         variationChange(e) {
             if (e.key === '-')
@@ -271,10 +275,19 @@ export default {
             this.$refs.newStockInput[0].select();
             setTimeout(() => {
                 this.newStockTooltip = true;
+                document.body.addEventListener('click', this.clickElement);
             }, 500);
         },
         setupAlarm(code) {
             this.$q.notify({ type: 'positive', message: `Feature nao implementada ainda n_n'` });
+        },
+        clickElement(e) {
+            const el = this.editingStock != null ? document.getElementById(this.editingStock) : document.getElementById('new-stock');
+            if (el) {
+                if (!(el === e.target || el.contains(e.target))) {
+                    this.cancelNewStock();
+                }
+            }
         }
     },
     computed: {
@@ -384,6 +397,9 @@ export default {
         this.selectedSort = localStorage.getItem('prices-page-sort') || 'code';
 
         this.init();
+    },
+    beforeDestroy() {
+        document.body.removeEventListener('click', this.clickElement);
     }
 };
 </script>
