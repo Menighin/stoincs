@@ -9,14 +9,8 @@ const ALPHA_VANTAGE_FUNCTIONS = {
 
 class AlphaVantageService {
 
-    constructor() {
-        this.apiKey = null;
-    }
-
     async getKey() {
-        if (this.apiKey === null)
-            this.apiKey = (await ConfigurationService.getConfiguration()).alphaVantageKey || '';
-        return this.apiKey;
+        return (await ConfigurationService.getConfiguration()).alphaVantageKey || '';
     }
 
     async getLastValue(code) {
@@ -38,7 +32,7 @@ class AlphaVantageService {
         });
 
         let status = 'success';
-        let errorMessage = '';
+        let errorMessage = 'Não foi possível atualizar o preço';
         if (!('Global Quote' in res.data)) {
             status = 'error';
             errorMessage = 'Error Message' in res.data ? 'Código inválido' : 'Número de chamadas da API excedido';
@@ -46,7 +40,9 @@ class AlphaVantageService {
 
         const globalQuote = res.data['Global Quote'];
 
-        if (status === 'success') {
+        if (status === 'success' && Object.keys(globalQuote).any()) {
+            const now = new Date();
+            const nowTime = `${now.getHours().toString().padStart(2, '0')}${now.toJSON().substr(13, 6)}`;
             return {
                 status: status,
                 errorMessage: errorMessage,
@@ -54,12 +50,12 @@ class AlphaVantageService {
                 price: parseFloat(globalQuote['05. price']),
                 changePrice: parseFloat(globalQuote['09. change']),
                 changePercent: parseFloat(globalQuote['10. change percent'].toString().slice(0, -1)),
-                lastTradingDay: new Date(`${globalQuote['07. latest trading day']} 00:00:00`)
+                apiUpdate: new Date(`${globalQuote['07. latest trading day']} ${nowTime}`)
             };
         } else {
             return {
                 code: code,
-                status: status,
+                status: 'error',
                 errorMessage: errorMessage
             };
         }

@@ -30,6 +30,16 @@
                     </q-icon>
                 </div>
                 <q-input class="q-ma-sm" filled v-model="alphaVantageKey" label="Chave Alpha Vantage" />
+                <div class="row q-ma-sm justify-between items-center">
+                    <h5 class="q-ma-none">HG Brasil</h5>
+                    <q-icon name="help" class="cursor-pointer" size="24px" color="info">
+                        <q-menu anchor="top right" self="bottom right" content-class="q-pa-sm">
+                            Chave de acesso da API HG Brasil.<br />Essa API é utilizada para buscar os valores das ações em tempo real.<br />
+                            Para conseguir a sua chave, basta acessar o site da <a href="#" @click="$event.preventDefault(); shell.openExternal('https://hgbrasil.com/')">HG Brasil</a>, criar seu usuário e criar sua chave de acesso.
+                        </q-menu>
+                    </q-icon>
+                </div>
+                <q-input class="q-ma-sm" filled v-model="hgBrasilKey" label="Chave HG Brasil" />
             </div>
 
             <div class="col-lg-6 col-md-12 col-sm-12 q-pa-md">
@@ -41,13 +51,20 @@
                                 <q-menu anchor="top right" self="bottom right" content-class="q-pa-sm">
                                     Define a frequência de atualização de preços dos ativos.<br />
                                     A API grátis da Alpha Vantage é limitada a 5 requisições por minuto e 500 requisições diárias.<br />
-                                    Caso esteja usando uma chave grátis da API, tenha cuidado para não ficar sem requisições. <br />
+                                    A API grátis da HG Brasil é limitada a 400 requisições diárias.<br />
+                                    Caso esteja usando uma chave grátis de uma dessas APIs, tenha cuidado para não ficar sem requisições. <br />
                                     O quadro de resumo te auxilia a encontrar os melhores parametros para utilizar a atualização automatica dos valores.
                                 </q-menu>
                             </q-icon>
                         </div>
 
                         <q-item-label header class="q-my-none q-py-none">Atualizar automaticamente? <q-checkbox v-model="autoUpdate" /></q-item-label>
+
+                        <div>
+                            <q-item-label header class="q-my-none q-py-none">Qual API utilizar?</q-item-label>
+                            <q-radio label="Alpha Vantage" val="alpha-vantage" v-model="updatePriceApi" />
+                            <q-radio label="HG Brasil" val="hg-brasil" v-model="updatePriceApi" />
+                        </div>
 
                         <q-item-label header>Quais ações devem ter o valor atualizado?</q-item-label>
                         <div class="q-gutter-md row items-start">
@@ -77,13 +94,10 @@
                             </template>
                         </div>
 
-                        <q-item-label header>Quantas ações devem ser atualizadas por tick?</q-item-label>
-                        <q-input dense v-model="priceUpdate.many" @blur="priceUpdate.many = Math.max(1, priceUpdate.many)" type="number" filled/>
+                        <q-item-label header class="q-mt-sm">Atualizar <q-input class="inline-input" dense v-model="priceUpdate.many" @blur="priceUpdate.many = Math.max(1, priceUpdate.many)" type="number" filled/> ações
+                            a cada <q-input class="inline-input" dense v-model="priceUpdate.when" @blur="priceUpdate.when = Math.max(1, priceUpdate.when)" type="number" filled/> minuto(s)</q-item-label>
 
-                        <q-item-label header>Qual o intervalo, em minutos, entre cada tick?</q-item-label>
-                        <q-input dense v-model="priceUpdate.when" @blur="priceUpdate.when = Math.max(1, priceUpdate.when)" type="number" filled/>
-
-                        <q-item-label header>Entre quais horas do dia os preços devem ser atualizados?</q-item-label>
+                        <q-item-label header style="margin-top: 0">Entre quais horas do dia os preços devem ser atualizados?</q-item-label>
                         <div class="row">
                             <q-input dense class="q-pr-sm q-pb-none" filled v-model="priceUpdate.startTime" mask="time" :rules="['time']" label="Início">
                                 <template v-slot:append>
@@ -122,6 +136,7 @@
 
 import DateUtils from '../../src-electron/utils/DateUtils';
 import { ipcRenderer, shell } from 'electron';
+import axios from 'axios';
 
 export default {
     name: 'PageConfigurations',
@@ -130,6 +145,8 @@ export default {
             username: '',
             password: '',
             alphaVantageKey: '',
+            updatePriceApi: '',
+            hgBrasilKey: '',
             isPwd: true,
             priceUpdate: {},
             stockToAdd: '',
@@ -148,9 +165,11 @@ export default {
                 username: this.username,
                 password: this.password,
                 alphaVantageKey: this.alphaVantageKey,
+                hgBrasilKey: this.hgBrasilKey,
                 priceUpdate: {
                     ...this.priceUpdate,
-                    auto: this.autoUpdate
+                    auto: this.autoUpdate,
+                    updatePriceApi: this.updatePriceApi
                 }
             };
 
@@ -236,19 +255,23 @@ export default {
         });
 
         ipcRenderer.on('configuration/get', (event, response) => {
+            console.log(JSON.stringify(response));
             if (response.status === 'success') {
                 this.username = response.data.username || '';
                 this.password = response.data.password || '';
                 this.alphaVantageKey = response.data.alphaVantageKey || '';
+                this.hgBrasilKey = response.data.hgBrasilKey || '';
                 this.priceUpdate = response.data.priceUpdate || {};
 
-                if (!this.priceUpdate.auto) this.priceUpdate.auto = true;
+                if (!this.priceUpdate.updatePriceApi) this.priceUpdate.updatePriceApi = 'alpha-vantage';
+                if (typeof this.priceUpdate.auto === 'undefined') this.priceUpdate.auto = true;
                 if (!this.priceUpdate.many) this.priceUpdate.many = 1;
                 if (!this.priceUpdate.when) this.priceUpdate.when = 1;
                 if (!this.priceUpdate.startTime) this.priceUpdate.startTime = '00:00';
                 if (!this.priceUpdate.endTime) this.priceUpdate.endTime = '00:00';
 
                 this.autoUpdate = this.priceUpdate.auto;
+                this.updatePriceApi = this.priceUpdate.updatePriceApi;
             } else {
                 this.$q.notify({ type: 'negative', message: `Error ao ler suas configurações: ${response.error.message}` });
                 console.error(response.error);
@@ -281,6 +304,11 @@ export default {
         padding: 2px 5px;
         border: 1px solid #ccc;
         min-height: 77px;
+    }
+
+    .inline-input {
+        display: inline-block;
+        width: 50px;
     }
 }
 

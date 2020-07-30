@@ -88,6 +88,10 @@
                 {{ props.row.lastUpdated ? `${DateUtils.getFormatedHoursFromSeconds(parseInt((new Date() - new Date(props.row.lastUpdated)) / 1000), true, true, false) }` : null }}
             </q-td>
 
+            <q-td auto-width slot="body-cell-apiUpdate" slot-scope="props" :props="props">
+                {{ props.row.apiUpdate ? `${DateUtils.getFormatedHoursFromSeconds(parseInt((new Date() - new Date(props.row.apiUpdate)) / 1000), true, true, false) }` : null }}
+            </q-td>
+
             <q-td auto-width slot="body-cell-historicPosition" slot-scope="props" :props="props" :class="{ 'value-up': props.row.historicPosition > 0, 'value-down': props.row.historicPosition < 0 }">
                 {{ NumberUtils.formatCurrency(props.row.historicPosition) }}
                 <div class="variation">{{ NumberUtils.formatPercentage(props.row.historicVariation) }}</div>
@@ -243,11 +247,11 @@ export default {
                     format: val => val ? DateUtils.toString(new Date(val)) : null
                 },
                 {
-                    name: 'lastTradingDay',
+                    name: 'apiUpdate',
                     align: 'center',
-                    label: 'Ultima atualização Alpha Vantage',
-                    field: 'lastTradingDay',
-                    format: val => val ? DateUtils.toString(new Date(val), true, false) : null
+                    label: 'Ultima atualização API',
+                    field: 'apiUpdate',
+                    format: val => val ? DateUtils.toString(new Date(val)) : null
                 },
                 {
                     name: 'historicPosition',
@@ -398,7 +402,7 @@ export default {
                     changePrice: this.stockPrices[w.code] ? this.stockPrices[w.code].changePrice : 0,
                     changePercent: this.stockPrices[w.code] ? this.stockPrices[w.code].changePercent : 0,
                     lastUpdated: this.stockPrices[w.code] ? this.stockPrices[w.code].lastUpdated : null,
-                    lastTradingDay: this.stockPrices[w.code] ? this.stockPrices[w.code].lastTradingDay : null,
+                    apiUpdate: this.stockPrices[w.code] ? this.stockPrices[w.code].apiUpdate : null,
                     averageBuyPrice: averageBuyPrice,
                     historicPosition: historicPosition,
                     historicVariation: historicVariation * 100
@@ -474,7 +478,7 @@ export default {
                 this.stockPrices[r.code].price = r.price;
                 this.stockPrices[r.code].changePrice = r.changePrice;
                 this.stockPrices[r.code].changePercent = r.changePercent;
-                this.stockPrices[r.code].lastTradingDay = r.lastTradingDay;
+                this.stockPrices[r.code].apiUpdate = r.apiUpdate;
                 this.stockPrices[r.code].lastUpdated = r.lastUpdated;
             }
 

@@ -42,7 +42,6 @@ class UpdatePricesJob {
 
     async run() {
         if (!this._configuration.auto) {
-            NotificationService.notifyMessage('Preços não atualizados', 'A atualização automática de preços está desligada', 'fas fa-coins');
             return;
         }
 

@@ -1,6 +1,8 @@
 import fs from 'fs';
 import FileSystemUtils from '../utils/FileSystemUtils';
 import AlphaVantageService from './AlphaVantageService';
+import HgBrasilService from './HgBrasilService';
+import ConfigurationService from './ConfigurationService';
 
 const FILES = {
     STOCK_PRICES: 'stock_prices'
@@ -33,9 +35,16 @@ class StockPriceService {
     }
 
     async autoUpdateStockPrices(stocks) {
-        console.log(`[STOCK PRICE SERVICE] Updating stocks ${stocks.join(', ')}...`);
+        const configuration = await ConfigurationService.getConfiguration();
+        let updateApi = 'alpha-vantage';
+        if (configuration && configuration.priceUpdate && configuration.priceUpdate.updatePriceApi)
+            updateApi = configuration.priceUpdate.updatePriceApi;
 
-        const promises = stocks.map(s => AlphaVantageService.getLastValue(s));
+        console.log(`[STOCK PRICE SERVICE] Updating stocks using ${updateApi}: ${stocks.join(', ')}...`);
+
+        const promises = updateApi === 'alpha-vantage'
+            ? stocks.map(s => AlphaVantageService.getLastValue(s))
+            : stocks.map(s => HgBrasilService.getLastValue(s));
 
         const results = (await Promise.all(promises)).filter(o => o !== null);
 
@@ -49,7 +58,7 @@ class StockPriceService {
                 price: r.price,
                 changePrice: r.changePrice,
                 changePercent: r.changePercent,
-                lastTradingDay: r.lastTradingDay,
+                apiUpdate: r.apiUpdate,
                 lastUpdated: now
             };
             r.lastUpdated = now;

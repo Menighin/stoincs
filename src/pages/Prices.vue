@@ -111,7 +111,8 @@
                         </div>
                     </div>
                     <div class="last-updated" align="center">
-                        {{ sp.lastUpdated }}
+                        <span title="Última vez que o Porquinho atualizou">{{ sp.lastUpdated }}</span>
+                        <span title="Última data de atualização do ativo na API utilizada">({{sp.apiUpdate}})</span>
                     </div>
                 </q-card-section>
 
@@ -303,6 +304,7 @@ export default {
                     changePercentRaw: stockPrice.changePercent,
                     changePrice: NumberUtils.formatCurrency(stockPrice.changePrice, true) || '-',
                     lastUpdated: DateUtils.getDiffDateFormated(new Date(stockPrice.lastUpdated), new Date()),
+                    apiUpdate: DateUtils.getFormatedHoursFromSeconds(parseInt((new Date() - new Date(stockPrice.apiUpdate)) / 1000), true, true, false),
                     quantity: quantity,
                     variation: stockPrice.changePrice > 0 ? 'up' : stockPrice.changePrice < 0 ? 'down' : 'unchanged',
                     isEdit: stockPrice.isEdit || false
