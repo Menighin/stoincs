@@ -36,7 +36,12 @@ class CeiCrawlerService {
         const password = configuration.password || '';
 
         const chromiumPath = puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked/node_modules/puppeteer');
-        this._ceiCrawler = new CeiCrawler(user, password, { puppeteerLaunch: { headless: true, executablePath: chromiumPath }, capDates: true });
+        const puppeterLaunchOptions = {
+            headless: true,
+            executablePath: chromiumPath,
+            args: ['--disable-dev-shm-usage']
+        };
+        this._ceiCrawler = new CeiCrawler(user, password, { puppeteerLaunch: puppeterLaunchOptions, capDates: true });
 
         return this._ceiCrawler;
     }

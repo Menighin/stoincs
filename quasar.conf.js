@@ -115,7 +115,7 @@ module.exports = function(ctx) {
                 linux: {
                     target: [
                         'AppImage',
-                        'deb'
+                        'rpm'
                     ]
                 },
                 publish: {
