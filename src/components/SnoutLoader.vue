@@ -73,7 +73,12 @@ export default {
     mounted() {
         const self = this;
         EventBus.$on('snout-loader-start', (evt) => {
-            self.loading.push(evt);
+            const loading = self.loading.first(o => o.code === evt.code);
+            if (loading)
+                loading.message = evt.message;
+            else
+                self.loading.push(evt);
+
             if (!this.progress)
                 self.$refs.snoutLoader.$el.getElementById('snout-fill').style.fill = 'url("#gradient-2")';
             self.$refs.snoutLoader.$el.classList.add('loading');

@@ -166,7 +166,7 @@
 <script>
 import NotificationPopup from '../components/NotificationPopup';
 import { ipcRenderer } from 'electron';
-import DateUtils from '../../src-electron/utils/DateUtils';
+import DateUtils from '../../src-shared/utils/DateUtils';
 import SnoutLoader from '../components/SnoutLoader';
 import EventBus from '../components/EventBus';
 import InlineSvg from 'vue-inline-svg';

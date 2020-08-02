@@ -13,6 +13,10 @@ class CeiCrawlerService {
 
     _closeTimeout = null;
 
+    /**
+     * Returns a free instance of CeiCrawler
+     * @returns {CeiCrawler} - Instance of CeiCrawler
+     */
     async _getFreeInstance() {
         clearTimeout(this._closeTimeout);
         if (this._ceiCrawler != null && this._isFree) {
@@ -94,6 +98,19 @@ class CeiCrawlerService {
         console.log('[CEI CRAWLER SERVICE] Getting wallet...');
         try {
             const result = await ceiCrawler.getWallet(date);
+            await this.freeUpInstance();
+            return result;
+        } catch (e) {
+            await this.freeUpInstance();
+            throw e;
+        }
+    }
+
+    async getWalletOptions() {
+        const ceiCrawler = await this._getFreeInstance();
+        console.log('[CEI CRAWLER SERVICE] Getting wallet options...');
+        try {
+            const result = await ceiCrawler.getWalletOptions();
             await this.freeUpInstance();
             return result;
         } catch (e) {

@@ -3,6 +3,7 @@ import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
 import UpdatePricesJob from '../jobs/UpdatePricesJob';
 import UpdateTreasuryDirectJob from '../jobs/UpdateTreasuryDirectJob';
 import UpdateDividendsJob from '../jobs/UpdateDividendsJob';
+import UpdateWalletHistoryJob from '../jobs/UpdateWalletHistoryJob';
 import SyncGoogleDriveJob from '../jobs/SyncGoogleDriveJob';
 import NotificationService from '../services/NotificationService';
 import Controllers from '../controllers/main';
@@ -55,10 +56,11 @@ function createWindow() {
     });
 
     NotificationService.setup(mainWindow);
-    UpdateStockHistoryJob.setup();
-    UpdatePricesJob.setup(mainWindow);
-    UpdateTreasuryDirectJob.setup();
-    UpdateDividendsJob.setup();
+    // UpdateStockHistoryJob.setup();
+    // UpdatePricesJob.setup(mainWindow);
+    // UpdateTreasuryDirectJob.setup();
+    // UpdateDividendsJob.setup();
+    UpdateWalletHistoryJob.setup();
     SyncGoogleDriveJob.setup(mainWindow);
     AutoUpdaterService.setup(mainWindow);
     setTimeout(() => {

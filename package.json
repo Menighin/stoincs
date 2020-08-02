@@ -14,7 +14,7 @@
     "@quasar/extras": "^1.8.2",
     "adm-zip": "^0.4.16",
     "axios": "^0.19.2",
-    "cei-crawler": "^1.0.0",
+    "cei-crawler": "^1.1.0",
     "core-js": "^3.0.0",
     "electron-updater": "^4.3.1",
     "express": "^4.17.1",

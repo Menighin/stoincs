@@ -83,12 +83,12 @@ class DividendsService {
         const rootPath = await FileSystemUtils.getDataPath();
         const path = `${rootPath}/${FILES.DIVIDENDS}`;
         const dividends = await this.getDividends();
-
+        let newDividends = 0;
         dividendsCei.forEach(cei => {
             const alreadyExistsAccount = dividends
                 .any(d => d.institution === cei.institution && d.account === cei.account);
 
-            const savedDividend = alreadyExistsAccount
+            const savedAccount = alreadyExistsAccount
                 ? dividends.first(d => d.institution === cei.institution && d.account === cei.account)
                 : {
                     institution: cei.institution,
@@ -98,12 +98,13 @@ class DividendsService {
                 };
 
             // If there's no dividend data for this account and institution, add it
-            if (!alreadyExistsAccount) dividends.push(savedDividend);
+            if (!alreadyExistsAccount) dividends.push(savedAccount);
 
             cei.pastEvents.forEach(e => {
                 const id = this.getEventId(e);
-                if (!savedDividend.pastEvents.any(o => o.id === id))
-                    savedDividend.pastEvents.push({
+                if (!savedAccount.pastEvents.any(o => o.id === id)) {
+                    newDividends++;
+                    savedAccount.pastEvents.push({
                         id: id,
                         code: e.code,
                         stockType: e.stockType,
@@ -114,8 +115,9 @@ class DividendsService {
                         netValue: e.netValue,
                         source: 'CEI'
                     });
+                }
             });
-            savedDividend.futureEvents = cei.futureEvents.map(e => ({
+            savedAccount.futureEvents = cei.futureEvents.map(e => ({
                 code: e.code,
                 stockType: e.stockType,
                 type: e.type,
@@ -133,6 +135,7 @@ class DividendsService {
         });
 
         await fs.promises.writeFile(path, JSON.stringify(dividends));
+        return newDividends;
     }
 
     getEventId(e) {

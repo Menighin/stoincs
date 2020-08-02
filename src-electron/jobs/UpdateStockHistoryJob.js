@@ -1,5 +1,5 @@
 import StockHistoryService from '../services/StockHistoryService';
-import DateUtils from '../utils/DateUtils';
+import DateUtils from '../../src-shared/utils/DateUtils';
 import StockUtils from '../utils/StockUtils';
 import NotificationService from '../services/NotificationService';
 import WalletService from '../services/WalletService';

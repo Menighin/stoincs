@@ -134,7 +134,7 @@
 
 <script>
 
-import DateUtils from '../../src-electron/utils/DateUtils';
+import DateUtils from '../../src-shared/utils/DateUtils';
 import { ipcRenderer, shell } from 'electron';
 import axios from 'axios';
 

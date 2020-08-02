@@ -1,11 +1,11 @@
 import DividendsService from '../services/DividendsService';
-import DateUtils from '../utils/DateUtils';
+import DateUtils from '../../src-shared/utils/DateUtils';
 import NotificationService from '../services/NotificationService';
 import CeiCrawlerService from '../services/CeiCrawlerService';
 
 const NOTIFICATION = {
     TITLE: 'Dividendos',
-    ICON: 'fas fa-landmark'
+    ICON: 'fas fa-receipt'
 };
 
 class UpdateDividendsJob {
@@ -35,9 +35,9 @@ class UpdateDividendsJob {
                 console.log('[DIVIDENDS JOB] Executing CEI Crawler - Dividends...');
                 const dividends = await CeiCrawlerService.getDividends();
 
-                await DividendsService.saveDividendsFromJob(dividends);
+                const newDividends = await DividendsService.saveDividendsFromJob(dividends);
                 await DividendsService.updateDividendsJobMetadata();
-                NotificationService.notifyMessage(NOTIFICATION.TITLE, `Dividendos foram atualizados!`, NOTIFICATION.ICON);
+                NotificationService.notifyMessage(NOTIFICATION.TITLE, `Dividendos foram atualizados! ${newDividends} novos eventos!`, NOTIFICATION.ICON);
             } else {
                 NotificationService.notifyMessage(NOTIFICATION.TITLE, `Dividendos já estão atualizados com o CEI`, NOTIFICATION.ICON);
             }

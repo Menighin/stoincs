@@ -1,5 +1,5 @@
 import TreasuryDirectService from '../services/TreasuryDirectService';
-import DateUtils from '../utils/DateUtils';
+import DateUtils from '../../src-shared/utils/DateUtils';
 import NotificationService from '../services/NotificationService';
 import CeiCrawlerService from '../services/CeiCrawlerService';
 

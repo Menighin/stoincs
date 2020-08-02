@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 import SnoutLoaderPlugin from '../plugins/SnoutLoaderPlugin';
+import Prototypes from '../../src-shared/utils/Prototypes';
 
 import routes from './routes';
 

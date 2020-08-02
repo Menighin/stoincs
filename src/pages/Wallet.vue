@@ -171,8 +171,8 @@
 <script>
 
 import { ipcRenderer } from 'electron';
-import NumberUtils from '../../src-electron/utils/NumberUtils';
-import DateUtils from '../../src-electron/utils/DateUtils';
+import NumberUtils from '../../src-shared/utils/NumberUtils';
+import DateUtils from '../../src-shared/utils/DateUtils';
 
 export default {
     name: 'PageWallet',

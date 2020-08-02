@@ -40,7 +40,7 @@ import treemapInit from 'highcharts/modules/treemap';
 import waterfallInit from 'highcharts/highcharts-more';
 import { ipcRenderer } from 'electron';
 import HighchartUtils, { SeriesColors } from '../utils/HighchartUtils';
-import NumberUtils from '../../src-electron/utils/NumberUtils';
+import NumberUtils from '../../src-shared/utils/NumberUtils';
 
 treemapInit(Highcharts);
 waterfallInit(Highcharts);
