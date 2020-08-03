@@ -2,12 +2,43 @@
     <q-page class="chart-page" ref="chartPage">
 
         <q-tabs v-model="tab" class="text-secondary" active-color="accent">
+            <q-tab name="walletPerformance" label="Performance" />
             <q-tab name="treemap" label="Treemap" />
             <q-tab name="bars" label="Barras" />
             <q-tab name="waterfall" label="Waterfall" />
         </q-tabs>
 
         <q-tab-panels v-model="tab" animated class="chart-panel" ref="chartPanel">
+            <q-tab-panel name="walletPerformance">
+                <div style="width: 600px; margin: 0 0 0 auto; text-align: right">
+                    <div style="width: 200px; display: inline-block; margin-right: 20px">
+                        <q-radio label="Porcentagem" v-model="walletPerformanceType" val="percentage" />
+                        <q-radio label="Valor" v-model="walletPerformanceType" val="value" />
+                    </div>
+                    <q-select style="width: 200px; display: inline-block;" @input="changedWalletPerformanceTime" :options="walletPerformanceDateOptions" v-model="walletPerformanceDate" filled dense />
+                </div>
+                <div style="height: 90%" class="wallet-performance-container">
+                    <div class="wallet-performance-total" :class="`${walletPerformanceTotalValue > 0 ? 'value-up' : (walletPerformanceTotalValue < 0 ? 'value-down' : '')}`">
+                        <span class="value">
+                            <template v-if="walletPerformanceType === 'value'">{{ NumberUtils.formatCurrency(walletPerformanceTotalValue, true) }}</template>
+                            <template v-if="walletPerformanceType === 'percentage'">{{ NumberUtils.formatPercentage(walletPerformanceTotalValue, true) }}</template>
+                        </span>
+                        <span class="icon">
+                            <q-icon name="eva-trending-up-outline" class="variation-up" v-if="walletPerformanceTotalValue > 0" />
+                            <q-icon name="eva-trending-down-outline" class="variation-down" v-else-if="walletPerformanceTotalValue < 0" />
+                            <q-icon name="eva-minus-outline" v-else />
+                        </span>
+                    </div>
+                    <highcharts ref="walletPerformanceChart" class="chart" :options="walletPerformanceOptions" v-if="data.length > 0" />
+                    <div class="no-data" v-else>
+                        <h5>Não há dados para este gráfico <q-icon size="2em" name="sentiment_dissatisfied" /></h5><br/>
+                        <span>
+                            Configure seu acesso ao CEI
+                        </span>
+                    </div>
+                </div>
+            </q-tab-panel>
+
             <q-tab-panel name="treemap">
                 <q-radio label="Valor investido" v-model="treemapRadio" val="invested" />
                 <q-radio label="Valor atual" v-model="treemapRadio" val="actual" />
@@ -35,6 +66,7 @@
                     </div>
                 </div>
             </q-tab-panel>
+
             <q-tab-panel name="waterfall">
                 <q-select :options="waterfallOptions" v-model="waterfallSelected" filled dense style="width: 200px; margin: 0 0 0 auto;" />
                 <div style="height: 90%">
@@ -75,15 +107,34 @@ export default {
             stockPrices: {},
             consolidated: [],
             walletLabels: {},
+            walletPerformance: [],
             tab: null,
             treemapRadio: 'invested',
             barChartInWallet: true,
             barChartShowTotal: false,
             waterfallSelected: null,
-            waterfallOptions: []
+            waterfallOptions: [],
+            walletPerformanceDateOptions: [
+                { label: '7 dias', value: 7 },
+                { label: '15 dias', value: 15 },
+                { label: '30 dias', value: 30 },
+                { label: '60 dias', value: 60 },
+                { label: '90 dias', value: 90 },
+                { label: 'Ultimo semestre', value: 30 * 6 },
+                { label: 'Ultimo ano', value: 365 }
+            ],
+            walletPerformanceDate: { label: '30 dias', value: 30 },
+            walletPerformanceType: 'percentage',
+            NumberUtils: NumberUtils
         };
     },
     methods: {
+        changedWalletPerformanceTime() {
+            const days = this.walletPerformanceDate.value;
+            const now = new Date();
+            const since = new Date(now.getTime() - 1000 * 60 * 60 * 24 * days);
+            ipcRenderer.send('wallet-performance/get', { d1: since, d2: now });
+        }
     },
     computed: {
         data() {
@@ -101,6 +152,80 @@ export default {
                     label: this.walletLabels[c.code]
                 };
             });
+        },
+        walletPerformanceTotal() {
+            return this.walletPerformanceTotalValue.toFixed(2);
+        },
+        walletPerformanceTotalValue() {
+            if (this.walletPerformanceType === 'value')
+                return this.walletPerformance.map(o => o.variation).last() || 0;
+            else
+                return this.walletPerformance.map(o => o.variationPercentage).last() || 0;
+        },
+        walletPerformanceOptions() {
+            const categories = this.walletPerformance.map(o => o.date);
+            const data = this.walletPerformanceType === 'value'
+                ? this.walletPerformance.map(o => o.variation)
+                : this.walletPerformance.map(o => o.variationPercentage);
+
+            const color = data.last() > 0 ? Highcharts.getOptions().colors[2] : Highcharts.getOptions().colors[5];
+
+            return {
+                chart: {
+                    zoomType: 'x'
+                },
+                title: {
+                    text: 'Performance da Carteira de Ações'
+                },
+                xAxis: {
+                    categories: categories
+                },
+                yAxis: {
+                    title: {
+                        text: 'Variação do valor'
+                    }
+                },
+                legend: {
+                    enabled: false
+                },
+                plotOptions: {
+                    area: {
+                        fillColor: {
+                            linearGradient: {
+                                x1: 0,
+                                y1: 0,
+                                x2: 0,
+                                y2: 1
+                            },
+                            stops: [
+                                [0, color],
+                                [1, Highcharts.color(color).setOpacity(0).get('rgba')]
+                            ]
+                        },
+                        marker: {
+                            radius: 2
+                        },
+                        lineWidth: 1,
+                        states: {
+                            hover: {
+                                lineWidth: 1
+                            }
+                        },
+                        threshold: null
+                    }
+                },
+                series: [{
+                    type: 'area',
+                    name: 'Variação',
+                    data: data,
+                    color: color
+                }],
+                tooltip: {
+                    valueDecimals: 2,
+                    valueSuffix: this.walletPerformanceType === 'percentage' ? '%' : '',
+                    valuePrefix: this.walletPerformanceType === 'value' ? 'R$' : ''
+                }
+            };
         },
         treemapOptions() {
             const rawData = this.data.filter(o => o.quantityBought - o.quantitySold > 0);
@@ -402,17 +527,18 @@ export default {
             }
         });
 
+        ipcRenderer.on('wallet-performance/get', (event, response) => {
+            this.walletPerformance = response.data;
+        });
+
         ipcRenderer.send('stock-prices/get');
         ipcRenderer.send('wallet/get');
         ipcRenderer.send('stockHistory/consolidated');
+        this.changedWalletPerformanceTime();
 
         setTimeout(() => {
-            this.tab = 'treemap';
+            this.tab = 'walletPerformance';
             this.$refs.chartPanel.$el.style.height = `${this.$refs.chartPage.$el.clientHeight - 100}px`;
-
-            setTimeout(() => {
-                if (this.$refs.treemapChart) this.$refs.treemapChart.chart.reflow();
-            }, 200);
         }, 200);
     }
 };
@@ -424,6 +550,25 @@ export default {
 
         .no-data {
             padding-top: 100px;
+        }
+
+        .wallet-performance-container {
+            position: relative;
+            .wallet-performance-total {
+                position: absolute;
+                top: 30px;
+                left: 120px;
+                z-index: 10000;
+                background: rgba(255, 255, 255, 0.5);
+                .value {
+                    font-size: 64px;
+                    vertical-align: middle;
+                }
+                .icon {
+                    vertical-align: middle;
+                    font-size: 92px;
+                }
+            }
         }
     }
 </style>

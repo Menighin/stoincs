@@ -6,6 +6,7 @@ import { StockHistoryFiles } from './StockHistoryService';
 import { WalletFiles } from './WalletService';
 import { ConfigurationFiles } from './ConfigurationService';
 import { StockPriceFiles } from './StockPriceService';
+import { WalletHistoryFiles } from './WalletHistoryService';
 
 class FileService {
 
@@ -14,7 +15,8 @@ class FileService {
             ...Object.values(StockHistoryFiles),
             ...Object.values(WalletFiles),
             ...Object.values(ConfigurationFiles),
-            ...Object.values(StockPriceFiles)
+            ...Object.values(StockPriceFiles),
+            ...Object.values(WalletHistoryFiles)
         ];
     }
 

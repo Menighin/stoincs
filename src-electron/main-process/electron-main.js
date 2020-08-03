@@ -56,10 +56,10 @@ function createWindow() {
     });
 
     NotificationService.setup(mainWindow);
-    // UpdateStockHistoryJob.setup();
-    // UpdatePricesJob.setup(mainWindow);
-    // UpdateTreasuryDirectJob.setup();
-    // UpdateDividendsJob.setup();
+    UpdateStockHistoryJob.setup();
+    UpdatePricesJob.setup(mainWindow);
+    UpdateTreasuryDirectJob.setup();
+    UpdateDividendsJob.setup();
     UpdateWalletHistoryJob.setup();
     SyncGoogleDriveJob.setup(mainWindow);
     AutoUpdaterService.setup(mainWindow);

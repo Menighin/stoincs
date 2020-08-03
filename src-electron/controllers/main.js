@@ -8,5 +8,6 @@ import TreasuryDirectController from './TreasuryDirectController';
 import DividendsController from './DividendsController';
 import AutoUpdaterController from './AutoUpdaterController';
 import AboutController from './AboutController';
+import WalletHistoryController from './WalletHistoryController';
 
 export default {};

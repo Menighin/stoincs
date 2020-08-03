@@ -65,10 +65,54 @@ class WalletHistoryService {
     async getWalletPerformanceData(startDate, endDate) {
         const walletHistory = await this.getWalletHistory();
         let currentDate = startDate;
+        const res = [];
+        if (startDate > endDate) throw new Error('Start date should be lower than end date');
 
-        while(currentDate <= endDate) {
+        let dayBeforeData = null;
+        while ((dayBeforeData === null || dayBeforeData === undefined) && currentDate <= endDate) {
+            const key = DateUtils.toString(currentDate, true, false);
+            dayBeforeData = walletHistory[key];
             currentDate = new Date(currentDate.getTime() + 1000 * 60 * 60 * 24);
         }
+
+        while (currentDate <= endDate) {
+            const key = DateUtils.toString(currentDate, true, false);
+            const currentData = walletHistory[key];
+
+            if (currentData) {
+                let totalCurrent = 0;
+                let totalDayBefore = 0;
+                for (const code of Object.keys(dayBeforeData)) {
+                    const currentStock = currentData[code];
+                    const dayBeforeStock = dayBeforeData[code];
+                    if (currentStock) {
+                        const quantity = Math.min(dayBeforeStock.quantity, currentStock.quantity);
+                        totalCurrent += quantity * currentStock.price;
+                        totalDayBefore += quantity * dayBeforeStock.price;
+                    }
+                }
+                if (totalDayBefore > 0) {
+                    const variation = (totalCurrent - totalDayBefore);
+                    const variationPercentage = (variation / totalDayBefore) * 100;
+                    res.push({ date: key, variationPercentage: variationPercentage, variation: variation });
+                }
+                dayBeforeData = currentData;
+            }
+
+            currentDate = new Date(currentDate.getTime() + 1000 * 60 * 60 * 24);
+        }
+
+        return res.map((o, i) => {
+            let sum = 0;
+            let sumPercentage = 0;
+            for (let j = 0; j < i; j++) sum += res[j].variation;
+            for (let j = 0; j < i; j++) sumPercentage += res[j].variationPercentage;
+            return {
+                date: o.date,
+                variation: sum + o.variation,
+                variationPercentage: sumPercentage + o.variationPercentage
+            };
+        });
     }
 
 };

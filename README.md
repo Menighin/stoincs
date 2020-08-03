@@ -35,6 +35,6 @@ Caso precise de alguns dados de teste, copie os arquivos da pasta `sample_data` 
 - [x] Integração Google Drive
 - [x] Gráficos
 - [x] Tesouro direto
-- [ ] Dividendos
-- [ ] Histórico de valorização da carteira
+- [x] Dividendos
+- [x] Histórico de valorização da carteira
 - [ ] Alertas

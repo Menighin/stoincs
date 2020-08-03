@@ -43,7 +43,7 @@ class CeiCrawlerService {
         const puppeterLaunchOptions = {
             headless: true,
             executablePath: chromiumPath,
-            args: ['--disable-dev-shm-usage']
+            args: ['--disable-dev-shm-usage', '--shm-size=3gb']
         };
         this._ceiCrawler = new CeiCrawler(user, password, { puppeteerLaunch: puppeterLaunchOptions, capDates: true });
 
