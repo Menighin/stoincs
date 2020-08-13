@@ -1,8 +1,8 @@
 {
-  "name": "porquinho-digital",
+  "name": "stoincs",
   "version": "0.0.3",
   "description": "Acompanhe seus investimentos",
-  "productName": "Porquinho Digital",
+  "productName": "Stoincs",
   "author": "Joao Menighin <joao.menighin@gmail.com>",
   "private": true,
   "main": "main.js",

@@ -8,7 +8,7 @@
                 fill="black"
                 id="logo-svg"
                 :style="`transform: scale(${logoScale})`"
-                aria-label="Porquinho Digital Logo"
+                aria-label="Stoincs Logo"
             ></inline-svg>
         </div>
         <div class="about" v-if="about != null">
@@ -40,22 +40,22 @@
                             src="img/snout.svg"
                             fill="black"
                             style="transform: scale(1)"
-                            aria-label="Porquinho Digital Logo"
+                            aria-label="Stoincs Logo"
                         ></inline-svg>
                         <div class="q-mt-md text-center">
-                            Bem-vindo ao <strong>Porquinho Digital</strong>!
+                            Bem-vindo ao <strong>Stoincs</strong>!
                         </div>
                     </q-carousel-slide>
                     <q-carousel-slide :name="3" class="column no-wrap flex-center">
                         <q-icon name="eva-code" color="primary" size="72px"></q-icon>
                         <div class="q-mt-md text-center">
-                            O <strong>Porquinho Digital</strong> é um projeto de código aberto. Sinta-se convidado a contribuir no nosso <a href="http://www.github.com/Menighin/porquinho-digital" target="_blank">GitHub</a>, seja com código, idéias ou dúvidas!
+                            O <strong>Stoincs</strong> é um projeto de código aberto. Sinta-se convidado a contribuir no nosso <a href="http://www.github.com/Menighin/stoincs" target="_blank">GitHub</a>, seja com código, idéias ou dúvidas!
                         </div>
                     </q-carousel-slide>
                     <q-carousel-slide :name="4" class="column no-wrap flex-center">
                         <q-icon name="eva-file-text-outline" color="primary" size="72px"></q-icon>
                         <div class="q-mt-md text-center">
-                            No <strong>Porquinho Digital</strong> você é dono dos seus dados. Eles ficam salvos localmente no seu computador!
+                            No <strong>Stoincs</strong> você é dono dos seus dados. Eles ficam salvos localmente no seu computador!
                         </div>
                     </q-carousel-slide>
                     <q-carousel-slide :name="5" class="column no-wrap flex-center">
@@ -75,7 +75,7 @@
                             src="img/snout.svg"
                             fill="black"
                             style="transform: scale(1)"
-                            aria-label="Porquinho Digital Logo"
+                            aria-label="Stoincs Logo"
                         ></inline-svg>
                         <div class="q-mt-md text-center">
                             <h5 style="padding: 0; margin: 0"><strong>Bons investimentos!</strong></h5>

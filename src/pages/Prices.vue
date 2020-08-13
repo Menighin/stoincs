@@ -111,7 +111,7 @@
                         </div>
                     </div>
                     <div class="last-updated" align="center">
-                        <span title="Última vez que o Porquinho atualizou">{{ sp.lastUpdated }}</span>
+                        <span title="Última vez que o Stoincs atualizou">{{ sp.lastUpdated }}</span>
                         <span title="Última data de atualização do ativo na API utilizada">({{sp.apiUpdate}})</span>
                     </div>
                 </q-card-section>

@@ -12,7 +12,7 @@
                 />
 
                 <q-toolbar-title>
-                    Porquinho Digital
+                    Stoincs
                 </q-toolbar-title>
 
                 <NotificationPopup :data.sync="notifications" />
@@ -145,12 +145,12 @@
                         src="img/snout.svg"
                         fill="black"
                         style="transform: scale(1);"
-                        aria-label="Porquinho Digital Logo"
+                        aria-label="Stoincs Logo"
                     ></inline-svg>
                 </q-card-section>
                 <q-card-section class="row q-ma-sm flex flex-center" style="padding-top: 0">
                     <div class="q-mt-md text-center">
-                        Nova versão do <strong>Porquinho Digital</strong> baixada! Deseja instalar agora?
+                        Nova versão do <strong>Stoincs</strong> baixada! Deseja instalar agora?
                     </div>
                 </q-card-section>
                 <q-separator />

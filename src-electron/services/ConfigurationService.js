@@ -6,6 +6,8 @@ import StockUtils from '../utils/StockUtils';
 import UpdatePricesJob from '../jobs/UpdatePricesJob';
 import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
 import UpdateTreasuryDirectJob from '../jobs/UpdateTreasuryDirectJob';
+import UpdateDividendsJob from '../jobs/UpdateDividendsJob';
+import UpdateWalletHistoryJob from '../jobs/UpdateWalletHistoryJob';
 import CeiCrawlerService from '../services/CeiCrawlerService';
 
 const FILES = {
@@ -34,6 +36,8 @@ class ConfigurationService {
             await UpdatePricesJob.updateConfig();
             UpdateStockHistoryJob.run();
             UpdateTreasuryDirectJob.run();
+            UpdateDividendsJob.run();
+            UpdateWalletHistoryJob.run();
         }
     }
 

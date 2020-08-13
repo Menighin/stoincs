@@ -11,7 +11,7 @@
                 height="32"
                 id="snout-loader"
                 ref="snoutLoader"
-                aria-label="Porquinho Digital Logo"
+                aria-label="Stoincs Logo"
             ></inline-svg>
         </div>
     </div>

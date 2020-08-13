@@ -19,14 +19,14 @@ class AutoUpdaterService {
         autoUpdater.on('update-available', (info) => {
             console.log('[AUTO UPDATER] Update available ' + JSON.stringify(info));
             this._downloadingVersion = info.version;
-            NotificationService.notifyMessage('Porquinho Digital', `Baixando nova versão ${info.version}!`, 'fas fa-exclamation');
+            NotificationService.notifyMessage('Stoincs', `Baixando nova versão ${info.version}!`, 'fas fa-exclamation');
         });
         autoUpdater.on('update-not-available', (info) => {
             console.log('[AUTO UPDATER] Update not available');
         });
         autoUpdater.on('error', (err) => {
             console.log('[AUTO UPDATER] Error on update: ' + err.message);
-            NotificationService.notifyMessage('Porquinho Digital', 'Erro ao baixar nova versão: ' + err.message, 'fas fa-times');
+            NotificationService.notifyMessage('Stoincs', 'Erro ao baixar nova versão: ' + err.message, 'fas fa-times');
         });
         autoUpdater.on('download-progress', (progressObj) => {
             let logMessage = 'Download speed: ' + progressObj.bytesPerSecond;

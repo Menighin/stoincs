@@ -21,7 +21,7 @@ class FileService {
     }
 
     async downloadFiles() {
-        const savePath = await dialog.showSaveDialog({ defaultPath: 'porquinho-digital.zip' });
+        const savePath = await dialog.showSaveDialog({ defaultPath: 'stoincs.zip' });
         if (!savePath.canceled) {
             const admZip = new AdmZip();
             const dataPath = await FileSystemUtils.getDataPath();

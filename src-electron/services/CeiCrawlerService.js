@@ -19,6 +19,7 @@ class CeiCrawlerService {
      */
     async _getFreeInstance() {
         clearTimeout(this._closeTimeout);
+        this._closeTimeout = null;
         if (this._ceiCrawler != null && this._isFree) {
             console.log(`[CEI CRAWLER SERVICE] Instance exists and it is free. Returning it...`);
             this._isFree = false;
@@ -51,7 +52,7 @@ class CeiCrawlerService {
     }
 
     async _waitForFreeInstance() {
-        let duration = 20000; // Start with 10s
+        let duration = 20000; // Start with 20s
         while (!this._isFree) {
             console.log(`[CEI CRAWLER SERVICE] Waiting free instance for ${duration}ms...`);
             await AsyncUtils.timeout(duration);
@@ -62,7 +63,6 @@ class CeiCrawlerService {
 
     async freeUpInstance(instantly = false) {
         console.log('[CEI CRAWLER SERVICE] Freeing instance...');
-        this._isFree = true;
 
         // If freed instance is not used for some time, closes it
         if (this._closeTimeout === null && !instantly)
@@ -78,6 +78,8 @@ class CeiCrawlerService {
             this._closeTimeout = null;
             this._ceiCrawler = null;
         }
+
+        this._isFree = true;
     }
 
     async getStockHistory(startDate, endDate) {

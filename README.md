@@ -1,4 +1,4 @@
-# Porquinho Digital
+# Stoincs
 <p align="center">
   <img src="./src/assets/snout.svg">
 </p>

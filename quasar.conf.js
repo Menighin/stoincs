@@ -6,7 +6,7 @@ const beforeBuild = async () => {
         buildDate: new Date(),
         machine: os.hostname()
     };
-    await fs.promises.writeFile('./src-electron/resources/AboutPorquinho.js', `export default ${JSON.stringify(about)}`);
+    await fs.promises.writeFile('./src-electron/resources/AboutStoincs.js', `export default ${JSON.stringify(about)}`);
 };
 
 module.exports = function(ctx) {
@@ -61,8 +61,8 @@ module.exports = function(ctx) {
             workboxPluginMode: 'GenerateSW',
             workboxOptions: {},
             manifest: {
-                name: 'Porquinho Digital',
-                short_name: 'Porquinho Digital',
+                name: 'Stoincs',
+                short_name: 'Stoincs',
                 description: 'Acompanhe seus investimentos',
                 display: 'standalone',
                 orientation: 'portrait',
@@ -105,16 +105,15 @@ module.exports = function(ctx) {
         electron: {
             bundler: 'builder',
             builder: {
-                appId: 'porquinho-digital',
-                copyright: 'Copyright © 2020 Porquinho Digital',
-                productName: 'Porquinho Digital',
+                appId: 'stoincs',
+                copyright: 'Copyright © 2020 Stoincs',
+                productName: 'Stoincs',
                 win: {
                     icon: 'src-electron/icons/icon.png',
                     target: 'nsis'
                 },
                 linux: {
                     target: [
-                        'AppImage',
                         'rpm'
                     ]
                 },
