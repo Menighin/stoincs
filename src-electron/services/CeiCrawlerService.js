@@ -35,10 +35,14 @@ class CeiCrawlerService {
             }
         }
 
-        this._isFree = false;
         const configuration = await ConfigurationService.getConfiguration();
-        const user = configuration.username || '';
-        const password = configuration.password || '';
+        const user = configuration.username || null;
+        const password = configuration.password || null;
+
+        if (user === null || password === null)
+            throw new Error('Login no CEI não está configurado');
+
+        this._isFree = false;
 
         const chromiumPath = puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked/node_modules/puppeteer');
         const puppeterLaunchOptions = {
