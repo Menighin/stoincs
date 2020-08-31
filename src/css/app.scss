@@ -1,5 +1,13 @@
 // app global css in SCSS form
 
+body {
+    // overflow: hidden;
+}
+
+.page-container {
+    height: 100%;
+}
+
 .table-container {
     .data-table {
         table {

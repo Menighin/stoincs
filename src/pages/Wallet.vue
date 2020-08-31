@@ -1,5 +1,5 @@
 <template>
-    <q-page class="wallet-page">
+    <q-page class="wallet-page q-px-lg">
         <div class="filter">
             <q-btn outline color="primary" label="Sincronizar com Histórico" class="q-mx-sm q-my-lg" icon="eva-sync-outline" @click="downloadFromHistory"/>
             <q-btn outline color="primary" class="q-mx-sm q-my-lg" icon="eva-settings-2-outline" @click="configDialog = true"/>
@@ -20,6 +20,7 @@
             :visible-columns="visibleColumns"
             :loading="tableLoading"
             ref="table"
+            v-dynamic-height="{ heightOffset: 300, innerSelector: '.q-table__middle' }"
         >
             <template v-slot:top>
                 <h5 style="margin: 0 5px 0 0">Carteira de Ações</h5>

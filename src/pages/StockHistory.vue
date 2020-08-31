@@ -1,5 +1,5 @@
 <template>
-    <q-page class="">
+    <q-page class="q-px-lg">
         <div class="actions">
             <q-btn outline color="primary" label="Refresh" class="q-mx-sm q-my-lg" icon="eva-refresh" @click="refreshHistory"/>
         </div>
@@ -12,12 +12,14 @@
             :columns="columns"
             row-key="row => `${row.code}-${row.id}`"
             flat
+            ref="dataTable"
             bordered
             :rows-per-page-options="[25, 50, 100]"
             rows-per-page-label="Items por página"
             :pagination.sync="pagination"
             :visible-columns="visibleColumns"
             :loading="tableLoading"
+            v-dynamic-height="{ heightOffset: 300, innerSelector: '.q-table__middle' }"
         >
             <template v-slot:top>
                 <h5 style="margin: 0">Extrato</h5>
@@ -538,7 +540,7 @@ export default {
 
     .table-container {
         .q-table__middle {
-            max-height: 700px;
+            // max-height: 400px;
         }
     }
 

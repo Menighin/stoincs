@@ -1,5 +1,5 @@
 <template>
-    <q-layout view="hHh LpR lFf">
+    <q-layout view="hHh LpR lFf" class="main-layout">
         <q-header elevated>
             <q-toolbar>
                 <q-btn
@@ -374,7 +374,7 @@ export default {
     .snout-loader {
         position: fixed;
         bottom: 8px;
-        right: 16px;
+        right: 8px;
     }
 
     .page-container {

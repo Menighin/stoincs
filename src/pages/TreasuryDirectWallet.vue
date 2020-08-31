@@ -1,5 +1,5 @@
 <template>
-    <q-page class="treasury-direct-wallet-page">
+    <q-page class="treasury-direct-wallet-page q-px-lg">
         <div class="row q-px-sm q-py-lg justify-between items-center">
             <q-card class="kpis-card q-px-lg q-py-md" flat bordered>
                 <q-card-section horizontal>
@@ -30,6 +30,7 @@
             :rows-per-page-options="[50, 100, 150]"
             rows-per-page-label="Items por página"
             :pagination.sync="pagination"
+            v-dynamic-height="{ heightOffset: 350, innerSelector: '.q-table__middle' }"
             :visible-columns="visibleColumns">
             <template v-slot:top>
                 <h5 style="margin: 0 5px 0 0">Carteira de Tesouro Direto</h5>

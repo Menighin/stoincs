@@ -5,7 +5,13 @@
 </template>
 
 <script>
+
+import DynamicHeight from './directives/DynamicHeight';
+
 export default {
-    name: 'App'
+    name: 'App',
+    directives: {
+        DynamicHeight
+    }
 };
 </script>

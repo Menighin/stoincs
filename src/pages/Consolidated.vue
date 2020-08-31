@@ -1,5 +1,5 @@
 <template>
-    <q-page class="stock-history-consolidated q-ma-none">
+    <q-page class="stock-history-consolidated q-ma-none q-px-lg">
         <div class="row q-pa-sm justify-between items-center">
             <q-card class="kpis-card q-px-lg q-py-md" flat bordered>
                 <q-card-section horizontal>
@@ -33,6 +33,7 @@
             :pagination.sync="pagination"
             :visible-columns="visibleColumns"
             :loading="tableLoading"
+            v-dynamic-height="{ heightOffset: 350, innerSelector: '.q-table__middle' }"
         >
             <template v-slot:top>
                 <h5 style="margin: 0">Consolidados</h5>
