@@ -1,10 +1,51 @@
 import fs from 'fs';
 import FileSystemUtils from '../utils/FileSystemUtils';
+import CsvUtils from '../../src-shared/utils/CsvUtils';
+import { dialog } from 'electron';
 
 const FILES = {
     DIVIDENDS: 'dividends',
     JOB_METADATA: 'dividends_job'
 };
+
+const CSV_HEADERS = [
+    {
+        code: 'account',
+        label: 'Conta'
+    },
+    {
+        code: 'institution',
+        label: 'Instituição'
+    },
+    {
+        code: 'code',
+        label: 'Ativo'
+    },
+    {
+        code: 'type',
+        label: 'Tipo'
+    },
+    {
+        code: 'stockType',
+        label: 'Tipo do Ativo'
+    },
+    {
+        code: 'date',
+        label: 'Data do Pagamento'
+    },
+    {
+        code: 'grossValue',
+        label: 'Valor Bruto'
+    },
+    {
+        code: 'netValue',
+        label: 'Valor Líquido'
+    },
+    {
+        code: 'source',
+        label: 'Fonte'
+    }
+];
 
 class DividendsService {
 
@@ -136,6 +177,14 @@ class DividendsService {
 
         await fs.promises.writeFile(path, JSON.stringify(dividends));
         return newDividends;
+    }
+    
+    async downloadCsv() {
+        const savePath = await dialog.showSaveDialog({ defaultPath: 'stoincs-dividendos.csv' });
+        if (!savePath.canceled) {
+            const data = await this.getDividendsEvents();
+            await CsvUtils.saveCsv(savePath.filePath, data, CSV_HEADERS);
+        }
     }
 
     getEventId(e) {

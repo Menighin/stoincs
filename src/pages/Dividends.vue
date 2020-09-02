@@ -68,6 +68,21 @@
                     style="min-width: 150px"
                     class="q-ma-sm"
                 />
+
+                <q-btn-dropdown flat color="primary" label=".CSV">
+                    <q-list>
+                        <q-item clickable v-close-popup @click="downloadCsv">
+                            <q-item-section>
+                                <q-item-label>Download</q-item-label>
+                            </q-item-section>
+                        </q-item>
+                        <q-item clickable v-close-popup @click="downloadCsv">
+                            <q-item-section>
+                                <q-item-label>Upload</q-item-label>
+                            </q-item-section>
+                        </q-item>
+                    </q-list>
+                </q-btn-dropdown>
             </template>
 
             <template v-slot:body="props">
@@ -186,6 +201,9 @@ export default {
         },
         changeVisibleColumns() {
             localStorage.setItem('dividends/columns', JSON.stringify(this.visibleColumns));
+        },
+        downloadCsv() {
+            ipcRenderer.send('dividends/download-csv');
         }
     },
     computed: {

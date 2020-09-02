@@ -30,9 +30,9 @@
                     v-model="filterStock"
                     dense
                     outlined
-                    label="Ações"
+                    label="Ativo"
                     class="q-ma-sm"
-                    style="min-width: 150px"
+                    style="width: 100px"
                 />
 
                 <q-select
@@ -43,7 +43,7 @@
                     label="Meses"
                     :options="months"
                     class="q-ma-sm"
-                    style="min-width: 150px"
+                    style="width: 100px"
                 />
 
                 <q-select
@@ -62,8 +62,22 @@
                     class="q-ma-sm"
                 />
 
-                <q-btn flat class="q-ma-sm" icon="eva-percent-outline" @click="split = {}; showSplitDialog = true" color="primary" />
-                <q-btn flat class="q-ma-sm" icon="eva-plus-circle-outline" @click="showCreateDialog" color="primary" />
+                <q-btn-dropdown flat color="primary" label=".CSV">
+                    <q-list>
+                        <q-item clickable v-close-popup @click="downloadCsv">
+                            <q-item-section>
+                                <q-item-label>Download</q-item-label>
+                            </q-item-section>
+                        </q-item>
+                        <q-item clickable v-close-popup @click="downloadCsv">
+                            <q-item-section>
+                                <q-item-label>Upload</q-item-label>
+                            </q-item-section>
+                        </q-item>
+                    </q-list>
+                </q-btn-dropdown>
+                <q-btn flat icon="eva-percent-outline" @click="split = {}; showSplitDialog = true" color="primary" title="Split de ativos" />
+                <q-btn flat icon="eva-plus-circle-outline" @click="showCreateDialog" color="primary" title="Adicionar ativo" />
             </template>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
@@ -404,6 +418,9 @@ export default {
                 if (this.newOperation.partialAccount && this.newOperation.partialAccount.length > 0)
                     this.newOperation.account = this.newOperation.partialAccount;
             }
+        },
+        downloadCsv() {
+            ipcRenderer.send('stockHistory/download-csv');
         }
     },
     computed: {

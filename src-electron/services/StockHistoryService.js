@@ -3,11 +3,48 @@ import StockUtils from '../utils/StockUtils';
 import FileSystemUtils from '../utils/FileSystemUtils';
 import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
 import DividendsService from './DividendsService';
+import { dialog } from 'electron';
+import CsvUtils from '../../src-shared/utils/CsvUtils';
 
 const FILES = {
     JOB_METADATA: 'stock_history_job',
     STOCK_HISTORY: 'stock_history'
 };
+
+const CSV_HEADERS = [
+    {
+        code: 'account',
+        label: 'Conta'
+    },
+    {
+        code: 'institution',
+        label: 'Instituição'
+    },
+    {
+        code: 'code',
+        label: 'Ativo'
+    },
+    {
+        code: 'operation',
+        label: 'Operação'
+    },
+    {
+        code: 'date',
+        label: 'Data'
+    },
+    {
+        code: 'quantity',
+        label: 'Quantidade'
+    },
+    {
+        code: 'price',
+        label: 'Preço'
+    },
+    {
+        code: 'source',
+        label: 'Fonte'
+    }
+];
 
 class StockHistoryService {
 
@@ -93,8 +130,8 @@ class StockHistoryService {
                 p = [...p, ...c.stockHistory.map(s => ({
                     ...s,
                     date: new Date(s.date),
-                    institution: s.institution,
-                    account: s.account
+                    institution: c.institution,
+                    account: c.account
                 }))];
                 return p;
             }, []);
@@ -352,6 +389,14 @@ class StockHistoryService {
 
         this.saveStockHistory(stockHistory, true);
         return splitted;
+    }
+
+    async downloadCsv() {
+        const savePath = await dialog.showSaveDialog({ defaultPath: 'stoincs-negociacoes.csv' });
+        if (!savePath.canceled) {
+            const data = await this.getStockHistoryOperations();
+            await CsvUtils.saveCsv(savePath.filePath, data, CSV_HEADERS);
+        }
     }
 
 }
