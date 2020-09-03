@@ -35,27 +35,31 @@ class UpdateTreasuryDirectJob {
                 console.log('[TREASURY DIRECT JOB] Executing CEI Crawler - Treasury Direct...');
                 const wallets = await CeiCrawlerService.getWallet(yesterday);
                 const treasuryDirect = wallets.reduce((data, account) => {
-                    account.nationalTreasuryWallet.forEach(treasure => {
-                        if (!data[treasure.code])
-                            data[treasure.code] = {
-                                code: treasure.code,
-                                expirationDate: treasure.expirationDate,
-                                investedValue: 0,
-                                grossValue: 0,
-                                netValue: 0,
-                                quantity: 0
-                            };
+                    const key = `${account.institution}-${account.account}`;
 
-                        data[treasure.code].investedValue += treasure.investedValue;
-                        data[treasure.code].grossValue += treasure.grossValue;
-                        data[treasure.code].netValue += treasure.netValue;
-                        data[treasure.code].quantity += treasure.quantity;
-                        data[treasure.code].lastUpdated = now;
+                    if (!data[key])
+                        data[key] = {
+                            institution: account.institution,
+                            account: account.account,
+                            data: []
+                        };
+                    
+                    account.nationalTreasuryWallet.forEach(treasure => {
+                        data[key].data.push({
+                            code: treasure.code,
+                            expirationDate: treasure.expirationDate,
+                            investedValue: treasure.investedValue,
+                            grossValue:treasure.grossValue,
+                            netValue: treasure.netValue,
+                            quantity:  treasure.quantity,
+                            lastUpdated: now,
+                            source: 'CEI'
+                        });
                     });
                     return data;
                 }, {});
 
-                await TreasuryDirectService.saveTreasuryDirect(Object.values(treasuryDirect));
+                await TreasuryDirectService.saveTreasuryDirectFromJob(Object.values(treasuryDirect));
                 await TreasuryDirectService.updateTreasuryDirectJobMetadata();
                 NotificationService.notifyMessage(NOTIFICATION.TITLE, `Tesouro direto foi atualizado!`, NOTIFICATION.ICON);
             } else {

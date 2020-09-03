@@ -59,16 +59,32 @@
                     outlined
                     dense
                     options-dense
-                    :display-value="`Colunas (${visibleColumns.length}/${columns.length})`"
+                    :display-value="`Colunas (${visibleColumns.length}/${columns.length - 1})`"
                     emit-value
                     @input="changeVisibleColumns"
                     map-options
-                    :options="columns"
+                    :options="columns.dropLast()"
                     option-value="name"
                     options-cover
                     style="min-width: 150px"
                     class="q-ma-sm"
                 />
+
+                <q-btn-dropdown flat color="primary" label=".CSV">
+                    <q-list>
+                        <q-item clickable v-close-popup @click="downloadCsv">
+                            <q-item-section>
+                                <q-item-label>Download</q-item-label>
+                            </q-item-section>
+                        </q-item>
+                        <q-item clickable v-close-popup @click="downloadCsv">
+                            <q-item-section>
+                                <q-item-label>Upload</q-item-label>
+                            </q-item-section>
+                        </q-item>
+                    </q-list>
+                </q-btn-dropdown>
+
             </template>
 
             <q-td auto-width slot="body-cell-grossProfit" slot-scope="props" :props="props">
@@ -83,6 +99,10 @@
                     {{ NumberUtils.formatCurrency(props.row.netProfit) }}
                     <div class="variation">{{ NumberUtils.formatPercentage(props.row.netProfitPercentage) }}</div>
                 </div>
+            </q-td>
+
+            <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
+                <q-btn flat icon="eva-trash-2-outline" @click="deleteRow(props.row)" color="primary" />
             </q-td>
 
             <template v-slot:no-data="">
@@ -114,6 +134,20 @@ export default {
             },
             visibleColumns: [ 'code', 'quantity', 'investedValue', 'grossValue', 'grossProfit', 'netValue', 'netProfit', 'expirationDate', 'lastUpdated' ],
             columns: [
+                {
+                    name: 'institution',
+                    label: 'Instituição',
+                    align: 'left',
+                    field: 'institution',
+                    sortable: true
+                },
+                {
+                    name: 'account',
+                    align: 'left',
+                    label: 'Conta',
+                    field: 'account',
+                    sortable: true
+                },
                 {
                     name: 'code',
                     align: 'center',
@@ -181,6 +215,19 @@ export default {
                     label: 'Atualizado a',
                     field: 'lastUpdated',
                     format: val => val ? DateUtils.toString(new Date(val)) : null
+                },
+                {
+                    name: 'source',
+                    align: 'center',
+                    label: 'Origem',
+                    field: 'source'
+                },
+                {
+                    name: 'action',
+                    align: 'center',
+                    label: 'Ações',
+                    field: 'action',
+                    required: true
                 }
             ],
             NumberUtils: NumberUtils,
@@ -196,6 +243,26 @@ export default {
         },
         changeVisibleColumns() {
             localStorage.setItem('treasury-direct/columns', JSON.stringify(this.visibleColumns));
+        },
+        deleteRow(row) {
+            this.$q.dialog({
+                title: 'Confirmação',
+                message: 'Tem certeza que deseja remover este item?',
+                cancel: {
+                    label: 'Não',
+                    flat: true
+                },
+                ok: {
+                    label: 'Sim',
+                    flat: true
+                },
+                persistent: true
+            }).onOk(() => {
+                ipcRenderer.send('treasury-direct/delete', row);
+            });
+        },
+        downloadCsv() {
+            ipcRenderer.send('treasury-direct/download-csv');
         }
     },
     computed: {
@@ -243,6 +310,17 @@ export default {
             } else {
                 this.$q.notify({ type: 'negative', message: `Erro ao carregar tesouro direto` });
                 console.error(response);
+            }
+        });
+
+        ipcRenderer.on('treasury-direct/delete', (event, args) => {
+            this.tableLoading = false;
+            if (args.status === 'success') {
+                this.$q.notify({ type: 'positive', message: 'Tesouro removido com sucesso' });
+                this.init();
+            } else {
+                this.$q.notify({ type: 'negative', message: 'Um erro ocorreu ao remover operação' });
+                console.error(args.error);
             }
         });
 

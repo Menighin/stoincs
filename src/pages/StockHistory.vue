@@ -52,10 +52,10 @@
                     outlined
                     dense
                     options-dense
-                    :display-value="`Colunas (${visibleColumns.length}/${columns.length})`"
+                    :display-value="`Colunas (${visibleColumns.length}/${columns.length - 1})`"
                     emit-value
                     map-options
-                    :options="columns"
+                    :options="columns.dropLast()"
                     option-value="name"
                     options-cover
                     style="min-width: 150px"
