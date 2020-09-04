@@ -11,6 +11,14 @@ body {
 .table-container {
     .data-table {
         table {
+
+            thead tr th {
+                position: sticky;
+                z-index: 2;
+                top: 0;
+                background: white;
+            }
+
             tbody {
                 tr:nth-child(odd) {
                     background: #f7f7f7;
@@ -18,6 +26,18 @@ body {
                 tr:hover {
                     background-color: #f0f0f0;
                 }
+            }
+        }
+
+        &.sticky-last-column {
+            th:last-child, td:last-child {
+                position: sticky;
+                right: 0;
+                z-index: 1;
+            }
+
+            td:last-child {
+                background-color: $accent-column;
             }
         }
     }

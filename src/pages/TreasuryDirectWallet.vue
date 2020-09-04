@@ -20,7 +20,7 @@
         </div>
         <q-table
             class="table-container q-mx-lg"
-            table-class="data-table"
+            table-class="data-table sticky-last-column"
             title="Carteira de Tesouro Direto"
             :data="dataTable"
             :columns="columns"
@@ -84,7 +84,7 @@
                         </q-item>
                     </q-list>
                 </q-btn-dropdown>
-
+                <q-btn flat icon="eva-plus-circle-outline" @click="newOperation = {}; showCreateForm = true;" color="primary" title="Adicionar ativo" />
             </template>
 
             <q-td auto-width slot="body-cell-grossProfit" slot-scope="props" :props="props">
@@ -102,7 +102,7 @@
             </q-td>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
-                <q-btn flat icon="eva-trash-2-outline" @click="deleteRow(props.row)" color="primary" />
+                <q-btn flat icon="eva-trash-2-outline" size="12px" @click="deleteRow(props.row)" color="primary" />
             </q-td>
 
             <template v-slot:no-data="">
@@ -114,6 +114,74 @@
                 </div>
             </template>
         </q-table>
+
+        <q-dialog v-model="showCreateForm" persistent>
+            <q-card>
+                <create-item-form
+                    title="Nova operaçã1"
+                    @cancel="showCreateForm = false;"
+                    @submit="saveOperation"
+                    :fields="createFormFields" />
+                <!-- <q-form @submit="saveOperation" class="q-gutter-md">
+                    <q-card-section class="row items-center">
+                        <div class="q-gutter-md q-ma-md" style="width: 400px; max-width: 500px">
+                            <div class="text-h5">Nova Operação</div>
+
+                            <q-select
+                                filled
+                                v-model="newOperation.institution"
+                                label="Instituição"
+                                use-input
+                                clearable
+                                new-value-mode="add-unique"
+                                :options="filteredInstitutions"
+                                @filter="filterInstitutionFn"
+                                @input-value="(v) => newOperation.partialInstitution = v"
+                                @blur="blurSelect('institution')"
+                                lazy-rules
+                                class="q-ma-sm" style="padding-bottom: 0"
+                                :rules="[ val => val && val.length > 0 || '']"
+                            />
+
+                            <q-select
+                                filled
+                                v-model="newOperation.account"
+                                label="Conta"
+                                use-input
+                                clearable
+                                new-value-mode="add-unique"
+                                :options="filteredAccounts"
+                                @filter="filterAccountFn"
+                                @input-value="(v) => newOperation.partialAccount = v"
+                                @blur="blurSelect('account')"
+                                lazy-rules
+                                class="q-ma-sm" style="padding-bottom: 0"
+                                :rules="[ val => val && val.length > 0 || '']"
+                            />
+
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.code" label="Ativo" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-select :options="['C', 'V']" style="padding-bottom: 0" class="q-ma-sm" filled v-model="newOperation.operation" label="Operação" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.date" mask="##/##/####" label="Data"  lazy-rules :rules="[ val => val && val.length > 0 || '']">
+                                <template v-slot:append>
+                                    <q-icon name="event" class="cursor-pointer">
+                                        <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
+                                            <q-date mask="DD/MM/YYYY" v-model="newOperation.date" @input="() => $refs.qDateProxy.hide()" />
+                                        </q-popup-proxy>
+                                    </q-icon>
+                                </template>
+                            </q-input>
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.quantity" label="Quantidade" lazy-rules :rules="[ val => val && val != null ]" />
+                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.price" label="Preço" fill-mask="0" mask="R$ #,##" reverse-fill-mask lazy-rules :rules="[ val => val && val.length > 0 || '']" />
+                        </div>
+                    </q-card-section>
+
+                    <q-card-actions align="right">
+                        <q-btn flat label="Cancelar" color="primary" v-close-popup />
+                        <q-btn flat label="Salvar" type="submit" color="primary" />
+                    </q-card-actions>
+                </q-form> -->
+            </q-card>
+        </q-dialog>
     </q-page>
 </template>
 
@@ -122,9 +190,13 @@
 import { ipcRenderer } from 'electron';
 import NumberUtils from '../../src-shared/utils/NumberUtils';
 import DateUtils from '../../src-shared/utils/DateUtils';
+import CreateItemForm from '../components/CreateItemForm';
 
 export default {
     name: 'PageTreasuryDirectWallet',
+    components: {
+        CreateItemForm
+    },
     data() {
         return {
             now: new Date(),
@@ -232,7 +304,11 @@ export default {
             ],
             NumberUtils: NumberUtils,
             DateUtils: DateUtils,
-            tableLoading: true
+            tableLoading: true,
+            showCreateForm: false,
+            newOperation: {},
+            filteredInstitutions: [],
+            filteredAccounts: []
         };
     },
     methods: {
@@ -243,6 +319,9 @@ export default {
         },
         changeVisibleColumns() {
             localStorage.setItem('treasury-direct/columns', JSON.stringify(this.visibleColumns));
+        },
+        saveOperation(form) {
+            console.log(form);
         },
         deleteRow(row) {
             this.$q.dialog({
@@ -263,6 +342,39 @@ export default {
         },
         downloadCsv() {
             ipcRenderer.send('treasury-direct/download-csv');
+        },
+        filterInstitutionFn(val, update) {
+            update(() => {
+                if (val === '') {
+                    this.filteredInstitutions = this.institutionOptions;
+                } else {
+                    const needle = val.toLowerCase();
+                    this.filteredInstitutions = this.institutionOptions.filter(
+                        v => v.toLowerCase().indexOf(needle) > -1
+                    );
+                }
+            });
+        },
+        filterAccountFn(val, update) {
+            update(() => {
+                if (val === '') {
+                    this.filteredAccounts = this.accountOptions;
+                } else {
+                    const needle = val.toLowerCase();
+                    this.filteredAccounts = this.accountOptions.filter(
+                        v => v.toLowerCase().indexOf(needle) > -1
+                    );
+                }
+            });
+        },
+        blurSelect(field) {
+            if (field === 'institution') {
+                if (this.newOperation.partialInstitution && this.newOperation.partialInstitution.length > 0)
+                    this.newOperation.institution = this.newOperation.partialInstitution;
+            } else if (field === 'account') {
+                if (this.newOperation.partialAccount && this.newOperation.partialAccount.length > 0)
+                    this.newOperation.account = this.newOperation.partialAccount;
+            }
         }
     },
     computed: {
@@ -294,6 +406,51 @@ export default {
                     label: 'Lucro Líquido',
                     value: totalNetProfit,
                     colorFormat: true
+                }
+            ];
+        },
+        institutionOptions() {
+            return [...new Set(this.dataTable.map(o => o.institution).sort())];
+        },
+        accountOptions() {
+            return [...new Set(this.dataTable.map(o => o.account).sort())];
+        },
+        createFormFields() {
+            return [
+                {
+                    id: 'test',
+                    label: 'Testando',
+                    type: 'text'
+                },
+                {
+                    id: 'institution',
+                    label: 'Instituição',
+                    type: 'autocomplete',
+                    options: ['abcd', 'efgh']
+                },
+                {
+                    id: 'operation',
+                    label: 'Tipo',
+                    type: 'select',
+                    options: [{ value: 'c', label: 'Compra' }, { value: 'v', label: 'Venda' }]
+                },
+                {
+                    id: 'date',
+                    label: 'Data',
+                    type: 'date'
+                },
+                {
+                    id: 'date2',
+                    label: 'Data 2',
+                    type: 'date'
+                },
+                {
+                    id: 'price',
+                    type: 'text',
+                    label: 'Preço',
+                    fillMask: '0',
+                    mask: 'R$ #,##',
+                    reverseFillMask: true
                 }
             ];
         }
