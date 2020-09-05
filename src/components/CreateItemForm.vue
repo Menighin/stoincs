@@ -1,5 +1,5 @@
 <template>
-    <q-form @submit="$emit('submit', form)" class="q-gutter-md">
+    <q-form @submit="$emit('submit', value)" class="q-gutter-md">
         <q-card-section class="row items-center">
             <div class="q-gutter-md q-ma-md" style="width: 400px; max-width: 500px">
                 <div class="text-h5">{{ title }}</div>
@@ -11,7 +11,7 @@
                         class="q-ma-sm"
                         style="padding-bottom: 0"
                         filled
-                        v-model="form[f.id]"
+                        v-model="value[f.id]"
                         :fill-mask="f.fillMask"
                         :mask="f.mask"
                         :reverse-fill-mask="f.reverseFillMask"
@@ -24,7 +24,7 @@
                         v-if="f.type === 'autocomplete'"
                         :key="f.id"
                         filled
-                        v-model="form[f.id]"
+                        v-model="value[f.id]"
                         :label="f.label"
                         use-input
                         clearable
@@ -45,7 +45,7 @@
                         style="padding-bottom: 0"
                         class="q-ma-sm"
                         filled
-                        v-model="form[f.id]"
+                        v-model="value[f.id]"
                         :label="f.label"
                         lazy-rules
                         :rules="[ val => val && val.toString().length > 0 || '']"
@@ -57,7 +57,7 @@
                         class="q-ma-sm"
                         style="padding-bottom: 0"
                         filled
-                        v-model="form[f.id]"
+                        v-model="value[f.id]"
                         mask="##/##/####"
                         :label="f.label"
                         lazy-rules
@@ -65,7 +65,7 @@
                         <template v-slot:append>
                             <q-icon name="event" class="cursor-pointer">
                                 <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
-                                    <q-date mask="DD/MM/YYYY" v-model="form[f.id]" @input="() => $refs.qDateProxy.forEach(o => o.hide())" />
+                                    <q-date mask="DD/MM/YYYY" v-model="value[f.id]" @input="() => $refs.qDateProxy.forEach(o => o.hide())" />
                                 </q-popup-proxy>
                             </q-icon>
                         </template>
@@ -84,6 +84,10 @@
 export default {
     name: 'CreateItemForm',
     props: {
+        value: {
+            type: Object,
+            required: true
+        },
         fields: {
             type: Array,
             default: () => []
@@ -94,7 +98,6 @@ export default {
     },
     data() {
         return {
-            form: {},
             partialInput: {},
             filteredOptions: {}
         };
@@ -116,7 +119,12 @@ export default {
         },
         blurSelect(id) {
             if (this.partialInput[id] && this.partialInput[id].length > 0)
-                this.form[id] = this.partialInput[id];
+                this.value[id] = this.partialInput[id];
+        }
+    },
+    watch: {
+        value() {
+            this.$emit('input', this.value);
         }
     }
 };

@@ -46,3 +46,17 @@ Array.prototype.dropLast = function(predicate) {
     }
     return result.reverse();
 };
+
+Array.prototype.distinct = function(predicate) {
+    const unique = new Set();
+    const predicateFn = predicate || ((o) => JSON.stringify(o));
+    return this.filter(o => {
+        const value = predicateFn(o);
+        if (unique.has(value))
+            return false;
+        else {
+            unique.add(value);
+            return true;
+        }
+    });
+};

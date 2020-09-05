@@ -186,7 +186,7 @@
 
                             <q-card-section v-show="split.from && split.to">
                                 Resultado: Uma operação de <strong>100</strong> papéis custando <strong>R$ 15,00</strong> cada, passará a ser uma operação de
-                                <strong>{{ Math.floor(100 / (split.from / split.to)) }}</strong> papéis custando <strong>{{  NumberUtils.formatCurrency((15.00 * (split.from / split.to))) }}</strong> cada.
+                                <strong>{{ Math.floor(100 / (split.from / split.to)) }}</strong> papéis custando <strong>{{  NumberUtils.formatNumber((15.00 * (split.from / split.to)), 'R$ ') }}</strong> cada.
                             </q-card-section>
                         </div>
                     </q-card-section>
@@ -275,7 +275,7 @@ export default {
                     label: 'Preço',
                     field: 'price',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'totalValue',
@@ -283,7 +283,7 @@ export default {
                     label: 'Total',
                     field: 'totalValue',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'source',
@@ -345,9 +345,9 @@ export default {
         saveOperation() {
             const payload = {
                 ...this.newOperation,
-                totalValue: NumberUtils.getNumberFromCurrency(this.totalNewOperation),
+                totalValue: NumberUtils.getNumberFromString(this.totalNewOperation),
                 date: this.isEdit ? new Date(this.newOperation.date) : DateUtils.fromDateStr(this.newOperation.date),
-                price: NumberUtils.getNumberFromCurrency(this.newOperation.price),
+                price: NumberUtils.getNumberFromString(this.newOperation.price),
                 quantity: parseInt(this.newOperation.quantity)
             };
 
@@ -442,9 +442,9 @@ export default {
             return filteredData;
         },
         totalNewOperation() {
-            const price = this.newOperation.price ? NumberUtils.getNumberFromCurrency(this.newOperation.price) : 0;
+            const price = this.newOperation.price ? NumberUtils.getNumberFromString(this.newOperation.price) : 0;
             const result = price * this.newOperation.quantity || 0;
-            return NumberUtils.formatCurrency(result);
+            return NumberUtils.formatNumber(result, 'R$ ');
         },
         stockCodes() {
             const stocks = {};

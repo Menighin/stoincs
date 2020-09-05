@@ -15,6 +15,12 @@ class NumberUtils {
         return `${currency} ${sign}${n.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
+    static formatNumber(n, prefix = '', suffix = '', showSign = false, locale = 'pt-BR', digits = 2) {
+        if (n === null || n === undefined) return null;
+        const sign = n >= 0 && showSign ? '+' : '';
+        return `${prefix}${sign}${n.toLocaleString(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits })}${suffix}`;
+    }
+
     /**
      * Returns the number formated as percentage
      * @param {Number} n - Number to be formated
@@ -29,21 +35,12 @@ class NumberUtils {
     }
 
     /**
-     * Format a currency number string back to Number
-     * @param {String} n - The number with currency
+     * Format a number string back to Number (ex: R$ 1.)
+     * @param {String} n - The number with in string
      * @returns {Number} - The number from currency
      */
-    static getNumberFromCurrency(n) {
+    static getNumberFromString(n) {
         return parseFloat(n.replace(/[^0-9,]+/g, '').replace(',', '.'));
-    }
-
-    /**
-     * Format a percentage number string back to Number
-     * @param {String} n - The string with percentage
-     * @returns {Number} - The number from percentage
-     */
-    static getNumberFromPercentage(n) {
-        return parseFloat(n.replace(/[^0-9,-]+/g, '').replace(',', '.'));
     }
 
 }

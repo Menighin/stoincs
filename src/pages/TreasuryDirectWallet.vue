@@ -8,7 +8,7 @@
                         <q-card-section :key="`kpi-${i}`">
                             <div class="label">{{ kpi.label }}</div>
                             <div class="value" :class="{ 'value-up': kpi.value > 0 && kpi.colorFormat, 'value-down': kpi.value < 0 && kpi.colorFormat }">
-                                {{ NumberUtils.formatCurrency(kpi.value) }}
+                                {{ NumberUtils.formatNumber(kpi.value, 'R$ ') }}
                             </div>
                         </q-card-section>
 
@@ -84,20 +84,20 @@
                         </q-item>
                     </q-list>
                 </q-btn-dropdown>
-                <q-btn flat icon="eva-plus-circle-outline" @click="newOperation = {}; showCreateForm = true;" color="primary" title="Adicionar ativo" />
+                <q-btn flat icon="eva-plus-circle-outline" @click="showCreateForm = true;" color="primary" title="Adicionar ativo" />
             </template>
 
             <q-td auto-width slot="body-cell-grossProfit" slot-scope="props" :props="props">
                 <div class="q-pl-sm profit-cell" :class="{ 'value-up': props.row.grossProfit > 0, 'value-down': props.row.grossProfit < 0 }">
-                    {{ NumberUtils.formatCurrency(props.row.grossProfit) }}
-                    <div class="variation">{{ NumberUtils.formatPercentage(props.row.grossProfitPercentage) }}</div>
+                    {{ NumberUtils.formatNumber(props.row.grossProfit, 'R$ ') }}
+                    <div class="variation">{{ NumberUtils.formatNumber(props.row.grossProfitPercentage, '', '%', true) }}</div>
                 </div>
             </q-td>
 
             <q-td auto-width slot="body-cell-netProfit" slot-scope="props" :props="props">
                 <div class="q-pl-sm profit-cell" :class="{ 'value-up': props.row.netProfit > 0, 'value-down': props.row.netProfit < 0 }">
-                    {{ NumberUtils.formatCurrency(props.row.netProfit) }}
-                    <div class="variation">{{ NumberUtils.formatPercentage(props.row.netProfitPercentage) }}</div>
+                    {{ NumberUtils.formatNumber(props.row.netProfit, 'R$ ') }}
+                    <div class="variation">{{ NumberUtils.formatNumber(props.row.netProfitPercentage, '', '%', true) }}</div>
                 </div>
             </q-td>
 
@@ -118,68 +118,11 @@
         <q-dialog v-model="showCreateForm" persistent>
             <q-card>
                 <create-item-form
-                    title="Nova operaçã1"
+                    v-model="newOperation"
+                    title="Nova operação"
                     @cancel="showCreateForm = false;"
                     @submit="saveOperation"
                     :fields="createFormFields" />
-                <!-- <q-form @submit="saveOperation" class="q-gutter-md">
-                    <q-card-section class="row items-center">
-                        <div class="q-gutter-md q-ma-md" style="width: 400px; max-width: 500px">
-                            <div class="text-h5">Nova Operação</div>
-
-                            <q-select
-                                filled
-                                v-model="newOperation.institution"
-                                label="Instituição"
-                                use-input
-                                clearable
-                                new-value-mode="add-unique"
-                                :options="filteredInstitutions"
-                                @filter="filterInstitutionFn"
-                                @input-value="(v) => newOperation.partialInstitution = v"
-                                @blur="blurSelect('institution')"
-                                lazy-rules
-                                class="q-ma-sm" style="padding-bottom: 0"
-                                :rules="[ val => val && val.length > 0 || '']"
-                            />
-
-                            <q-select
-                                filled
-                                v-model="newOperation.account"
-                                label="Conta"
-                                use-input
-                                clearable
-                                new-value-mode="add-unique"
-                                :options="filteredAccounts"
-                                @filter="filterAccountFn"
-                                @input-value="(v) => newOperation.partialAccount = v"
-                                @blur="blurSelect('account')"
-                                lazy-rules
-                                class="q-ma-sm" style="padding-bottom: 0"
-                                :rules="[ val => val && val.length > 0 || '']"
-                            />
-
-                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.code" label="Ativo" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
-                            <q-select :options="['C', 'V']" style="padding-bottom: 0" class="q-ma-sm" filled v-model="newOperation.operation" label="Operação" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
-                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.date" mask="##/##/####" label="Data"  lazy-rules :rules="[ val => val && val.length > 0 || '']">
-                                <template v-slot:append>
-                                    <q-icon name="event" class="cursor-pointer">
-                                        <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
-                                            <q-date mask="DD/MM/YYYY" v-model="newOperation.date" @input="() => $refs.qDateProxy.hide()" />
-                                        </q-popup-proxy>
-                                    </q-icon>
-                                </template>
-                            </q-input>
-                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.quantity" label="Quantidade" lazy-rules :rules="[ val => val && val != null ]" />
-                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.price" label="Preço" fill-mask="0" mask="R$ #,##" reverse-fill-mask lazy-rules :rules="[ val => val && val.length > 0 || '']" />
-                        </div>
-                    </q-card-section>
-
-                    <q-card-actions align="right">
-                        <q-btn flat label="Cancelar" color="primary" v-close-popup />
-                        <q-btn flat label="Salvar" type="submit" color="primary" />
-                    </q-card-actions>
-                </q-form> -->
             </q-card>
         </q-dialog>
     </q-page>
@@ -240,7 +183,7 @@ export default {
                     label: 'Valor Investido',
                     field: 'investedValue',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'grossValue',
@@ -248,7 +191,7 @@ export default {
                     label: 'Valor Bruto',
                     field: 'grossValue',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'grossProfit',
@@ -256,7 +199,7 @@ export default {
                     label: 'Lucro Bruto',
                     field: 'grossProfit',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'netValue',
@@ -264,7 +207,7 @@ export default {
                     label: 'Valor Líquido',
                     field: 'netValue',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'netProfit',
@@ -272,7 +215,7 @@ export default {
                     label: 'Lucro Líquido',
                     field: 'netProfit',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'expirationDate',
@@ -322,6 +265,8 @@ export default {
         },
         saveOperation(form) {
             console.log(form);
+            console.log(this.newOperation);
+            console.log('-----------------');
         },
         deleteRow(row) {
             this.$q.dialog({
@@ -342,39 +287,6 @@ export default {
         },
         downloadCsv() {
             ipcRenderer.send('treasury-direct/download-csv');
-        },
-        filterInstitutionFn(val, update) {
-            update(() => {
-                if (val === '') {
-                    this.filteredInstitutions = this.institutionOptions;
-                } else {
-                    const needle = val.toLowerCase();
-                    this.filteredInstitutions = this.institutionOptions.filter(
-                        v => v.toLowerCase().indexOf(needle) > -1
-                    );
-                }
-            });
-        },
-        filterAccountFn(val, update) {
-            update(() => {
-                if (val === '') {
-                    this.filteredAccounts = this.accountOptions;
-                } else {
-                    const needle = val.toLowerCase();
-                    this.filteredAccounts = this.accountOptions.filter(
-                        v => v.toLowerCase().indexOf(needle) > -1
-                    );
-                }
-            });
-        },
-        blurSelect(field) {
-            if (field === 'institution') {
-                if (this.newOperation.partialInstitution && this.newOperation.partialInstitution.length > 0)
-                    this.newOperation.institution = this.newOperation.partialInstitution;
-            } else if (field === 'account') {
-                if (this.newOperation.partialAccount && this.newOperation.partialAccount.length > 0)
-                    this.newOperation.account = this.newOperation.partialAccount;
-            }
         }
     },
     computed: {
@@ -409,48 +321,61 @@ export default {
                 }
             ];
         },
-        institutionOptions() {
-            return [...new Set(this.dataTable.map(o => o.institution).sort())];
-        },
-        accountOptions() {
-            return [...new Set(this.dataTable.map(o => o.account).sort())];
-        },
         createFormFields() {
             return [
-                {
-                    id: 'test',
-                    label: 'Testando',
-                    type: 'text'
-                },
                 {
                     id: 'institution',
                     label: 'Instituição',
                     type: 'autocomplete',
-                    options: ['abcd', 'efgh']
+                    options: this.dataTable.map(o => o.institution).distinct()
                 },
                 {
-                    id: 'operation',
-                    label: 'Tipo',
-                    type: 'select',
-                    options: [{ value: 'c', label: 'Compra' }, { value: 'v', label: 'Venda' }]
+                    id: 'account',
+                    label: 'Conta',
+                    type: 'autocomplete',
+                    options: this.dataTable.map(o => o.account).distinct()
                 },
                 {
-                    id: 'date',
-                    label: 'Data',
-                    type: 'date'
+                    id: 'code',
+                    label: 'Título',
+                    type: 'text'
                 },
                 {
-                    id: 'date2',
-                    label: 'Data 2',
-                    type: 'date'
-                },
-                {
-                    id: 'price',
+                    id: 'quantity',
+                    label: 'Quantidade',
                     type: 'text',
-                    label: 'Preço',
+                    fillMask: '0',
+                    mask: '#,##',
+                    reverseFillMask: true
+                },
+                {
+                    id: 'investedValue',
+                    label: 'Valor Investido',
+                    type: 'text',
                     fillMask: '0',
                     mask: 'R$ #,##',
                     reverseFillMask: true
+                },
+                {
+                    id: 'grossValue',
+                    label: 'Valor Bruto',
+                    type: 'text',
+                    fillMask: '0',
+                    mask: 'R$ #,##',
+                    reverseFillMask: true
+                },
+                {
+                    id: 'netValue',
+                    label: 'Valor Líquido',
+                    type: 'text',
+                    fillMask: '0',
+                    mask: 'R$ #,##',
+                    reverseFillMask: true
+                },
+                {
+                    id: 'expirationDate',
+                    label: 'Data de Vencimento',
+                    type: 'date'
                 }
             ];
         }

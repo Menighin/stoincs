@@ -8,7 +8,7 @@
                         <q-card-section :key="`kpi-${i}`">
                             <div class="label">{{ kpi.label }}</div>
                             <div class="value" :class="{ 'value-up': kpi.value > 0 && kpi.colorFormat, 'value-down': kpi.value < 0 && kpi.colorFormat }">
-                                {{ NumberUtils.formatCurrency(kpi.value) }}
+                                {{ NumberUtils.formatNumber(kpi.value, 'R$ ') }}
                             </div>
                         </q-card-section>
 
@@ -170,7 +170,7 @@ export default {
                     label: 'Valor Bruto',
                     field: 'grossValue',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'netValue',
@@ -178,7 +178,7 @@ export default {
                     label: 'Valor Líquido',
                     field: 'netValue',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'source',

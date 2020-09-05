@@ -233,8 +233,8 @@ export default {
 
             ipcRenderer.send('stock-prices/add-stock', {
                 code: this.newStock,
-                price: NumberUtils.getNumberFromCurrency(this.newStockValue),
-                changePercent: NumberUtils.getNumberFromPercentage(this.newStockValueVariation)
+                price: NumberUtils.getNumberFromString(this.newStockValue),
+                changePercent: NumberUtils.getNumberFromString(this.newStockValueVariation)
             });
 
             if (this.editingStock !== null && this.editingStock !== this.newStock) {
@@ -298,11 +298,11 @@ export default {
                 const quantity = this.wallet[k] ? this.wallet[k].quantity : 0;
                 return {
                     code: k,
-                    price: NumberUtils.formatCurrency(stockPrice.price) || '-',
+                    price: NumberUtils.formatNumber(stockPrice.price, 'R$ ') || '-',
                     priceRaw: stockPrice.price,
-                    changePercent: NumberUtils.formatPercentage(stockPrice.changePercent, true) || '-',
+                    changePercent: NumberUtils.formatNumber(stockPrice.changePercent, '', '%', true) || '-',
                     changePercentRaw: stockPrice.changePercent,
-                    changePrice: NumberUtils.formatCurrency(stockPrice.changePrice, true) || '-',
+                    changePrice: NumberUtils.formatNumber(stockPrice.changePrice, 'R$ ', '', true) || '-',
                     lastUpdated: DateUtils.getDiffDateFormated(new Date(stockPrice.lastUpdated), new Date()),
                     apiUpdate: DateUtils.getFormatedHoursFromSeconds(parseInt((new Date() - new Date(stockPrice.apiUpdate)) / 1000), true, true, false),
                     quantity: quantity,

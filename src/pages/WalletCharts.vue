@@ -20,8 +20,8 @@
                 <div style="height: 90%" class="wallet-performance-container">
                     <div class="wallet-performance-total" :class="`${walletPerformanceTotalValue > 0 ? 'value-up' : (walletPerformanceTotalValue < 0 ? 'value-down' : '')}`">
                         <span class="value">
-                            <template v-if="walletPerformanceType === 'value'">{{ NumberUtils.formatCurrency(walletPerformanceTotalValue, true) }}</template>
-                            <template v-if="walletPerformanceType === 'percentage'">{{ NumberUtils.formatPercentage(walletPerformanceTotalValue, true) }}</template>
+                            <template v-if="walletPerformanceType === 'value'">{{ NumberUtils.formatNumber(walletPerformanceTotalValue, 'R$ ', '', true) }}</template>
+                            <template v-if="walletPerformanceType === 'percentage'">{{ NumberUtils.formatNumber(walletPerformanceTotalValue, '', '%', true) }}</template>
                         </span>
                         <span class="icon">
                             <q-icon name="eva-trending-up-outline" class="variation-up" v-if="walletPerformanceTotalValue > 0" />
@@ -289,9 +289,9 @@ export default {
                         useHTML: true,
                         formatter: function() {
                             if (this.point.leaf)
-                                return `<div style="text-align: center">${this.point.name}<br />${NumberUtils.formatPercentage(this.percentage * 100, false)}</div>`;
+                                return `<div style="text-align: center">${this.point.name}<br />${NumberUtils.formatNumber(this.percentage * 100, '', '%', false)}</div>`;
                             else
-                                return `${this.point.name}<br />${NumberUtils.formatPercentage(this.percentage * 100, false)}`;
+                                return `${this.point.name}<br />${NumberUtils.formatNumber(this.percentage * 100, '', '%', false)}`;
                         }
                     }
                 }],
@@ -304,12 +304,12 @@ export default {
                         const items = [
                             {
                                 name: 'Porcentagem',
-                                value: NumberUtils.formatPercentage(this.percentage * 100, false),
+                                value: NumberUtils.formatNumber(this.percentage * 100, '', '%', false),
                                 color: SeriesColors[0 % SeriesColors.length]
                             },
                             {
                                 name: 'Valor',
-                                value: NumberUtils.formatCurrency(this.value),
+                                value: NumberUtils.formatNumber(this.value, 'R$ '),
                                 color: SeriesColors[1 % SeriesColors.length]
                             },
                             {
@@ -322,13 +322,13 @@ export default {
                         if (this.leaf) {
                             items.push({
                                 name: 'Preço atual',
-                                value: NumberUtils.formatCurrency(this.price),
+                                value: NumberUtils.formatNumber(this.price, 'R$ '),
                                 color: SeriesColors[3 % SeriesColors.length]
                             });
 
                             items.push({
                                 name: 'Preço médio de compra',
-                                value: NumberUtils.formatCurrency(this.averageBuyPrice),
+                                value: NumberUtils.formatNumber(this.averageBuyPrice, 'R$ '),
                                 color: SeriesColors[4 % SeriesColors.length]
                             });
                         }
@@ -381,14 +381,14 @@ export default {
                     formatter: function() {
                         const items = this.points.map(p => ({
                             name: p.series.name,
-                            value: NumberUtils.formatCurrency(p.y),
+                            value: NumberUtils.formatNumber(p.y, 'R$ '),
                             color: p.color
                         }));
 
                         // The result
                         items.push({
                             name: 'Balanço',
-                            value: NumberUtils.formatCurrency(this.points[1].y + this.points[2].y - this.points[0].y, true),
+                            value: NumberUtils.formatNumber(this.points[1].y + this.points[2].y - this.points[0].y, 'R$ ', '', true),
                             color: SeriesColors[3]
                         });
 

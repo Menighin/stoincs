@@ -8,7 +8,7 @@
                         <q-card-section :key="`kpi-${i}`">
                             <div class="label">{{kpi.label}}</div>
                             <div class="value" :class="{ 'value-up': kpi.value > 0, 'value-down': kpi.value < 0 }">
-                                {{ NumberUtils.formatCurrency(kpi.value) }}
+                                {{ NumberUtils.formatNumber(kpi.value, 'R$ ') }}
                             </div>
                         </q-card-section>
 
@@ -79,11 +79,11 @@
             </template>
 
             <q-td auto-width slot="body-cell-profitLoss" slot-scope="props" :props="props" :class="{ 'value-up': props.row.profitLoss > 0, 'value-down': props.row.profitLoss < 0 }">
-                {{ NumberUtils.formatCurrency(props.row.profitLoss) }}
+                {{ NumberUtils.formatNumber(props.row.profitLoss, 'R$ ') }}
             </q-td>
 
             <q-td auto-width slot="body-cell-dividends" slot-scope="props" :props="props" :class="{ 'value-up': props.row.dividends > 0, 'value-down': props.row.dividends < 0 }">
-                {{ NumberUtils.formatCurrency(props.row.dividends) }}
+                {{ NumberUtils.formatNumber(props.row.dividends, 'R$ ') }}
             </q-td>
 
             <template v-slot:no-data="">
@@ -154,7 +154,7 @@ export default {
                     label: 'Valor Comprado',
                     field: 'valueBought',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'averageBuyPrice',
@@ -162,7 +162,7 @@ export default {
                     label: 'Pç. Médio Compra',
                     field: 'averageBuyPrice',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'valueSold',
@@ -170,7 +170,7 @@ export default {
                     label: 'Valor Vendido',
                     field: 'valueSold',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'averageSellPrice',
@@ -178,7 +178,7 @@ export default {
                     label: 'Pç. Médio Venda',
                     field: 'averageSellPrice',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'valueBalance',
@@ -186,7 +186,7 @@ export default {
                     label: 'Saldo',
                     field: 'valueBalance',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'profitLoss',

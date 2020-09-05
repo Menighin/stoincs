@@ -62,9 +62,9 @@
 
             <q-td auto-width slot="body-cell-price" slot-scope="props" :props="props">
                 <div class="q-pl-sm price-cell" v-if="!editingStockPrice[props.row.code]" :class="{ 'updating-price': loadingStocks[props.row.code], 'value-up': props.row.changePrice > 0, 'value-down': props.row.changePrice < 0 }">
-                    {{ NumberUtils.formatCurrency(props.row.price) }}
-                    <div class="variation" v-if="configuration.variation === 'price'">{{ NumberUtils.formatCurrency(props.row.changePrice, true) }}</div>
-                    <div class="variation" v-if="configuration.variation === 'percentage'">{{ NumberUtils.formatPercentage(props.row.changePercent) }}</div>
+                    {{ NumberUtils.formatNumber(props.row.price, 'R$ ') }}
+                    <div class="variation" v-if="configuration.variation === 'price'">{{ NumberUtils.formatNumber(props.row.changePrice, 'R$ ', '', true) }}</div>
+                    <div class="variation" v-if="configuration.variation === 'percentage'">{{ NumberUtils.formatNumber(props.row.changePercent, '', '%', true) }}</div>
                 </div>
                 <q-input
                     borderless
@@ -94,8 +94,8 @@
             </q-td>
 
             <q-td auto-width slot="body-cell-historicPosition" slot-scope="props" :props="props" :class="{ 'value-up': props.row.historicPosition > 0, 'value-down': props.row.historicPosition < 0 }">
-                {{ NumberUtils.formatCurrency(props.row.historicPosition) }}
-                <div class="variation">{{ NumberUtils.formatPercentage(props.row.historicVariation) }}</div>
+                {{ NumberUtils.formatNumber(props.row.historicPosition, 'R$ ') }}
+                <div class="variation">{{ NumberUtils.formatNumber(props.row.historicVariation, '', '%', true) }}</div>
             </q-td>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
@@ -221,7 +221,7 @@ export default {
                     label: 'Valor',
                     field: 'value',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'averageBuyPrice',
@@ -229,7 +229,7 @@ export default {
                     label: 'Preço Médio de Compra',
                     field: 'averageBuyPrice',
                     sortable: true,
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'price',
@@ -238,7 +238,7 @@ export default {
                     field: 'price',
                     sortable: true,
                     headerStyle: 'padding-right: 54px',
-                    format: val => NumberUtils.formatCurrency(val)
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'lastUpdated',
@@ -362,7 +362,7 @@ export default {
         saveStockPrice(code) {
             if (!this.stockPrices[code])
                 this.$set(this.stockPrices, code, {});
-            this.stockPrices[code].price = NumberUtils.getNumberFromCurrency(this.newPrice);
+            this.stockPrices[code].price = NumberUtils.getNumberFromString(this.newPrice);
             this.stockPrices[code].changePrice = null;
             this.stockPrices[code].changePercent = null;
             this.stockPrices[code].lastUpdated = new Date();

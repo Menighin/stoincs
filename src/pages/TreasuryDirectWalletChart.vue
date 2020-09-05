@@ -89,9 +89,9 @@ export default {
                         useHTML: true,
                         formatter: function() {
                             if (this.point.leaf)
-                                return `<div style="text-align: center">${this.point.name}<br />${NumberUtils.formatPercentage(this.percentage * 100, false)}</div>`;
+                                return `<div style="text-align: center">${this.point.name}<br />${NumberUtils.formatNumber(this.percentage * 100, '', '%', false)}</div>`;
                             else
-                                return `${this.point.name}<br />${NumberUtils.formatPercentage(this.percentage * 100, false)}`;
+                                return `${this.point.name}<br />${NumberUtils.formatNumber(this.percentage * 100, '', '%', false)}`;
                         }
                     }
                 }],
@@ -104,22 +104,22 @@ export default {
                         const items = [
                             {
                                 name: 'Porcentagem',
-                                value: NumberUtils.formatPercentage(this.percentage * 100, false),
+                                value: NumberUtils.formatNumber(this.percentage * 100, '', '%', false),
                                 color: SeriesColors[0 % SeriesColors.length]
                             },
                             {
                                 name: 'Valor Investido',
-                                value: NumberUtils.formatCurrency(this.investedValue),
+                                value: NumberUtils.formatNumber(this.investedValue, 'R$ '),
                                 color: SeriesColors[1 % SeriesColors.length]
                             },
                             {
                                 name: 'Valor Liquido',
-                                value: NumberUtils.formatCurrency(this.value),
+                                value: NumberUtils.formatNumber(this.value, 'R$ '),
                                 color: SeriesColors[2 % SeriesColors.length]
                             },
                             {
                                 name: 'Valor Bruto',
-                                value: NumberUtils.formatCurrency(this.grossValue),
+                                value: NumberUtils.formatNumber(this.grossValue, 'R$ '),
                                 color: SeriesColors[3 % SeriesColors.length]
                             },
                             {
@@ -172,14 +172,14 @@ export default {
                     formatter: function() {
                         const items = this.points.map(p => ({
                             name: p.series.name,
-                            value: NumberUtils.formatCurrency(p.y),
+                            value: NumberUtils.formatNumber(p.y, 'R$ '),
                             color: p.color
                         }));
 
                         // The result
                         items.push({
                             name: 'Balanço',
-                            value: NumberUtils.formatCurrency(this.points[1].y - this.points[0].y, true),
+                            value: NumberUtils.formatNumber(this.points[1].y - this.points[0].y, 'R$ ', '', true),
                             color: SeriesColors[3]
                         });
 
