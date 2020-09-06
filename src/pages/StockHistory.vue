@@ -95,43 +95,6 @@
             </template>
         </q-table>
 
-        <q-dialog v-model="showSplitDialog" persistent>
-            <q-card>
-                <q-form @submit="splitStocks" class="q-gutter-md">
-                    <q-card-section class="row items-center">
-                        <div class="q-gutter-md q-ma-md" style="width: 400px; max-width: 500px">
-                            <q-card-section>
-                                <div class="text-h5">Split de ações</div>
-                                <q-select :disable="isEdit" :options="stockCodes" style="padding-bottom: 0" class="q-ma-sm" filled v-model="split.code" label="Ação" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
-                                <q-input :disable="isEdit" class="q-ma-sm" style="padding-bottom: 0" filled v-model="split.date" mask="##/##/####" label="Data"  lazy-rules :rules="[ val => val && val.length > 0 || '']">
-                                    <template v-slot:append>
-                                        <q-icon name="event" class="cursor-pointer">
-                                            <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
-                                                <q-date mask="DD/MM/YYYY" v-model="split.date" @input="() => $refs.qDateProxy.hide()" />
-                                            </q-popup-proxy>
-                                        </q-icon>
-                                    </template>
-                                </q-input>
-                                <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="split.from" label="De" lazy-rules :rules="[ val => val && val != null ]" />
-                                <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="split.to" label="Para" lazy-rules :rules="[ val => val && val != null ]" />
-                            </q-card-section>
-
-                            <q-separator />
-
-                            <q-card-section v-show="split.from && split.to">
-                                Resultado: Uma operação de <strong>100</strong> papéis custando <strong>R$ 15,00</strong> cada, passará a ser uma operação de
-                                <strong>{{ Math.floor(100 / (split.from / split.to)) }}</strong> papéis custando <strong>{{  NumberUtils.formatNumber((15.00 * (split.from / split.to)), 'R$ ') }}</strong> cada.
-                            </q-card-section>
-                        </div>
-                    </q-card-section>
-                    <q-card-actions align="right">
-                        <q-btn flat label="Cancelar" color="primary" v-close-popup />
-                        <q-btn flat label="Salvar" type="submit" color="primary" />
-                    </q-card-actions>
-                </q-form>
-            </q-card>
-        </q-dialog>
-
         <q-dialog v-model="showCreateForm">
             <q-card>
                 <stoincs-form
@@ -145,6 +108,26 @@
                 </stoincs-form>
             </q-card>
         </q-dialog>
+
+        <q-dialog v-model="showSplitDialog">
+            <q-card>
+                <stoincs-form
+                    v-model="split"
+                    title="Split de Ações"
+                    @cancel="showSplitDialog = false;"
+                    @submit="splitStocks"
+                    :fields="splitFormFields">
+
+                    <q-separator />
+
+                    <q-card-section v-show="split.from && split.to">
+                        Resultado: Uma operação de <strong>100</strong> papéis custando <strong>R$ 15,00</strong> cada, passará a ser uma operação de
+                        <strong>{{ Math.floor(100 / (split.from / split.to)) }}</strong> papéis custando <strong>{{  NumberUtils.formatNumber((15.00 * (split.from / split.to)), 'R$ ') }}</strong> cada.
+                    </q-card-section>
+                </stoincs-form>
+            </q-card>
+        </q-dialog>
+
     </q-page>
 </template>
 
@@ -252,9 +235,7 @@ export default {
                 }
             ],
             newOperation: {},
-            split: {},
-            filteredInstitutions: [],
-            filteredAccounts: []
+            split: {}
         };
     },
     methods: {
@@ -363,13 +344,6 @@ export default {
             const result = price * this.newOperation.quantity || 0;
             return NumberUtils.formatNumber(result, 'R$ ');
         },
-        stockCodes() {
-            const stocks = {};
-            for (const stock of this.dataTable) {
-                stocks[stock.code] = 1;
-            }
-            return Object.keys(stocks).sort();
-        },
         createFormFields() {
             return [
                 {
@@ -421,6 +395,37 @@ export default {
                     type: 'text',
                     fillMask: '0',
                     mask: 'R$ #,##',
+                    reverseFillMask: true
+                }
+            ];
+        },
+        splitFormFields() {
+            return [
+                {
+                    id: 'code',
+                    label: 'Ativo',
+                    type: 'select',
+                    options: this.dataTable.map(o => o.code).distinct().sort()
+                },
+                {
+                    id: 'date',
+                    label: 'Data',
+                    type: 'date'
+                },
+                {
+                    id: 'from',
+                    label: 'De',
+                    type: 'text',
+                    fillMask: '0',
+                    mask: '#',
+                    reverseFillMask: true
+                },
+                {
+                    id: 'to',
+                    label: 'Para',
+                    type: 'text',
+                    fillMask: '0',
+                    mask: '#',
                     reverseFillMask: true
                 }
             ];

@@ -20,7 +20,7 @@
         </div>
         <q-table
             class="table-container q-mx-lg"
-            table-class="data-table"
+            table-class="data-table sticky-last-column"
             title="Carteira de Dividendos"
             :data="dataTable"
             :columns="columns"
@@ -58,11 +58,11 @@
                     outlined
                     dense
                     options-dense
-                    :display-value="`Colunas (${visibleColumns.length}/${columns.length})`"
+                    :display-value="`Colunas (${visibleColumns.length}/${columns.length - 1})`"
                     @input="changeVisibleColumns"
                     emit-value
                     map-options
-                    :options="columns"
+                    :options="columns.dropLast()"
                     option-value="name"
                     options-cover
                     style="min-width: 150px"
@@ -83,12 +83,16 @@
                         </q-item>
                     </q-list>
                 </q-btn-dropdown>
+                <q-btn flat icon="eva-plus-circle-outline" @click="showCreateForm = true;" color="primary" title="Adicionar dividendo" />
             </template>
 
             <template v-slot:body="props">
                 <q-tr :props="props" :class="{'future-event': props.row.isFuture}">
                     <q-td v-for="col in props.cols" :key="col.name" :class="col.__tdClass">
-                        {{ col.value }}
+                        <template v-if="col.name !== 'action'">
+                            {{ col.value }}
+                        </template>
+                        <q-btn v-else flat icon="eva-trash-2-outline" size="10px" @click="deleteRow(props.row)" color="primary" />
                     </q-td>
                 </q-tr>
             </template>
@@ -186,6 +190,13 @@ export default {
                     label: 'Origem',
                     field: 'source',
                     sortable: true
+                },
+                {
+                    name: 'action',
+                    align: 'center',
+                    label: 'Ações',
+                    field: 'action',
+                    required: true
                 }
             ],
             NumberUtils: NumberUtils,
