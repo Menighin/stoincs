@@ -16,6 +16,7 @@
                         :mask="f.mask"
                         :reverse-fill-mask="f.reverseFillMask"
                         :label="f.label"
+                        :disable="f.disable"
                         lazy-rules
                         :rules="[ val => val && val != null ]"
                     />
@@ -34,6 +35,7 @@
                         @input-value="(v) => partialInput[f.id] = v"
                         @blur="blurSelect(f.id)"
                         lazy-rules
+                        :disable="f.disable"
                         class="q-ma-sm" style="padding-bottom: 0"
                         :rules="[ val => val && val.length > 0 || '']"
                     />
@@ -48,6 +50,7 @@
                         v-model="value[f.id]"
                         :label="f.label"
                         lazy-rules
+                        :disable="f.disable"
                         :rules="[ val => val && val.toString().length > 0 || '']"
                     />
 
@@ -61,16 +64,19 @@
                         mask="##/##/####"
                         :label="f.label"
                         lazy-rules
+                        :disable="f.disable"
                         :rules="[ val => val && val.length > 0 || '']">
                         <template v-slot:append>
-                            <q-icon name="event" class="cursor-pointer">
-                                <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
+                            <q-icon name="event" class="cursor-pointer" :disable="f.disable">
+                                <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale" :disable="f.disable">
                                     <q-date mask="DD/MM/YYYY" v-model="value[f.id]" @input="() => $refs.qDateProxy.forEach(o => o.hide())" />
                                 </q-popup-proxy>
                             </q-icon>
                         </template>
                     </q-input>
                 </template>
+
+                <slot></slot>
             </div>
         </q-card-section>
         <q-card-actions align="right">
@@ -82,7 +88,7 @@
 
 <script>
 export default {
-    name: 'CreateItemForm',
+    name: 'StoincsForm',
     props: {
         value: {
             type: Object,

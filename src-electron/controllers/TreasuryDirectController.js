@@ -3,6 +3,7 @@ import TreasuryDirectService from '../services/TreasuryDirectService';
 
 const METHODS = {
     GET_TREASURY_DIRECT: 'treasury-direct/get',
+    SAVE: 'treasury-direct/save',
     DELETE: 'treasury-direct/delete',
     DOWNLOAD_CSV: 'treasury-direct/download-csv'
 };
@@ -14,6 +15,16 @@ ipcMain.on(METHODS.GET_TREASURY_DIRECT, async (event, arg) => {
         event.reply(METHODS.GET_TREASURY_DIRECT, { status: 'success', data: treasuryDirect });
     } catch (e) {
         event.reply(METHODS.GET_TREASURY_DIRECT, { status: 'error', message: e.message });
+    }
+});
+
+ipcMain.on(METHODS.SAVE, async (event, newOperation) => {
+    await TreasuryDirectService.saveNewOperation(newOperation);
+
+    try {
+        event.reply(METHODS.SAVE, { status: 'success', data: newOperation });
+    } catch (e) {
+        event.reply(METHODS.SAVE, { status: 'error', message: e.message });
     }
 });
 

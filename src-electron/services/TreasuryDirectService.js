@@ -127,6 +127,26 @@ class TreasuryDirectService {
         await fs.promises.writeFile(path, JSON.stringify(Object.values(data)));
     }
 
+    async saveNewOperation(newOperation) {
+        const data = await this.getTreasuryDirect();
+        const newOperationCopy = { ...newOperation, lastUpdated: new Date(), source: 'Manual' };
+        delete newOperationCopy['institution'];
+        delete newOperationCopy['account'];
+
+        const account = data.first(o => o.institution === newOperation.institution && o.account === newOperation.account);
+        if (account)
+            account.data.push(newOperationCopy)
+        else {
+            data.push({
+                institution: newOperation.institution,
+                account: newOperation.account,
+                data: [newOperationCopy]
+            });
+        }
+
+        await this.saveTreasuryDirect(data);
+    }
+
     async delete(treasuryDirect) {
         const data = await this.getTreasuryDirect();
 

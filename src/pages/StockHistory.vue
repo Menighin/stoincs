@@ -6,7 +6,7 @@
 
         <q-table
             class="table-container q-mx-lg"
-            table-class="data-table"
+            table-class="data-table sticky-last-column"
             title="Histórico"
             :data="filteredDataTable"
             :columns="columns"
@@ -81,8 +81,8 @@
             </template>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
-                <q-btn flat icon="eva-edit-2-outline" @click="editRow(props.row)" color="primary" />
-                <q-btn flat icon="eva-trash-2-outline" @click="deleteRow(props.row)" color="primary" />
+                <q-btn flat icon="eva-edit-2-outline" size="10px" @click="editRow(props.row)" color="primary" />
+                <q-btn flat icon="eva-trash-2-outline" size="10px" @click="deleteRow(props.row)" color="primary" />
             </q-td>
 
             <template v-slot:no-data="">
@@ -94,72 +94,6 @@
                 </div>
             </template>
         </q-table>
-
-        <q-dialog v-model="showCreateForm" persistent>
-            <q-card>
-                <q-form @submit="saveOperation" class="q-gutter-md">
-                    <q-card-section class="row items-center">
-                        <div class="q-gutter-md q-ma-md" style="width: 400px; max-width: 500px">
-                            <div class="text-h5">{{isEdit ? 'Editar Operação' : 'Nova Operação'}}</div>
-
-                            <q-select
-                                filled
-                                :disable="isEdit"
-                                v-model="newOperation.institution"
-                                label="Instituição"
-                                use-input
-                                clearable
-                                new-value-mode="add-unique"
-                                :options="filteredInstitutions"
-                                @filter="filterInstitutionFn"
-                                @input-value="(v) => newOperation.partialInstitution = v"
-                                @blur="blurSelect('institution')"
-                                lazy-rules
-                                class="q-ma-sm" style="padding-bottom: 0"
-                                :rules="[ val => val && val.length > 0 || '']"
-                            />
-
-                            <q-select
-                                filled
-                                :disable="isEdit"
-                                v-model="newOperation.account"
-                                label="Conta"
-                                use-input
-                                clearable
-                                new-value-mode="add-unique"
-                                :options="filteredAccounts"
-                                @filter="filterAccountFn"
-                                @input-value="(v) => newOperation.partialAccount = v"
-                                @blur="blurSelect('account')"
-                                lazy-rules
-                                class="q-ma-sm" style="padding-bottom: 0"
-                                :rules="[ val => val && val.length > 0 || '']"
-                            />
-
-                            <q-input :disable="isEdit" class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.code" label="Ativo" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
-                            <q-select :disable="isEdit" :options="['C', 'V']" style="padding-bottom: 0" class="q-ma-sm" filled v-model="newOperation.operation" label="Operação" lazy-rules :rules="[ val => val && val.length > 0 || '']" />
-                            <q-input :disable="isEdit" class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.date" mask="##/##/####" label="Data"  lazy-rules :rules="[ val => val && val.length > 0 || '']">
-                                <template v-slot:append>
-                                    <q-icon name="event" class="cursor-pointer">
-                                        <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale">
-                                            <q-date mask="DD/MM/YYYY" v-model="newOperation.date" @input="() => $refs.qDateProxy.hide()" />
-                                        </q-popup-proxy>
-                                    </q-icon>
-                                </template>
-                            </q-input>
-                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.quantity" label="Quantidade" lazy-rules :rules="[ val => val && val != null ]" />
-                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled v-model="newOperation.price" label="Preço" fill-mask="0" mask="R$ #,##" reverse-fill-mask lazy-rules :rules="[ val => val && val.length > 0 || '']" />
-                            <q-input class="q-ma-sm" style="padding-bottom: 0" filled :value="totalNewOperation" label="Total" disable />
-                        </div>
-                    </q-card-section>
-
-                    <q-card-actions align="right">
-                        <q-btn flat label="Cancelar" color="primary" v-close-popup />
-                        <q-btn flat label="Salvar" type="submit" color="primary" />
-                    </q-card-actions>
-                </q-form>
-            </q-card>
-        </q-dialog>
 
         <q-dialog v-model="showSplitDialog" persistent>
             <q-card>
@@ -197,6 +131,20 @@
                 </q-form>
             </q-card>
         </q-dialog>
+
+        <q-dialog v-model="showCreateForm">
+            <q-card>
+                <stoincs-form
+                    v-model="newOperation"
+                    :title="isEdit ? 'Editar Operação' : 'Nova Operação'"
+                    @cancel="showCreateForm = false;"
+                    @submit="saveOperation"
+                    :fields="createFormFields">
+
+                    <q-input class="q-ma-sm" style="padding-bottom: 0" filled :value="totalNewOperation" label="Total" disable />
+                </stoincs-form>
+            </q-card>
+        </q-dialog>
     </q-page>
 </template>
 
@@ -205,9 +153,13 @@
 import { ipcRenderer } from 'electron';
 import NumberUtils from '../../src-shared/utils/NumberUtils';
 import DateUtils from '../../src-shared/utils/DateUtils';
+import StoincsForm from '../components/StoincsForm';
 
 export default {
     name: 'PageStockHistory',
+    components: {
+        StoincsForm
+    },
     data() {
         return {
             dataTable: [],
@@ -335,7 +287,7 @@ export default {
             this.$set(this.newOperation, 'institution', row.institution);
             this.$set(this.newOperation, 'account', row.account);
             this.$set(this.newOperation, 'code', row.code);
-            this.$set(this.newOperation, 'operation', row.operation);
+            this.$set(this.newOperation, 'operation', { value: row.operation, label: row.operation === 'C' ? 'Compra' : 'Venda' });
             this.$set(this.newOperation, 'date', row.date.toJSON());
             this.$set(this.newOperation, 'quantity', row.quantity);
             this.$set(this.newOperation, 'price', `R$ ${row.price.toFixed(2).replace('.', ',')}`);
@@ -345,14 +297,12 @@ export default {
         saveOperation() {
             const payload = {
                 ...this.newOperation,
+                operation: this.newOperation.operation.value,
                 totalValue: NumberUtils.getNumberFromString(this.totalNewOperation),
                 date: this.isEdit ? new Date(this.newOperation.date) : DateUtils.fromDateStr(this.newOperation.date),
                 price: NumberUtils.getNumberFromString(this.newOperation.price),
                 quantity: parseInt(this.newOperation.quantity)
             };
-
-            delete payload.partialAccount;
-            delete payload.partialInstitution;
 
             if (!this.isEdit)
                 ipcRenderer.send('stockHistory/create', payload);
@@ -385,39 +335,6 @@ export default {
             }).onOk(() => {
                 ipcRenderer.send('stockHistory/refresh');
             });
-        },
-        filterInstitutionFn(val, update) {
-            update(() => {
-                if (val === '') {
-                    this.filteredInstitutions = this.institutionOptions;
-                } else {
-                    const needle = val.toLowerCase();
-                    this.filteredInstitutions = this.institutionOptions.filter(
-                        v => v.toLowerCase().indexOf(needle) > -1
-                    );
-                }
-            });
-        },
-        filterAccountFn(val, update) {
-            update(() => {
-                if (val === '') {
-                    this.filteredAccounts = this.accountOptions;
-                } else {
-                    const needle = val.toLowerCase();
-                    this.filteredAccounts = this.accountOptions.filter(
-                        v => v.toLowerCase().indexOf(needle) > -1
-                    );
-                }
-            });
-        },
-        blurSelect(field) {
-            if (field === 'institution') {
-                if (this.newOperation.partialInstitution && this.newOperation.partialInstitution.length > 0)
-                    this.newOperation.institution = this.newOperation.partialInstitution;
-            } else if (field === 'account') {
-                if (this.newOperation.partialAccount && this.newOperation.partialAccount.length > 0)
-                    this.newOperation.account = this.newOperation.partialAccount;
-            }
         },
         downloadCsv() {
             ipcRenderer.send('stockHistory/download-csv');
@@ -453,15 +370,60 @@ export default {
             }
             return Object.keys(stocks).sort();
         },
-        institutionOptions() {
-            return [...new Set(this.dataTable.map(o => o.institution).sort())];
-        },
-        accountOptions() {
-            const data = this.dataTable
-                .filter(o => !this.newOperation.institution || this.newOperation.institution === o.institution)
-                .map(o => o.account)
-                .sort();
-            return [...new Set(data)];
+        createFormFields() {
+            return [
+                {
+                    id: 'institution',
+                    label: 'Instituição',
+                    type: 'autocomplete',
+                    options: this.dataTable.map(o => o.institution).distinct().sort(),
+                    disable: this.isEdit
+                },
+                {
+                    id: 'account',
+                    label: 'Conta',
+                    type: 'autocomplete',
+                    options: this.dataTable
+                        .filter(o => !this.newOperation.institution || this.newOperation.institution === o.institution)
+                        .map(o => o.account).distinct().sort(),
+                    disable: this.isEdit
+                },
+                {
+                    id: 'code',
+                    label: 'Ativo',
+                    type: 'text',
+                    disable: this.isEdit
+                },
+                {
+                    id: 'operation',
+                    label: 'Operação',
+                    type: 'select',
+                    options: [{ label: 'Compra', value: 'C' }, { label: 'Venda', value: 'V' }],
+                    disable: this.isEdit
+                },
+                {
+                    id: 'date',
+                    label: 'Data',
+                    type: 'date',
+                    disable: this.isEdit
+                },
+                {
+                    id: 'quantity',
+                    label: 'Quantidade',
+                    type: 'text',
+                    fillMask: '0',
+                    mask: '#',
+                    reverseFillMask: true
+                },
+                {
+                    id: 'price',
+                    label: 'Preço',
+                    type: 'text',
+                    fillMask: '0',
+                    mask: 'R$ #,##',
+                    reverseFillMask: true
+                }
+            ];
         }
     },
     mounted() {

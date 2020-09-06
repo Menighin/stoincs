@@ -102,7 +102,7 @@
             </q-td>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
-                <q-btn flat icon="eva-trash-2-outline" size="12px" @click="deleteRow(props.row)" color="primary" />
+                <q-btn flat icon="eva-trash-2-outline" size="10px" @click="deleteRow(props.row)" color="primary" />
             </q-td>
 
             <template v-slot:no-data="">
@@ -115,9 +115,9 @@
             </template>
         </q-table>
 
-        <q-dialog v-model="showCreateForm" persistent>
+        <q-dialog v-model="showCreateForm">
             <q-card>
-                <create-item-form
+                <stoincs-form
                     v-model="newOperation"
                     title="Nova operação"
                     @cancel="showCreateForm = false;"
@@ -133,12 +133,12 @@
 import { ipcRenderer } from 'electron';
 import NumberUtils from '../../src-shared/utils/NumberUtils';
 import DateUtils from '../../src-shared/utils/DateUtils';
-import CreateItemForm from '../components/CreateItemForm';
+import StoincsForm from '../components/StoincsForm';
 
 export default {
     name: 'PageTreasuryDirectWallet',
     components: {
-        CreateItemForm
+        StoincsForm
     },
     data() {
         return {
@@ -264,9 +264,15 @@ export default {
             localStorage.setItem('treasury-direct/columns', JSON.stringify(this.visibleColumns));
         },
         saveOperation(form) {
-            console.log(form);
-            console.log(this.newOperation);
-            console.log('-----------------');
+            this.showCreateForm = false;
+            this.newOperation.quantity = NumberUtils.getNumberFromString(this.newOperation.quantity);
+            this.newOperation.investedValue = NumberUtils.getNumberFromString(this.newOperation.investedValue);
+            this.newOperation.grossValue = NumberUtils.getNumberFromString(this.newOperation.grossValue);
+            this.newOperation.netValue = NumberUtils.getNumberFromString(this.newOperation.netValue);
+            this.newOperation.expirationDate = DateUtils.fromDateStr(this.newOperation.expirationDate);
+
+            ipcRenderer.send('treasury-direct/save', this.newOperation);
+            this.newOperation = {};
         },
         deleteRow(row) {
             this.$q.dialog({
@@ -327,13 +333,13 @@ export default {
                     id: 'institution',
                     label: 'Instituição',
                     type: 'autocomplete',
-                    options: this.dataTable.map(o => o.institution).distinct()
+                    options: this.dataTable.map(o => o.institution).distinct().sort()
                 },
                 {
                     id: 'account',
                     label: 'Conta',
                     type: 'autocomplete',
-                    options: this.dataTable.map(o => o.account).distinct()
+                    options: this.dataTable.map(o => o.account).distinct().sort()
                 },
                 {
                     id: 'code',
@@ -402,6 +408,17 @@ export default {
                 this.init();
             } else {
                 this.$q.notify({ type: 'negative', message: 'Um erro ocorreu ao remover operação' });
+                console.error(args.error);
+            }
+        });
+
+        ipcRenderer.on('treasury-direct/save', (event, args) => {
+            this.tableLoading = false;
+            if (args.status === 'success') {
+                this.$q.notify({ type: 'positive', message: 'Tesouro criado com sucesso' });
+                this.init();
+            } else {
+                this.$q.notify({ type: 'negative', message: 'Um erro ocorreu ao criar operação' });
                 console.error(args.error);
             }
         });
