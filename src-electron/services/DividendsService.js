@@ -55,6 +55,12 @@ class DividendsService {
         return b.date.getTime() - a.date.getTime();
     };
 
+    async saveDividends(dividends) {
+        const rootPath = await FileSystemUtils.getDataPath();
+        const path = `${rootPath}/${FILES.DIVIDENDS}`;
+        await fs.promises.writeFile(path, JSON.stringify(dividends));
+    }
+
     async getDividendsJobMetadata() {
         const rootPath = await FileSystemUtils.getDataPath();
         const path = `${rootPath}/${FILES.JOB_METADATA}`;
@@ -83,11 +89,7 @@ class DividendsService {
 
         const dividends = JSON.parse((await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || '[]');
         dividends.forEach(d => {
-            d.pastEvents.forEach(e => {
-                if (e.date)
-                    e.date = new Date(e.date);
-            });
-            d.futureEvents.forEach(e => {
+            d.data.forEach(e => {
                 if (e.date)
                     e.date = new Date(e.date);
             });
@@ -96,24 +98,23 @@ class DividendsService {
     }
 
     async getDividendsEvents() {
+        const now = new Date();
         return (await this.getDividends())
             .reduce((p, c) => {
+                const data = c.data.map(e => {
+                    const date = e.date ? new Date(e.date) : null;
+                    return {
+                        ...e,
+                        date: date,
+                        institution: c.institution,
+                        account: c.account,
+                        isFuture: date === null || date.getTime() > now.getTime()
+                    }
+                });
+
                 p = [
                     ...p,
-                    ...c.pastEvents.map(e => ({
-                        ...e,
-                        date: e.date ? new Date(e.date) : null,
-                        institution: c.institution,
-                        account: c.account,
-                        isFuture: false
-                    })),
-                    ...c.futureEvents.map(e => ({
-                        ...e,
-                        date: e.date ? new Date(e.date) : null,
-                        institution: c.institution,
-                        account: c.account,
-                        isFuture: true
-                    }))
+                    ...data
                 ];
                 return p;
             }, [])
@@ -134,18 +135,20 @@ class DividendsService {
                 : {
                     institution: cei.institution,
                     account: cei.account,
-                    pastEvents: [],
-                    futureEvents: []
+                    data: []
                 };
 
             // If there's no dividend data for this account and institution, add it
             if (!alreadyExistsAccount) dividends.push(savedAccount);
 
+            // Clear out future events (the one that has no ID)
+            savedAccount.data = savedAccount.data.filter(o => typeof o.id !== 'undefined');
+
             cei.pastEvents.forEach(e => {
                 const id = this.getEventId(e);
-                if (!savedAccount.pastEvents.any(o => o.id === id)) {
+                if (!savedAccount.data.any(o => o.id === id)) {
                     newDividends++;
-                    savedAccount.pastEvents.push({
+                    savedAccount.data.push({
                         id: id,
                         code: e.code,
                         stockType: e.stockType,
@@ -158,7 +161,7 @@ class DividendsService {
                     });
                 }
             });
-            savedAccount.futureEvents = cei.futureEvents.map(e => ({
+            savedAccount.data = cei.futureEvents.map(e => ({
                 code: e.code,
                 stockType: e.stockType,
                 type: e.type,
@@ -171,14 +174,57 @@ class DividendsService {
         });
 
         dividends.forEach(d => {
-            d.pastEvents.sort(this._compareDividendOrder);
-            d.futureEvents.sort(this._compareDividendOrder);
+            d.data.sort(this._compareDividendOrder);
         });
 
         await fs.promises.writeFile(path, JSON.stringify(dividends));
         return newDividends;
     }
     
+    async save(newDividend) {
+        const data = await this.getDividends();
+
+        const existsAccount = data.any(d => d.institution === newDividend.institution && d.account === newDividend.account);
+
+        const savedAccount = existsAccount
+        ? data.first(d => d.institution === newDividend.institution && d.account === newDividend.account)
+        : {
+            institution: newDividend.institution,
+            account: newDividend.account,
+            data: []
+        };
+
+        if (!existsAccount)
+            data.push(savedAccount);
+
+        const id = this.getEventId(newDividend);
+        delete newDividend['institution'];
+        delete newDividend['account'];
+        newDividend.source = 'Manual';
+        if (newDividend.date)
+            newDividend.date = new Date(newDividend.date);
+        newDividend.id = id;
+
+        if (savedAccount.data.any(o => o.id === id))
+            return false;
+        
+        savedAccount.data.push(newDividend);
+
+        await this.saveDividends(data);
+        return true;
+    }
+
+    async delete(dividend) {
+        const data = await this.getDividends();
+        if (dividend.date)
+            dividend.date = new Date(dividend.date);
+
+        const account = data.first(o => o.account === dividend.account && o.institution === dividend.institution);
+        account.data = account.data.dropFirst(o => this.getEventId(o) === this.getEventId(dividend));
+
+        await this.saveDividends(data);
+    }
+
     async downloadCsv() {
         const savePath = await dialog.showSaveDialog({ defaultPath: 'stoincs-dividendos.csv' });
         if (!savePath.canceled) {
@@ -188,7 +234,10 @@ class DividendsService {
     }
 
     getEventId(e) {
-        return `${e.code}_${e.quantity}_${e.date.getFullYear()}${e.date.getMonth()}${e.date.getDate()}`;
+        if (e.date)
+            return `${e.code}_${e.quantity}_${e.netValue}_${e.grossValue}_${e.date.getFullYear()}${e.date.getMonth()}${e.date.getDate()}_${e.source}`;
+        return `${e.code}_${e.quantity}_${e.netValue}_${e.grossValue}_undefined_${e.source}`;
+
     }
 
 };

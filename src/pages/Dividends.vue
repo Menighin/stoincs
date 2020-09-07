@@ -106,6 +106,18 @@
                 </div>
             </template>
         </q-table>
+
+        <q-dialog v-model="showCreateForm">
+            <q-card>
+                <stoincs-form
+                    v-model="newDividend"
+                    title="Novo dividendo"
+                    @cancel="showCreateForm = false;"
+                    @submit="saveDividend"
+                    :fields="createFormFields" />
+            </q-card>
+        </q-dialog>
+
     </q-page>
 </template>
 
@@ -114,9 +126,13 @@
 import { ipcRenderer } from 'electron';
 import NumberUtils from '../../src-shared/utils/NumberUtils';
 import DateUtils from '../../src-shared/utils/DateUtils';
+import StoincsForm from '../components/StoincsForm';
 
 export default {
     name: 'PageDividends',
+    components: {
+        StoincsForm
+    },
     data() {
         return {
             now: new Date(),
@@ -127,10 +143,17 @@ export default {
             visibleColumns: [ 'code', 'type', 'quantity', 'date', 'grossValue', 'netValue', 'source' ],
             columns: [
                 {
-                    name: 'broker',
-                    align: 'center',
-                    label: 'Corretora',
-                    field: 'broker',
+                    name: 'institution',
+                    label: 'Instituição',
+                    align: 'left',
+                    field: 'institution',
+                    sortable: true
+                },
+                {
+                    name: 'account',
+                    align: 'left',
+                    label: 'Conta',
+                    field: 'account',
                     sortable: true
                 },
                 {
@@ -201,7 +224,9 @@ export default {
             ],
             NumberUtils: NumberUtils,
             DateUtils: DateUtils,
-            tableLoading: true
+            tableLoading: true,
+            showCreateForm: false,
+            newDividend: {}
         };
     },
     methods: {
@@ -213,6 +238,34 @@ export default {
         changeVisibleColumns() {
             localStorage.setItem('dividends/columns', JSON.stringify(this.visibleColumns));
         },
+        saveDividend() {
+            this.showCreateForm = false;
+            this.newDividend.quantity = NumberUtils.getNumberFromString(this.newDividend.quantity);
+            this.newDividend.grossValue = NumberUtils.getNumberFromString(this.newDividend.grossValue);
+            this.newDividend.netValue = NumberUtils.getNumberFromString(this.newDividend.netValue);
+            if (this.newDividend.date)
+                this.newDividend.date = DateUtils.fromDateStr(this.newDividend.date);
+
+            ipcRenderer.send('dividends/save', this.newDividend);
+            this.newDividend = {};
+        },
+        deleteRow(row) {
+            this.$q.dialog({
+                title: 'Confirmação',
+                message: 'Tem certeza que deseja remover este item?',
+                cancel: {
+                    label: 'Não',
+                    flat: true
+                },
+                ok: {
+                    label: 'Sim',
+                    flat: true
+                },
+                persistent: true
+            }).onOk(() => {
+                ipcRenderer.send('dividends/delete', row);
+            });
+        },
         downloadCsv() {
             ipcRenderer.send('dividends/download-csv');
         }
@@ -220,7 +273,6 @@ export default {
     computed: {
         dataTable() {
             return this.dividends.map(d => {
-                d.broker = `${d.institution} - ${d.account}`;
                 return d;
             });
         },
@@ -245,6 +297,69 @@ export default {
                     colorFormat: true
                 }
             ];
+        },
+        createFormFields() {
+            return [
+                {
+                    id: 'institution',
+                    label: 'Instituição',
+                    type: 'autocomplete',
+                    options: this.dataTable.map(o => o.institution).distinct().sort()
+                },
+                {
+                    id: 'account',
+                    label: 'Conta',
+                    type: 'autocomplete',
+                    options: this.dataTable.map(o => o.account).distinct().sort()
+                },
+                {
+                    id: 'code',
+                    label: 'Ativo',
+                    type: 'text'
+                },
+                {
+                    id: 'type',
+                    label: 'Tipo',
+                    type: 'autocomplete',
+                    options: this.dataTable.map(o => o.type).distinct().sort()
+                },
+                {
+                    id: 'stockType',
+                    label: 'Tipo de Ativo',
+                    type: 'autocomplete',
+                    options: this.dataTable.map(o => o.stockType).distinct().sort()
+                },
+                {
+                    id: 'quantity',
+                    label: 'Quantidade',
+                    type: 'text',
+                    fillMask: '0',
+                    mask: '#',
+                    reverseFillMask: true
+                },
+                {
+                    id: 'date',
+                    label: 'Data de pagamento',
+                    type: 'date',
+                    required: false
+                },
+                {
+                    id: 'grossValue',
+                    label: 'Valor Bruto',
+                    type: 'text',
+                    fillMask: '0',
+                    mask: 'R$ #,##',
+                    reverseFillMask: true
+                },
+                {
+                    id: 'netValue',
+                    label: 'Valor Líquido',
+                    type: 'text',
+                    fillMask: '0',
+                    mask: 'R$ #,##',
+                    reverseFillMask: true
+                }
+            ];
         }
     },
     mounted() {
@@ -254,6 +369,27 @@ export default {
                 this.dividends = response.data;
             } else {
                 this.$q.notify({ type: 'negative', message: `Erro ao carregar dividendos` });
+                console.error(response);
+            }
+        });
+
+        ipcRenderer.on('dividends/save', (event, response) => {
+            this.tableLoading = false;
+            if (response.status === 'success') {
+                this.init();
+            } else {
+                this.$q.notify({ type: 'negative', message: response.message });
+                console.error(response);
+            }
+        });
+
+        ipcRenderer.on('dividends/delete', (event, response) => {
+            this.tableLoading = false;
+            if (response.status === 'success') {
+                this.init();
+                this.$q.notify({ type: 'positive', message: 'Operação removida com sucesso' });
+            } else {
+                this.$q.notify({ type: 'negative', message: 'Erro ao deletar evento' });
                 console.error(response);
             }
         });

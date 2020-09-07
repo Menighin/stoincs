@@ -164,7 +164,7 @@ class TreasuryDirectService {
     }
 
     async downloadCsv() {
-        const savePath = await dialog.showSaveDialog({ defaultPath: 'stoincs-dividendos.csv' });
+        const savePath = await dialog.showSaveDialog({ defaultPath: 'stoincs-tesouro-direto.csv' });
         if (!savePath.canceled) {
             const data = await this.getDividendsEvents();
             await CsvUtils.saveCsv(savePath.filePath, data, CSV_HEADERS);

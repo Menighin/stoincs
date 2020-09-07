@@ -3,6 +3,8 @@ import DividendsService from '../services/DividendsService';
 
 const METHODS = {
     GET_DIVIDENDS: 'dividends/get',
+    SAVE: 'dividends/save',
+    DELETE: 'dividends/delete',
     DOWNLOAD_CSV: 'dividends/download-csv'
 };
 
@@ -13,6 +15,27 @@ ipcMain.on(METHODS.GET_DIVIDENDS, async (event, arg) => {
         event.reply(METHODS.GET_DIVIDENDS, { status: 'success', data: dividends });
     } catch (e) {
         event.reply(METHODS.GET_DIVIDENDS, { status: 'error', message: e.message });
+    }
+});
+
+ipcMain.on(METHODS.SAVE, async (event, newDividend) => {
+    try {
+        const result = await DividendsService.save(newDividend);
+        if (result)
+            event.reply(METHODS.SAVE, { status: 'success' });
+        else
+            event.reply(METHODS.SAVE, { status: 'error', message: 'Operação já existe' })
+    } catch (e) {
+        event.reply(METHODS.SAVE, { status: 'error', message: e.message });
+    }
+});
+
+ipcMain.on(METHODS.DELETE, async (event, dividend) => {
+    try {
+        await DividendsService.delete(dividend);
+        event.reply(METHODS.DELETE, { status: 'success' });
+    } catch (e) {
+        event.reply(METHODS.DELETE, { status: 'error', message: e.message });
     }
 });
 

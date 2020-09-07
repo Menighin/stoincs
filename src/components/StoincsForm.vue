@@ -18,7 +18,7 @@
                         :label="f.label"
                         :disable="f.disable"
                         lazy-rules
-                        :rules="[ val => val && val != null ]"
+                        :rules="[ val => f.required === false || (val && val.toString().length > 0 || '')]"
                     />
 
                     <q-select
@@ -37,7 +37,7 @@
                         lazy-rules
                         :disable="f.disable"
                         class="q-ma-sm" style="padding-bottom: 0"
-                        :rules="[ val => val && val.length > 0 || '']"
+                        :rules="[ val => f.required === false || (val && val.toString().length > 0 || '')]"
                     />
 
                     <q-select
@@ -51,7 +51,7 @@
                         :label="f.label"
                         lazy-rules
                         :disable="f.disable"
-                        :rules="[ val => val && val.toString().length > 0 || '']"
+                        :rules="[ val => f.required === false || (val && val.toString().length > 0 || '')]"
                     />
 
                     <q-input
@@ -65,7 +65,7 @@
                         :label="f.label"
                         lazy-rules
                         :disable="f.disable"
-                        :rules="[ val => val && val.length > 0 || '']">
+                        :rules="[ val => f.required === false || (val && val.toString().length > 0 || '')]">
                         <template v-slot:append>
                             <q-icon name="event" class="cursor-pointer" :disable="f.disable">
                                 <q-popup-proxy ref="qDateProxy" transition-show="scale" transition-hide="scale" :disable="f.disable">
