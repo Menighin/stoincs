@@ -5,7 +5,9 @@ const METHODS = {
     GET_TREASURY_DIRECT: 'treasury-direct/get',
     SAVE: 'treasury-direct/save',
     DELETE: 'treasury-direct/delete',
-    DOWNLOAD_CSV: 'treasury-direct/download-csv'
+    UPDATE: 'treasury-direct/update',
+    DOWNLOAD_CSV: 'treasury-direct/download-csv',
+    UPLOAD_CSV: 'treasury-direct/upload-csv'
 };
 
 ipcMain.on(METHODS.GET_TREASURY_DIRECT, async (event, arg) => {
@@ -19,12 +21,23 @@ ipcMain.on(METHODS.GET_TREASURY_DIRECT, async (event, arg) => {
 });
 
 ipcMain.on(METHODS.SAVE, async (event, newOperation) => {
-    await TreasuryDirectService.saveNewOperation(newOperation);
-
     try {
-        event.reply(METHODS.SAVE, { status: 'success', data: newOperation });
+        const result = await TreasuryDirectService.saveNewOperation(newOperation);
+        if (result)
+            event.reply(METHODS.SAVE, { status: 'success', data: newOperation });
+        else
+            event.reply(METHODS.SAVE, { status: 'error', message: `Operação ${newOperation.code} já existe!` });
     } catch (e) {
         event.reply(METHODS.SAVE, { status: 'error', message: e.message });
+    }
+});
+
+ipcMain.on(METHODS.UPDATE, async (event, operation) => {
+    await TreasuryDirectService.updateOperation(operation);
+    try {
+        event.reply(METHODS.UPDATE, { status: 'success', data: operation });
+    } catch (e) {
+        event.reply(METHODS.UPDATE, { status: 'error', message: e.message });
     }
 });
 
@@ -43,6 +56,15 @@ ipcMain.on(METHODS.DOWNLOAD_CSV, async (event, arg) => {
         event.reply(METHODS.DOWNLOAD_CSV, { status: 'success' });
     } catch (e) {
         event.reply(METHODS.DOWNLOAD_CSV, { status: 'error', message: e.message });
+    }
+});
+
+ipcMain.on(METHODS.UPLOAD_CSV, async (event, arg) => {
+    try {
+        await TreasuryDirectService.uploadCsv();
+        event.reply(METHODS.UPLOAD_CSV, { status: 'success' });
+    } catch (e) {
+        event.reply(METHODS.UPLOAD_CSV, { status: 'error', message: e.message });
     }
 });
 

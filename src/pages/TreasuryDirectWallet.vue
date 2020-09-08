@@ -77,14 +77,14 @@
                                 <q-item-label>Download</q-item-label>
                             </q-item-section>
                         </q-item>
-                        <q-item clickable v-close-popup @click="downloadCsv">
+                        <q-item clickable v-close-popup @click="uploadCsv">
                             <q-item-section>
                                 <q-item-label>Upload</q-item-label>
                             </q-item-section>
                         </q-item>
                     </q-list>
                 </q-btn-dropdown>
-                <q-btn flat icon="eva-plus-circle-outline" @click="showCreateForm = true;" color="primary" title="Adicionar ativo" />
+                <q-btn flat icon="eva-plus-circle-outline" @click="isEdit = false; showCreateForm = true;" color="primary" title="Adicionar ativo" />
             </template>
 
             <q-td auto-width slot="body-cell-grossProfit" slot-scope="props" :props="props">
@@ -102,7 +102,8 @@
             </q-td>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
-                <q-btn flat icon="eva-trash-2-outline" size="10px" @click="deleteRow(props.row)" color="primary" />
+                <q-btn flat round class="q-ma-none" icon="eva-edit-2-outline" size="10px" @click="editRow(props.row)" color="primary" />
+                <q-btn round flat class="q-ma-none" icon="eva-trash-2-outline" size="10px" @click="deleteRow(props.row)" color="primary" />
             </q-td>
 
             <template v-slot:no-data="">
@@ -175,7 +176,8 @@ export default {
                     align: 'right',
                     label: 'Quantidade',
                     field: 'quantity',
-                    sortable: true
+                    sortable: true,
+                    format: val => NumberUtils.formatNumber(val)
                 },
                 {
                     name: 'investedValue',
@@ -251,7 +253,8 @@ export default {
             showCreateForm: false,
             newOperation: {},
             filteredInstitutions: [],
-            filteredAccounts: []
+            filteredAccounts: [],
+            isEdit: false
         };
     },
     methods: {
@@ -271,8 +274,25 @@ export default {
             this.newOperation.netValue = NumberUtils.getNumberFromString(this.newOperation.netValue);
             this.newOperation.expirationDate = DateUtils.fromDateStr(this.newOperation.expirationDate);
 
-            ipcRenderer.send('treasury-direct/save', this.newOperation);
+            if (!this.isEdit)
+                ipcRenderer.send('treasury-direct/save', this.newOperation);
+            else
+                ipcRenderer.send('treasury-direct/update', this.newOperation);
             this.newOperation = {};
+        },
+        editRow(row) {
+            this.isEdit = true;
+
+            this.$set(this.newOperation, 'institution', row.institution);
+            this.$set(this.newOperation, 'account', row.account);
+            this.$set(this.newOperation, 'code', row.code);
+            this.$set(this.newOperation, 'expirationDate', DateUtils.toString(row.expirationDate, true, false));
+            this.$set(this.newOperation, 'quantity', NumberUtils.formatNumber(row.quantity));
+            this.$set(this.newOperation, 'investedValue', NumberUtils.formatNumber(row.investedValue, 'R$ '));
+            this.$set(this.newOperation, 'grossValue', NumberUtils.formatNumber(row.grossValue, 'R$ '));
+            this.$set(this.newOperation, 'netValue', NumberUtils.formatNumber(row.netValue, 'R$ '));
+
+            this.showCreateForm = true;
         },
         deleteRow(row) {
             this.$q.dialog({
@@ -293,6 +313,9 @@ export default {
         },
         downloadCsv() {
             ipcRenderer.send('treasury-direct/download-csv');
+        },
+        uploadCsv() {
+            ipcRenderer.send('treasury-direct/upload-csv');
         }
     },
     computed: {
@@ -333,18 +356,21 @@ export default {
                     id: 'institution',
                     label: 'Instituição',
                     type: 'autocomplete',
-                    options: this.dataTable.map(o => o.institution).distinct().sort()
+                    options: this.dataTable.map(o => o.institution).distinct().sort(),
+                    disable: this.isEdit
                 },
                 {
                     id: 'account',
                     label: 'Conta',
                     type: 'autocomplete',
-                    options: this.dataTable.map(o => o.account).distinct().sort()
+                    options: this.dataTable.map(o => o.account).distinct().sort(),
+                    disable: this.isEdit
                 },
                 {
                     id: 'code',
                     label: 'Título',
-                    type: 'text'
+                    type: 'text',
+                    disable: this.isEdit
                 },
                 {
                     id: 'quantity',
@@ -418,7 +444,18 @@ export default {
                 this.$q.notify({ type: 'positive', message: 'Tesouro criado com sucesso' });
                 this.init();
             } else {
-                this.$q.notify({ type: 'negative', message: 'Um erro ocorreu ao criar operação' });
+                this.$q.notify({ type: 'negative', message: args.message });
+                console.error(args.error);
+            }
+        });
+
+        ipcRenderer.on('treasury-direct/update', (event, args) => {
+            this.tableLoading = false;
+            if (args.status === 'success') {
+                this.$q.notify({ type: 'positive', message: 'Tesouro atualizado com sucesso' });
+                this.init();
+            } else {
+                this.$q.notify({ type: 'negative', message: args.message });
                 console.error(args.error);
             }
         });

@@ -33,11 +33,12 @@ body {
             th:last-child, td:last-child {
                 position: sticky;
                 right: 0;
-                z-index: 1;
+                z-index: 2;
             }
 
             td:last-child {
                 background-color: $accent-column;
+                z-index: 1;
             }
         }
     }

@@ -92,7 +92,7 @@
                         <template v-if="col.name !== 'action'">
                             {{ col.value }}
                         </template>
-                        <q-btn v-else flat icon="eva-trash-2-outline" size="10px" @click="deleteRow(props.row)" color="primary" />
+                        <q-btn v-else round flat class="q-ma-none" icon="eva-trash-2-outline" size="10px" @click="deleteRow(props.row)" color="primary" />
                     </q-td>
                 </q-tr>
             </template>

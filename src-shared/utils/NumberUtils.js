@@ -1,37 +1,19 @@
 class NumberUtils {
 
     /**
-     * Returns number formated as currency
+     * Returns number formated
      * @param {Number} n - Number to be formated
-     * @param {String} [currency=R$] - Currency to be formated
+     * @param {String} [prefix=] - Prefix to be added
+     * @param {String} [suffix=] - Suffix to be added
+     * @param {Boolean} [showSign=false] - To add or not the + sign in the number
      * @param {String} [locale=pt-BR] - Locale to be formated
-     * @returns {String} - Formated number
+     * @param {Number} [digits=2] - Number of digits for the number
+     * @returns {String} - Formatted number
      */
-    static formatCurrency(n, showSign = false, currency = 'R$', locale = 'pt-BR') {
-        if (n === null || n === undefined) return null;
-        if (!showSign)
-            return `${currency} ${n.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        const sign = n < 0 ? '' : '+';
-        return `${currency} ${sign}${n.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    }
-
-    static formatNumber(n, prefix = '', suffix = '', showSign = false, locale = 'pt-BR', digits = 2) {
+    static formatNumber(n, prefix = '', suffix = '', showSign = false, locale = 'pt-BR', digits = 2, useGrouping = true) {
         if (n === null || n === undefined) return null;
         const sign = n >= 0 && showSign ? '+' : '';
-        return `${prefix}${sign}${n.toLocaleString(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits })}${suffix}`;
-    }
-
-    /**
-     * Returns the number formated as percentage
-     * @param {Number} n - Number to be formated
-     * @param {String} [locale=pt-BR] - Locale to be formated
-     * @param {Boolean} [showSign=true] - Whether to return the sign or not
-     * @returns {String} - Formated number
-     */
-    static formatPercentage(n, showSign = true, locale = 'pt-BR') {
-        if (n === null || n === undefined) return null;
-        const sign = showSign ? (n < 0 ? '' : '+') : '';
-        return `${sign}${n.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+        return `${prefix}${sign}${n.toLocaleString(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: useGrouping })}${suffix}`;
     }
 
     /**

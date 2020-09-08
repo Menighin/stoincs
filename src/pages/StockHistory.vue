@@ -81,8 +81,8 @@
             </template>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
-                <q-btn flat icon="eva-edit-2-outline" size="10px" @click="editRow(props.row)" color="primary" />
-                <q-btn flat icon="eva-trash-2-outline" size="10px" @click="deleteRow(props.row)" color="primary" />
+                <q-btn flat round class="q-ma-none" icon="eva-edit-2-outline" size="10px" @click="editRow(props.row)" color="primary" />
+                <q-btn flat round class="q-ma-none" icon="eva-trash-2-outline" size="10px" @click="deleteRow(props.row)" color="primary" />
             </q-td>
 
             <template v-slot:no-data="">
@@ -269,7 +269,7 @@ export default {
             this.$set(this.newOperation, 'account', row.account);
             this.$set(this.newOperation, 'code', row.code);
             this.$set(this.newOperation, 'operation', { value: row.operation, label: row.operation === 'C' ? 'Compra' : 'Venda' });
-            this.$set(this.newOperation, 'date', row.date.toJSON());
+            this.$set(this.newOperation, 'date', DateUtils.toString(row.date, true, false));
             this.$set(this.newOperation, 'quantity', row.quantity);
             this.$set(this.newOperation, 'price', `R$ ${row.price.toFixed(2).replace('.', ',')}`);
 

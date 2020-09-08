@@ -11,32 +11,50 @@ const FILES = {
 
 const CSV_HEADERS = [
     {
-        code: 'account',
-        label: 'Conta'
+        code: 'institution',
+        label: 'Instituição',
+        type: 'string'
     },
     {
-        code: 'institution',
-        label: 'Instituição'
+        code: 'account',
+        label: 'Conta',
+        type: 'string'
     },
     {
         code: 'code',
-        label: 'Titulo'
+        label: 'Titulo',
+        type: 'string'
+    },
+    {
+        code: 'quantity',
+        label: 'Quantidade',
+        type: 'integer'
+    },
+    {
+        code: 'investedValue',
+        label: 'Valor Investido',
+        type: 'float'
     },
     {
         code: 'grossValue',
-        label: 'Valor Bruto'
+        label: 'Valor Bruto',
+        type: 'float'
     },
     {
         code: 'netValue',
-        label: 'Valor Líquido'
+        label: 'Valor Líquido',
+        type: 'float'
     },
     {
-        code: 'date',
-        label: 'Data do Pagamento'
+        code: 'expirationDate',
+        label: 'Data de Vencimento',
+        type: 'date'
     },
     {
         code: 'source',
-        label: 'Fonte'
+        label: 'Fonte',
+        type: 'string',
+        required: false
     }
 ];
 
@@ -134,15 +152,33 @@ class TreasuryDirectService {
         delete newOperationCopy['account'];
 
         const account = data.first(o => o.institution === newOperation.institution && o.account === newOperation.account);
-        if (account)
+        if (account) {
+            if (account.data.any(o => o.code === newOperation.code))
+                return false;
             account.data.push(newOperationCopy)
-        else {
+        } else {
             data.push({
                 institution: newOperation.institution,
                 account: newOperation.account,
                 data: [newOperationCopy]
             });
         }
+
+        await this.saveTreasuryDirect(data);
+        return true;
+    }
+
+    async updateOperation(operation) {
+        const data = await this.getTreasuryDirect();
+
+        const account = data.first(o => o.institution === operation.institution && o.account === operation.account);
+        const savedOperation = account.data.first(o => o.code === operation.code);
+        savedOperation.source = 'Manual';
+        savedOperation.quantity = operation.quantity;
+        savedOperation.investedValue = operation.investedValue;
+        savedOperation.grossValue = operation.grossValue;
+        savedOperation.netValue = operation.netValue;
+        savedOperation.expirationDate = operation.expirationDate;
 
         await this.saveTreasuryDirect(data);
     }
@@ -163,11 +199,53 @@ class TreasuryDirectService {
         await this.saveTreasuryDirect(data);
     }
 
+    async saveFromCsv(operations) {
+        const data = await this.getTreasuryDirect();
+
+        for (let operation of operations) {
+            const operationCopy = { ...operation, lastUpdated: new Date(), source: 'Manual' };
+            delete operationCopy['institution'];
+            delete operationCopy['account'];
+    
+            const account = data.first(o => o.institution === operation.institution && o.account === operation.account);
+            if (account) {
+                const alreadyExists = account.data.first(o => o.code === operation.code);
+                if (alreadyExists) {
+                    alreadyExists.quantity = operation.quantity;
+                    alreadyExists.investedValue = operation.investedValue;
+                    alreadyExists.grossValue = operation.grossValue;
+                    alreadyExists.netValue = operation.netValue;
+                    alreadyExists.expirationDate = operation.expirationDate;
+                }
+                else
+                    account.data.push(operationCopy)
+            } else {
+                data.push({
+                    institution: newOperation.institution,
+                    account: newOperation.account,
+                    data: [operationCopy]
+                });
+            }
+        }
+
+        await this.saveTreasuryDirect(data);
+    }
+
     async downloadCsv() {
         const savePath = await dialog.showSaveDialog({ defaultPath: 'stoincs-tesouro-direto.csv' });
         if (!savePath.canceled) {
-            const data = await this.getDividendsEvents();
+            const data = await this.getTreasuryDirectFlat();
             await CsvUtils.saveCsv(savePath.filePath, data, CSV_HEADERS);
+        }
+    }
+
+    async uploadCsv() {
+        const openPaths = await dialog.showOpenDialog({ filters: [{ name: 'csv', extensions: ['csv'] }]});
+        if (!openPaths.canceled) {
+            openPaths.filePaths.forEach(async path => {
+                const data = await CsvUtils.readCsv(path, CSV_HEADERS);
+                await this.saveFromCsv(data);
+            });
         }
     }
 

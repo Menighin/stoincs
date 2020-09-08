@@ -7,7 +7,7 @@
 
         <q-table
             class="table-container q-mx-lg"
-            table-class="data-table"
+            table-class="data-table sticky-last-column"
             title="Carteira de ações"
             :data="dataTable"
             :columns="columns"
@@ -99,8 +99,8 @@
             </q-td>
 
             <q-td auto-width slot="body-cell-action" slot-scope="props" :props="props">
-                <q-btn flat icon="eva-sync-outline" @click="syncRow(props.row)" title="Atualizar" color="primary" />
-                <q-btn flat icon="eva-pricetags-outline" @click="editLabelDialog = true; editLabelCode = props.row.code; editLabel = props.row.label; partialEditLabel = ''" title="Editar label" color="primary" />
+                <q-btn flat round class="q-ma-none" icon="eva-sync-outline" @click="syncRow(props.row)" title="Atualizar" color="primary" size="10px" />
+                <q-btn flat round class="q-ma-none" icon="eva-pricetags-outline" size="10px" @click="editLabelDialog = true; editLabelCode = props.row.code; editLabel = props.row.label; partialEditLabel = ''" title="Editar label" color="primary" />
             </q-td>
 
             <template v-slot:no-data="">
