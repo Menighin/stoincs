@@ -242,10 +242,15 @@ class TreasuryDirectService {
     async uploadCsv() {
         const openPaths = await dialog.showOpenDialog({ filters: [{ name: 'csv', extensions: ['csv'] }]});
         if (!openPaths.canceled) {
-            openPaths.filePaths.forEach(async path => {
+            let lines = 0;
+            for (const path of openPaths.filePaths) {
                 const data = await CsvUtils.readCsv(path, CSV_HEADERS);
                 await this.saveFromCsv(data);
-            });
+                lines += data.length
+            }
+            return lines;
+        } else {
+            return -1;
         }
     }
 

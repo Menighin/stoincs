@@ -24,11 +24,7 @@ class CsvUtils {
         for (const d of data) {
             const line = [];
             columns.forEach(h => {
-                try {
-                    line.push(this.toCsv(d[h.code], h));
-                } catch (error) {
-                    console.log('ERROR parsing to CSV: ' + h.code + ' - ' + error.message);
-                }
+                line.push(this.toCsv(d[h.code], h));
             });
             result.push(line.join(','));
         }

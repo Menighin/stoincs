@@ -444,7 +444,7 @@ export default {
                 this.$q.notify({ type: 'positive', message: 'Tesouro criado com sucesso' });
                 this.init();
             } else {
-                this.$q.notify({ type: 'negative', message: args.message });
+                this.$q.notify({ type: 'negative', message: args.message, actions: [{ icon: 'close', color: 'white' }], timeout: 10000 });;
                 console.error(args.error);
             }
         });
@@ -455,7 +455,20 @@ export default {
                 this.$q.notify({ type: 'positive', message: 'Tesouro atualizado com sucesso' });
                 this.init();
             } else {
-                this.$q.notify({ type: 'negative', message: args.message });
+                this.$q.notify({ type: 'negative', message: args.message, actions: [{ icon: 'close', color: 'white' }], timeout: 10000 });;
+                console.error(args.error);
+            }
+        });
+
+        ipcRenderer.on('treasury-direct/upload-csv', (event, args) => {
+            this.tableLoading = false;
+            if (args.status === 'success') {
+                if (args.lines >= 0) {
+                    this.$q.notify({ type: 'positive', message: `${args.lines} linha(s) processadas` });
+                    this.init();
+                }
+            } else {
+                this.$q.notify({ type: 'negative', message: args.message, actions: [{ icon: 'close', color: 'white' }], timeout: 10000 });
                 console.error(args.error);
             }
         });
