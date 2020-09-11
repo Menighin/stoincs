@@ -5,7 +5,8 @@ const METHODS = {
     GET_DIVIDENDS: 'dividends/get',
     SAVE: 'dividends/save',
     DELETE: 'dividends/delete',
-    DOWNLOAD_CSV: 'dividends/download-csv'
+    DOWNLOAD_CSV: 'dividends/download-csv',
+    UPLOAD_CSV: 'dividends/upload-csv'
 };
 
 ipcMain.on(METHODS.GET_DIVIDENDS, async (event, arg) => {
@@ -45,6 +46,15 @@ ipcMain.on(METHODS.DOWNLOAD_CSV, async (event, arg) => {
         event.reply(METHODS.DOWNLOAD_CSV, { status: 'success' });
     } catch (e) {
         event.reply(METHODS.DOWNLOAD_CSV, { status: 'error', message: e.message });
+    }
+});
+
+ipcMain.on(METHODS.UPLOAD_CSV, async (event, arg) => {
+    try {
+        const lines = await DividendsService.uploadCsv();
+        event.reply(METHODS.UPLOAD_CSV, { status: 'success', lines: lines });
+    } catch (e) {
+        event.reply(METHODS.UPLOAD_CSV, { status: 'error', message: e.message });
     }
 });
 

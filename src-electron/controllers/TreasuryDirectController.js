@@ -64,7 +64,6 @@ ipcMain.on(METHODS.UPLOAD_CSV, async (event, arg) => {
         const lines = await TreasuryDirectService.uploadCsv();
         event.reply(METHODS.UPLOAD_CSV, { status: 'success', lines: lines });
     } catch (e) {
-        console.log('WTF!!!')
         event.reply(METHODS.UPLOAD_CSV, { status: 'error', message: e.message });
     }
 });

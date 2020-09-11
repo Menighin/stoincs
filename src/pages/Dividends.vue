@@ -30,7 +30,7 @@
             :rows-per-page-options="[50, 100, 150]"
             rows-per-page-label="Items por página"
             :pagination.sync="pagination"
-            v-dynamic-height="{ heightOffset: 350, innerSelector: '.q-table__middle' }"
+            v-dynamic-height="{ heightOffset: 400, innerSelector: '.q-table__middle' }"
             :visible-columns="visibleColumns">
             <template v-slot:top>
                 <h5 style="margin: 0 5px 0 0">Dividendos</h5>
@@ -76,7 +76,7 @@
                                 <q-item-label>Download</q-item-label>
                             </q-item-section>
                         </q-item>
-                        <q-item clickable v-close-popup @click="downloadCsv">
+                        <q-item clickable v-close-popup @click="uploadCsv">
                             <q-item-section>
                                 <q-item-label>Upload</q-item-label>
                             </q-item-section>
@@ -268,6 +268,9 @@ export default {
         },
         downloadCsv() {
             ipcRenderer.send('dividends/download-csv');
+        },
+        uploadCsv() {
+            ipcRenderer.send('dividends/upload-csv');
         }
     },
     computed: {
@@ -391,6 +394,19 @@ export default {
             } else {
                 this.$q.notify({ type: 'negative', message: 'Erro ao deletar evento' });
                 console.error(response);
+            }
+        });
+
+        ipcRenderer.on('dividends/upload-csv', (event, args) => {
+            this.tableLoading = false;
+            if (args.status === 'success') {
+                if (args.lines >= 0) {
+                    this.$q.notify({ type: 'positive', message: `${args.lines} linha(s) processadas` });
+                    this.init();
+                }
+            } else {
+                this.$q.notify({ type: 'negative', message: args.message, actions: [{ icon: 'close', color: 'white' }], timeout: 10000 });
+                console.error(args.error);
             }
         });
 

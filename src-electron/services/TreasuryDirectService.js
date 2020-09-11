@@ -28,7 +28,7 @@ const CSV_HEADERS = [
     {
         code: 'quantity',
         label: 'Quantidade',
-        type: 'integer'
+        type: 'float'
     },
     {
         code: 'investedValue',
@@ -216,6 +216,7 @@ class TreasuryDirectService {
                     alreadyExists.grossValue = operation.grossValue;
                     alreadyExists.netValue = operation.netValue;
                     alreadyExists.expirationDate = operation.expirationDate;
+                    alreadyExists.source = 'Manual';
                 }
                 else
                     account.data.push(operationCopy)

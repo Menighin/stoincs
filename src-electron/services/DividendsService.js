@@ -11,39 +11,54 @@ const FILES = {
 const CSV_HEADERS = [
     {
         code: 'account',
-        label: 'Conta'
+        label: 'Conta',
+        type: 'string'
     },
     {
         code: 'institution',
-        label: 'Instituição'
+        label: 'Instituição',
+        type: 'string'
     },
     {
         code: 'code',
-        label: 'Ativo'
+        label: 'Ativo',
+        type: 'string'
     },
     {
         code: 'type',
-        label: 'Tipo'
+        label: 'Tipo',
+        type: 'string'
     },
     {
         code: 'stockType',
-        label: 'Tipo do Ativo'
+        label: 'Tipo do Ativo',
+        type: 'string'
+    },
+    {
+        code: 'quantity',
+        label: 'Quantidade',
+        type: 'integer'
     },
     {
         code: 'date',
-        label: 'Data do Pagamento'
+        label: 'Data do Pagamento',
+        type: 'date'
     },
     {
         code: 'grossValue',
-        label: 'Valor Bruto'
+        label: 'Valor Bruto',
+        type: 'float'
     },
     {
         code: 'netValue',
-        label: 'Valor Líquido'
+        label: 'Valor Líquido',
+        type: 'float'
     },
     {
         code: 'source',
-        label: 'Fonte'
+        label: 'Fonte',
+        type: 'string',
+        required: false
     }
 ];
 
@@ -214,6 +229,37 @@ class DividendsService {
         return true;
     }
 
+    async saveFromCsv(operations) {
+        const data = await this.getDividends();
+
+        for (let operation of operations) {
+            const id = this.getEventId(operation);
+            const operationCopy = { id: id, ...operation, source: 'Manual' };
+            delete operationCopy['institution'];
+            delete operationCopy['account'];
+    
+            const account = data.first(o => o.institution === operation.institution && o.account === operation.account);
+            if (account) {
+                const alreadyExists = account.data.first(o => o.id === id);
+                if (alreadyExists) {
+                    alreadyExists.stockType = operation.stockType;
+                    alreadyExists.type = operation.type;
+                    alreadyExists.source = 'Manual';
+                }
+                else
+                    account.data.push(operationCopy)
+            } else {
+                data.push({
+                    institution: newOperation.institution,
+                    account: newOperation.account,
+                    data: [operationCopy]
+                });
+            }
+        }
+
+        await this.saveDividends(data);
+    }
+
     async delete(dividend) {
         const data = await this.getDividends();
         if (dividend.date)
@@ -228,8 +274,29 @@ class DividendsService {
     async downloadCsv() {
         const savePath = await dialog.showSaveDialog({ defaultPath: 'stoincs-dividendos.csv' });
         if (!savePath.canceled) {
+            try {
             const data = await this.getDividendsEvents();
             await CsvUtils.saveCsv(savePath.filePath, data, CSV_HEADERS);
+            } catch (e) {
+                console.log(e.message);
+                console.log(e.stack);
+            }
+        }
+    }
+
+    async uploadCsv() {
+        const openPaths = await dialog.showOpenDialog({ filters: [{ name: 'csv', extensions: ['csv'] }]});
+        if (!openPaths.canceled) {
+            let lines = 0;
+            for (const path of openPaths.filePaths) {
+                const data = await CsvUtils.readCsv(path, CSV_HEADERS);
+                console.log(JSON.stringify(data));
+                await this.saveFromCsv(data);
+                lines += data.length
+            }
+            return lines;
+        } else {
+            return -1;
         }
     }
 
@@ -237,7 +304,6 @@ class DividendsService {
         if (e.date)
             return `${e.code}_${e.quantity}_${e.netValue}_${e.grossValue}_${e.date.getFullYear()}${e.date.getMonth()}${e.date.getDate()}_${e.source}`;
         return `${e.code}_${e.quantity}_${e.netValue}_${e.grossValue}_undefined_${e.source}`;
-
     }
 
 };

@@ -9,14 +9,15 @@ class CsvUtils {
      * @param {Any} value - Value to be transformed
      */
     static toCsv(value, column) {
-        if (column.type === 'float' || column.type === 'integer')
+        if (value === null || typeof value === 'undefined') return null;
+        if (column.type === 'float')
             return `"${NumberUtils.formatNumber(value, '', '', false, 'pt-BR', 2, false)}"`;
+        else if (column.type === 'integer')
+            return `"${NumberUtils.formatNumber(value, '', '', false, 'pt-BR', 0, false)}"`;
         else if (column.type === 'date')
             return DateUtils.toString(value, true, true);
-        else if (value != null)
-            return value.toString();
         else
-            return value;
+            return value.toString();
     }
 
     static async saveCsv(path, data, columns) {
@@ -82,18 +83,30 @@ class CsvUtils {
         }, {});
     }
 
-    static splitLineByComma(line){
-        const ret = [];
-        const arr = line.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g) || [];
-        for (const e of arr) {
-            if ('"' === e[0]) {
-                ret.push(e.substr(1, e.length - 2));
-            } else {
-                ret.push(e.trim());
-            }
-        }
-        return ret;
-    }
+    static splitLineByComma(line) {
+        var reValid = /^\s*(?:'[^'\\]*(?:\\[\S\s][^'\\]*)*'|"[^"\\]*(?:\\[\S\s][^"\\]*)*"|[^,'"\s\\]*(?:\s+[^,'"\s\\]+)*)\s*(?:,\s*(?:'[^'\\]*(?:\\[\S\s][^'\\]*)*'|"[^"\\]*(?:\\[\S\s][^"\\]*)*"|[^,'"\s\\]*(?:\s+[^,'"\s\\]+)*)\s*)*$/;
+        var reValue = /(?!\s*$)\s*(?:'([^'\\]*(?:\\[\S\s][^'\\]*)*)'|"([^"\\]*(?:\\[\S\s][^"\\]*)*)"|([^,'"\s\\]*(?:\s+[^,'"\s\\]+)*))\s*(?:,|$)/g;
+    
+        // Return NULL if input string is not well formed CSV string.
+        if (!reValid.test(line)) return null;
+    
+        var a = []; // Initialize array to receive values.
+        line.replace(reValue, // "Walk" the string using replace with callback.
+            (m0, m1, m2, m3) => {
+    
+                // Remove backslash from \' in single quoted values.
+                if (m1 !== undefined) a.push(m1.replace(/\\'/g, "'"));
+    
+                // Remove backslash from \" in double quoted values.
+                else if (m2 !== undefined) a.push(m2.replace(/\\"/g, '"'));
+                else if (m3 !== undefined) a.push(m3);
+                return ''; // Return empty string.
+            });
+    
+        // Handle special case of empty last value.
+        if (/,\s*$/.test(line)) a.push('');
+        return a;
+    };
 }
 
 export default CsvUtils;

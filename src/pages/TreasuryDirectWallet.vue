@@ -30,7 +30,7 @@
             :rows-per-page-options="[50, 100, 150]"
             rows-per-page-label="Items por página"
             :pagination.sync="pagination"
-            v-dynamic-height="{ heightOffset: 350, innerSelector: '.q-table__middle' }"
+            v-dynamic-height="{ heightOffset: 400, innerSelector: '.q-table__middle' }"
             :visible-columns="visibleColumns">
             <template v-slot:top>
                 <h5 style="margin: 0 5px 0 0">Carteira de Tesouro Direto</h5>
@@ -444,7 +444,7 @@ export default {
                 this.$q.notify({ type: 'positive', message: 'Tesouro criado com sucesso' });
                 this.init();
             } else {
-                this.$q.notify({ type: 'negative', message: args.message, actions: [{ icon: 'close', color: 'white' }], timeout: 10000 });;
+                this.$q.notify({ type: 'negative', message: args.message, actions: [{ icon: 'close', color: 'white' }], timeout: 10000 });
                 console.error(args.error);
             }
         });
@@ -455,7 +455,7 @@ export default {
                 this.$q.notify({ type: 'positive', message: 'Tesouro atualizado com sucesso' });
                 this.init();
             } else {
-                this.$q.notify({ type: 'negative', message: args.message, actions: [{ icon: 'close', color: 'white' }], timeout: 10000 });;
+                this.$q.notify({ type: 'negative', message: args.message, actions: [{ icon: 'close', color: 'white' }], timeout: 10000 });
                 console.error(args.error);
             }
         });
