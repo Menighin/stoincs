@@ -218,7 +218,7 @@ export default {
                     label: 'Total',
                     field: 'totalValue',
                     sortable: true,
-                    format: val => NumberUtils.formatNumber(val, 'R$ ')
+                    format: (val, row) => NumberUtils.formatNumber(row.quantity * row.price, 'R$ ')
                 },
                 {
                     name: 'source',
@@ -239,6 +239,9 @@ export default {
         };
     },
     methods: {
+        init() {
+            ipcRenderer.send('stockHistory/get');
+        },
         showCreateDialog() {
             this.newOperation = {};
             this.isEdit = false;
@@ -279,7 +282,6 @@ export default {
             const payload = {
                 ...this.newOperation,
                 operation: this.newOperation.operation.value,
-                totalValue: NumberUtils.getNumberFromString(this.totalNewOperation),
                 date: this.isEdit ? new Date(this.newOperation.date) : DateUtils.fromDateStr(this.newOperation.date),
                 price: NumberUtils.getNumberFromString(this.newOperation.price),
                 quantity: parseInt(this.newOperation.quantity)
@@ -454,7 +456,6 @@ export default {
             });
             this.months = ['Todos', ...monthArray];
         });
-        ipcRenderer.send('stockHistory/get');
 
         ipcRenderer.on('stockHistory/delete', (event, args) => {
             this.tableLoading = false;
@@ -470,8 +471,7 @@ export default {
         ipcRenderer.on('stockHistory/create', (event, args) => {
             if (args.status === 'success') {
                 this.$q.notify({ type: 'positive', message: 'Operação adicionada com sucesso' });
-                args.operation.date = new Date(args.operation.date);
-                this.dataTable.push(args.operation);
+                this.init();
             } else {
                 this.$q.notify({ type: 'negative', message: args.error.message });
                 console.error(args.error);
@@ -528,6 +528,8 @@ export default {
                 console.error(args.error);
             }
         });
+
+        this.init();
     }
 };
 </script>

@@ -327,8 +327,8 @@ class StockHistoryService {
     async createStockOperation(stockOperation) {
         const stockHistory = await this.getStockHistory();
         let found = false;
-        stockOperation.id = StockUtils.generateId(stockOperation, stockOperation.account);
         stockOperation.source = 'Manual';
+        stockOperation.id = StockUtils.generateId(stockOperation, stockOperation.account);
         let result = { ...stockOperation };
         for (const account of stockHistory) {
             if (account.account === stockOperation.account && account.institution === stockOperation.institution) {
@@ -368,6 +368,9 @@ class StockHistoryService {
         for (let operation of operations) {
             const operationCopy = { ...operation, source: 'Manual' };
             const id = StockUtils.generateId(operationCopy, operationCopy.account);
+
+            console.log(`Importing ${JSON.stringify(operationCopy)} with ID ${id}`);
+
             operationCopy['id'] = id;
             delete operationCopy['institution'];
             delete operationCopy['account'];
@@ -377,7 +380,6 @@ class StockHistoryService {
                 const alreadyExists = account.stockHistory.first(o => o.id === id);
                 if (alreadyExists) {
                     alreadyExists.quantity = operation.quantity;
-                    alreadyExists.price = operation.price;
                     alreadyExists.source = 'Manual';
                 }
                 else
