@@ -53,11 +53,19 @@ class UpdateStockHistoryJob {
 
             // Setting CEI as source and ID for stock Histories
             stocksByAccount.forEach(i => {
-                i.stockHistory.forEach(s => {
+                i.stockHistory = i.stockHistory.map(s => {
                     s.source = 'CEI';
-                    s.id = StockUtils.generateId(s, i.account);
-                    newNegotiations++;
+                    return {
+                        id: StockUtils.generateId(s, i.account),
+                        code: s.code,
+                        operation: s.operation,
+                        date: new Date(s.date),
+                        quantity: s.quantity,
+                        price: s.price,
+                        source: s.source
+                    };
                 });
+                newNegotiations += i.stockHistory.length;
             });
 
             // Merging duplicates
@@ -65,7 +73,6 @@ class UpdateStockHistoryJob {
                 const stockOperationById = {};
                 acc.stockHistory.forEach(s => {
                     if (s.id in stockOperationById) {
-                        stockOperationById[s.id].totalValue += s.totalValue;
                         stockOperationById[s.id].quantity += s.quantity;
                     } else {
                         stockOperationById[s.id] = s;

@@ -12,7 +12,9 @@ const METHODS = {
     AVERAGE_PRICES: 'stockHistory/average-prices',
     PROFIT_LOSS: 'stockHistory/profit-loss',
     KPIS: 'stockHistory/kpis',
-    DOWNLOAD_CSV: 'stockHistory/download-csv'
+    DOWNLOAD_CSV: 'stockHistory/download-csv',
+    UPLOAD_CSV: 'stockHistory/upload-csv'
+
 };
 
 ipcMain.on(METHODS.GET, async (event, arg) => {
@@ -121,6 +123,15 @@ ipcMain.on(METHODS.DOWNLOAD_CSV, async (event, arg) => {
         event.reply(METHODS.DOWNLOAD_CSV, { status: 'success' });
     } catch (e) {
         event.reply(METHODS.DOWNLOAD_CSV, { status: 'error', message: e.message });
+    }
+});
+
+ipcMain.on(METHODS.UPLOAD_CSV, async (event, arg) => {
+    try {
+        const lines = await StockHistoryService.uploadCsv();
+        event.reply(METHODS.UPLOAD_CSV, { status: 'success', lines: lines });
+    } catch (e) {
+        event.reply(METHODS.UPLOAD_CSV, { status: 'error', message: e.message });
     }
 });
 

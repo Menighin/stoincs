@@ -69,7 +69,7 @@
                                 <q-item-label>Download</q-item-label>
                             </q-item-section>
                         </q-item>
-                        <q-item clickable v-close-popup @click="downloadCsv">
+                        <q-item clickable v-close-popup @click="uploadCsv">
                             <q-item-section>
                                 <q-item-label>Upload</q-item-label>
                             </q-item-section>
@@ -319,6 +319,9 @@ export default {
         },
         downloadCsv() {
             ipcRenderer.send('stockHistory/download-csv');
+        },
+        uploadCsv() {
+            ipcRenderer.send('stockHistory/upload-csv');
         }
     },
     computed: {
@@ -509,6 +512,19 @@ export default {
                 ipcRenderer.send('stockHistory/get');
             } else {
                 this.$q.notify({ type: 'negative', message: args.error.message });
+                console.error(args.error);
+            }
+        });
+
+        ipcRenderer.on('stockHistory/upload-csv', (event, args) => {
+            this.tableLoading = false;
+            if (args.status === 'success') {
+                if (args.lines >= 0) {
+                    this.$q.notify({ type: 'positive', message: `${args.lines} linha(s) processadas` });
+                    this.init();
+                }
+            } else {
+                this.$q.notify({ type: 'negative', message: args.message, actions: [{ icon: 'close', color: 'white' }], timeout: 10000 });
                 console.error(args.error);
             }
         });

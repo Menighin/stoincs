@@ -290,7 +290,6 @@ class DividendsService {
             let lines = 0;
             for (const path of openPaths.filePaths) {
                 const data = await CsvUtils.readCsv(path, CSV_HEADERS);
-                console.log(JSON.stringify(data));
                 await this.saveFromCsv(data);
                 lines += data.length
             }

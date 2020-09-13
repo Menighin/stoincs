@@ -14,31 +14,38 @@ const FILES = {
 const CSV_HEADERS = [
     {
         code: 'account',
-        label: 'Conta'
+        label: 'Conta',
+        type: 'string'
     },
     {
         code: 'institution',
-        label: 'Instituição'
+        label: 'Instituição',
+        type: 'string'
     },
     {
         code: 'code',
-        label: 'Ativo'
+        label: 'Ativo',
+        type: 'string'
     },
     {
         code: 'operation',
-        label: 'Operação'
+        label: 'Operação',
+        type: 'string'
     },
     {
         code: 'date',
-        label: 'Data'
+        label: 'Data',
+        type: 'date'
     },
     {
         code: 'quantity',
-        label: 'Quantidade'
+        label: 'Quantidade',
+        type: 'integer'
     },
     {
         code: 'price',
-        label: 'Preço'
+        label: 'Preço',
+        type: 'float'
     },
     {
         code: 'source',
@@ -332,7 +339,7 @@ class StockHistoryService {
 
                 const copyStockOperation = { ...stockOperation };
                 delete copyStockOperation.account;
-                delete copyStockOperation.copyStockOperation;
+                delete copyStockOperation.institution;
                 account.stockHistory.push(copyStockOperation);
                 found = true;
             }
@@ -353,6 +360,38 @@ class StockHistoryService {
         this.saveStockHistory(stockHistory, true);
 
         return result;
+    }
+
+    async saveFromCsv(operations) {
+        const data = await this.getStockHistory();
+
+        for (let operation of operations) {
+            const operationCopy = { ...operation, source: 'Manual' };
+            const id = StockUtils.generateId(operationCopy, operationCopy.account);
+            operationCopy['id'] = id;
+            delete operationCopy['institution'];
+            delete operationCopy['account'];
+    
+            const account = data.first(o => o.institution === operation.institution && o.account === operation.account);
+            if (account) {
+                const alreadyExists = account.stockHistory.first(o => o.id === id);
+                if (alreadyExists) {
+                    alreadyExists.quantity = operation.quantity;
+                    alreadyExists.price = operation.price;
+                    alreadyExists.source = 'Manual';
+                }
+                else
+                    account.stockHistory.push(operationCopy)
+            } else {
+                data.push({
+                    institution: newOperation.institution,
+                    account: newOperation.account,
+                    stockHistory: [operationCopy]
+                });
+            }
+        }
+
+        await this.saveStockHistory(data, true);
     }
 
     async refreshHistory() {
@@ -396,6 +435,21 @@ class StockHistoryService {
         if (!savePath.canceled) {
             const data = await this.getStockHistoryOperations();
             await CsvUtils.saveCsv(savePath.filePath, data, CSV_HEADERS);
+        }
+    }
+
+    async uploadCsv() {
+        const openPaths = await dialog.showOpenDialog({ filters: [{ name: 'csv', extensions: ['csv'] }]});
+        if (!openPaths.canceled) {
+            let lines = 0;
+            for (const path of openPaths.filePaths) {
+                const data = await CsvUtils.readCsv(path, CSV_HEADERS);
+                await this.saveFromCsv(data);
+                lines += data.length
+            }
+            return lines;
+        } else {
+            return -1;
         }
     }
 

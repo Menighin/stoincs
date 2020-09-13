@@ -26,7 +26,7 @@
                 <h5 style="margin: 0 5px 0 0">Carteira de Ações</h5>
                 <q-icon name="help" class="cursor-pointer" size="24px" color="info">
                     <q-menu anchor="bottom right" self="top right" content-class="q-pa-sm">
-                        Contém as informações de todos os ativos que você possui saldo. As colunas são:<br />
+                        Contém as informações de todos os ativos que você possui saldo de acordo com as suas negociações na tela de <strong>Extrato</strong>.<br />As colunas são:<br />
                         <ul>
                             <li><strong>Ativo</strong>: Código do ativo no carteira</li>
                             <li><strong>Quantidade</strong>: Quantidade do ativo na carteira</li>
