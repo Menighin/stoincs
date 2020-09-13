@@ -176,7 +176,7 @@ class DividendsService {
                     });
                 }
             });
-            savedAccount.data = cei.futureEvents.map(e => ({
+            savedAccount.data = [...cei.futureEvents.map(e => ({
                 code: e.code,
                 stockType: e.stockType,
                 type: e.type,
@@ -185,7 +185,7 @@ class DividendsService {
                 grossValue: e.grossValue,
                 netValue: e.netValue,
                 source: 'CEI'
-            }));
+            })), ...savedAccount.data];
         });
 
         dividends.forEach(d => {
