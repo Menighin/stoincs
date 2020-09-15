@@ -172,10 +172,10 @@ class StockHistoryService {
 
             if (c.operation === 'C') {
                 p[key].quantityBought += c.quantity;
-                p[key].valueBought += c.totalValue;
+                p[key].valueBought += c.price * c.quantity;
             } else if (c.operation === 'V') {
                 p[key].quantitySold += c.quantity;
-                p[key].valueSold += c.totalValue;
+                p[key].valueSold += c.price * c.quantity;
             }
             p[key].quantityBalance = Math.max(p[key].quantityBought - p[key].quantitySold, 0);
             return p;
@@ -209,10 +209,10 @@ class StockHistoryService {
 
                 if (c.operation === 'C') {
                     p[key].quantityBought += c.quantity;
-                    p[key].valueBought += c.totalValue;
+                    p[key].valueBought += c.price * c.quantity;
                 } else if (c.operation === 'V') {
                     p[key].quantitySold += c.quantity;
-                    p[key].valueSold += c.totalValue;
+                    p[key].valueSold += c.price * c.quantity;
                 }
                 return p;
             }, {});
@@ -250,10 +250,10 @@ class StockHistoryService {
 
                 if (stockOperation.operation === 'C') {
                     boughtQuantity[code] += stockOperation.quantity;
-                    boughtValue[code] += stockOperation.totalValue;
+                    boughtValue[code] += stockOperation.quantity * stockOperation.price;
                 } else if (stockOperation.operation === 'V' && (startDate === null || stockOperation.date >= startDate)) {
                     const averageBuyPriceSoFar = boughtQuantity[code] === 0 ? 0 : boughtValue[code] / boughtQuantity[code];
-                    profitLoss[code] += stockOperation.totalValue - stockOperation.quantity * averageBuyPriceSoFar;
+                    profitLoss[code] += stockOperation.quantity * stockOperation.price - stockOperation.quantity * averageBuyPriceSoFar;
                 }
             }
         }
@@ -269,12 +269,12 @@ class StockHistoryService {
         return [
             {
                 label: 'Compra',
-                value: -stockHistory.filter(o => o.operation === 'C').reduce((p, c) => p + c.totalValue, 0),
+                value: -stockHistory.filter(o => o.operation === 'C').reduce((p, c) => p + c.quantity * c.price, 0),
                 quantity: stockHistory.filter(o => o.operation === 'C').reduce((p, c) => p + c.quantity, 0)
             },
             {
                 label: 'Venda',
-                value: stockHistory.filter(o => o.operation === 'V').reduce((p, c) => p + c.totalValue, 0),
+                value: stockHistory.filter(o => o.operation === 'V').reduce((p, c) => p + c.quantity * c.price, 0),
                 quantity: stockHistory.filter(o => o.operation === 'V').reduce((p, c) => p + c.quantity, 0)
             },
             {

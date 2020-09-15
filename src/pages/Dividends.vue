@@ -313,7 +313,9 @@ export default {
                     id: 'account',
                     label: 'Conta',
                     type: 'autocomplete',
-                    options: this.dataTable.map(o => o.account).distinct().sort()
+                    options: this.dataTable
+                        .filter(o => !this.newDividend.institution || this.newDividend.institution === o.institution)
+                        .map(o => o.account).distinct().sort()
                 },
                 {
                     id: 'code',
@@ -380,6 +382,7 @@ export default {
             this.tableLoading = false;
             if (response.status === 'success') {
                 this.init();
+                this.$q.notify({ type: 'positive', message: 'Operação adicionada com sucesso' });
             } else {
                 this.$q.notify({ type: 'negative', message: response.message });
                 console.error(response);

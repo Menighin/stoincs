@@ -212,12 +212,14 @@ class DividendsService {
         if (!existsAccount)
             data.push(savedAccount);
 
+        if (newDividend.date)
+            newDividend.date = new Date(newDividend.date);
+        newDividend.source = 'Manual';
+        
         const id = this.getEventId(newDividend);
         delete newDividend['institution'];
         delete newDividend['account'];
-        newDividend.source = 'Manual';
-        if (newDividend.date)
-            newDividend.date = new Date(newDividend.date);
+
         newDividend.id = id;
 
         if (savedAccount.data.any(o => o.id === id))
