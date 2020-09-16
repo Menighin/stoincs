@@ -34,7 +34,7 @@ class CsvUtils {
     }
 
     static async readCsv(path, columns) {
-        const lines = (await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).split('\n');
+        const lines = (await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).split('\n').map(o => o.replace('\r', ''));
 
         const objects = [];
         lines.forEach((line, i) => {
@@ -53,10 +53,19 @@ class CsvUtils {
     static checkHeader(line, columns) {
         const fileHeaders = line.split(',');
         const requiredHeaders = columns.filter(o => o.required !== false).map(o => o.label);
-        requiredHeaders.forEach((header, i) => {
-            if (header !== fileHeaders[i])
-                throw new Error(`Headers do CSV esperados são: ${requiredHeaders.join(', ')}`)
-        })
+
+        let i = 0;
+        for (const header of fileHeaders) {
+            if (columns[i].required) {
+                if (header !== columns[i].label)
+                    throw new Error(`Headers do CSV esperados são: ${requiredHeaders.join(', ')}`);
+            } else {
+                while (i < columns.length && header !== columns[i].label) i++;
+                if (!columns[i] || header !== columns[i].label)
+                    throw new Error(`Headers do CSV esperados são: ${requiredHeaders.join(', ')}`);
+            }
+            i++;
+        }
     }
 
     static getObjectFromLine(line, columns, lineNumber) {
@@ -71,7 +80,7 @@ class CsvUtils {
                 if (c.type === 'integer' || c.type === 'float')
                     p[c.code] = NumberUtils.getNumberFromString(lineValue)
                 else if (c.type === 'date')
-                    p[c.code] = DateUtils.fromDateStr(lineValue);
+                    p[c.code] = DateUtils.fromDateStr(lineValue.split(' ').first(o => o.includes('/')));
                 else
                     p[c.code] = lineValue;
             } catch(e) {

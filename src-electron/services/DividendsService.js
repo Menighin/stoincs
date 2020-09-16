@@ -42,7 +42,8 @@ const CSV_HEADERS = [
     {
         code: 'date',
         label: 'Data do Pagamento',
-        type: 'date'
+        type: 'date',
+        required: false
     },
     {
         code: 'grossValue',
@@ -303,8 +304,8 @@ class DividendsService {
 
     getEventId(e) {
         if (e.date)
-            return `${e.code}_${e.quantity}_${e.netValue}_${e.grossValue}_${e.date.getFullYear()}${e.date.getMonth()}${e.date.getDate()}_${e.source}`;
-        return `${e.code}_${e.quantity}_${e.netValue}_${e.grossValue}_undefined_${e.source}`;
+            return `${e.code}_${e.quantity}_${e.type}_${e.netValue}_${e.grossValue}_${e.date.getFullYear()}${e.date.getMonth()}${e.date.getDate()}_${e.source}`;
+        return `${e.code}_${e.quantity}_${e.type}_${e.netValue}_${e.grossValue}_undefined_${e.source}`;
     }
 
 };
