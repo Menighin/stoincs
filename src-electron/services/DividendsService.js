@@ -160,23 +160,25 @@ class DividendsService {
             // Clear out future events (the one that has no ID)
             savedAccount.data = savedAccount.data.filter(o => typeof o.id !== 'undefined');
 
-            cei.pastEvents.forEach(e => {
-                const id = this.getEventId(e);
+            for (const e of cei.pastEvents) {
+                const newEvent = {
+                    code: e.code,
+                    stockType: e.stockType,
+                    type: e.type,
+                    quantity: e.quantity,
+                    date: e.date,
+                    grossValue: e.grossValue,
+                    netValue: e.netValue,
+                    source: 'CEI'
+                };
+                const id = this.getEventId(newEvent);
+                newEvent.id = id;
                 if (!savedAccount.data.any(o => o.id === id)) {
                     newDividends++;
-                    savedAccount.data.push({
-                        id: id,
-                        code: e.code,
-                        stockType: e.stockType,
-                        type: e.type,
-                        quantity: e.quantity,
-                        date: e.date,
-                        grossValue: e.grossValue,
-                        netValue: e.netValue,
-                        source: 'CEI'
-                    });
+                    savedAccount.data.push(newEvent);
                 }
-            });
+            }
+            
             savedAccount.data = [...cei.futureEvents.map(e => ({
                 code: e.code,
                 stockType: e.stockType,
