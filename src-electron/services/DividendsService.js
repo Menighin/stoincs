@@ -255,8 +255,8 @@ class DividendsService {
                     account.data.push(operationCopy)
             } else {
                 data.push({
-                    institution: newOperation.institution,
-                    account: newOperation.account,
+                    institution: operation.institution,
+                    account: operation.account,
                     data: [operationCopy]
                 });
             }

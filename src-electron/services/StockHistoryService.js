@@ -369,8 +369,6 @@ class StockHistoryService {
             const operationCopy = { ...operation, source: 'Manual' };
             const id = StockUtils.generateId(operationCopy, operationCopy.account);
 
-            console.log(`Importing ${JSON.stringify(operationCopy)} with ID ${id}`);
-
             operationCopy['id'] = id;
             delete operationCopy['institution'];
             delete operationCopy['account'];
@@ -386,8 +384,8 @@ class StockHistoryService {
                     account.stockHistory.push(operationCopy)
             } else {
                 data.push({
-                    institution: newOperation.institution,
-                    account: newOperation.account,
+                    institution: operation.institution,
+                    account: operation.account,
                     stockHistory: [operationCopy]
                 });
             }
