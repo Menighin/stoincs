@@ -22,7 +22,7 @@ class NumberUtils {
      * @returns {Number} - The number from currency
      */
     static getNumberFromString(n) {
-        return parseFloat(n.replace(/[^0-9,]+/g, '').replace(',', '.'));
+        return parseFloat(n.replace(/[^0-9,-]+/g, '').replace(',', '.'));
     }
 
 }

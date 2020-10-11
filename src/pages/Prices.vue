@@ -21,11 +21,11 @@
         </div>
 
         <transition-group class="stock-cards q-pa-md row items-start q-gutter-lg" name="list-complete">
-            <q-card v-for="sp in pricesCard" :key="`price-${sp.code}`" class="stock-card" :class="{'new': sp.isEdit}" :id="sp.code">
+            <q-card v-for="sp in pricesCard" :key="`price-${sp.code}`" class="stock-card" :class="{'new': sp.isNew || sp.isEdit}" :id="sp.code">
                 <q-card-section class="stock-title q-py-sm">
                     <div class="row">
                         <div class="col stock-code-container">
-                            <div class="new-stock-code" :class="{ 'invalid': newStockError }" v-if="sp.isEdit">
+                            <div class="new-stock-code" :class="{ 'invalid': newStockError }" v-if="sp.isNew">
                                 <q-input
                                     borderless
                                     mask="AAAA##"
@@ -47,7 +47,7 @@
                             <div class="code" v-else>
                                 {{ sp.code }}
                             </div>
-                            <q-btn v-if="!sp.isEdit" class="col edit-btn" round flat color="primary" size="12px" icon="eva-edit-outline" @click="editPrice(sp)" />
+                            <q-btn v-if="!sp.isNew && !sp.isEdit" class="col edit-btn" round flat color="primary" size="12px" icon="eva-edit-outline" @click="editPrice(sp)" />
                         </div>
                         <div class="quantity">
                             {{ sp.quantity || '-' }}
@@ -62,7 +62,7 @@
                         <div class="col-10">
                             <div class="column" style="height: 100%">
                                 <div class="col price flex flex-center q-mx-lg q-py-sm">
-                                    <template v-if="!sp.isEdit">
+                                    <template v-if="!sp.isNew && !sp.isEdit">
                                         {{ sp.price }}
                                     </template>
                                     <template v-else>
@@ -80,7 +80,7 @@
                                     </template>
                                 </div>
                                 <div class="col variation flex flex-center">
-                                    <template v-if="!sp.isEdit">
+                                    <template v-if="!sp.isNew && !sp.isEdit">
                                         <span>{{ sp.changePercent }}</span>
                                     </template>
                                     <template v-else>
@@ -97,7 +97,8 @@
                                                 @keydown="variationChange"
                                                 @input="newStockTooltip = false; newStockError = false;"
                                                 @keydown.esc="cancelNewStock"
-                                                @keydown.enter="saveStockPrice(sp)" />
+                                                @keydown.enter="saveStockPrice(sp)"
+                                                @keydown.tab="saveStockPrice(sp)" />
                                         </span>
                                     </template>
                                     <span>{{ sp.changePrice }}</span>
@@ -208,7 +209,7 @@ export default {
                 changePercent: 0,
                 changePrice: 0,
                 lastUpdated: new Date(),
-                isEdit: true
+                isNew: true
             });
             await this.$nextTick();
             this.$refs.newStockInput[0].focus();
@@ -249,8 +250,10 @@ export default {
             document.body.removeEventListener('click', this.clickElement);
         },
         cancelNewStock() {
-            if (this.stockPrices[this.newStock])
+            if (this.stockPrices[this.newStock]) {
+                this.$set(this.stockPrices[this.newStock], 'isNew', false);
                 this.$set(this.stockPrices[this.newStock], 'isEdit', false);
+            }
 
             this.newStock = null;
             this.$delete(this.stockPrices, 'new-stock');
@@ -273,7 +276,7 @@ export default {
 
             this.$set(this.stockPrices[stock.code], 'isEdit', true);
             await this.$nextTick();
-            this.$refs.newStockInput[0].select();
+            this.$refs.newStockValueInput[0].select();
             setTimeout(() => {
                 this.newStockTooltip = true;
                 document.body.addEventListener('click', this.clickElement);
@@ -307,6 +310,7 @@ export default {
                     apiUpdate: DateUtils.getFormatedHoursFromSeconds(parseInt((new Date() - new Date(stockPrice.apiUpdate)) / 1000), true, true, false),
                     quantity: quantity,
                     variation: stockPrice.changePrice > 0 ? 'up' : stockPrice.changePrice < 0 ? 'down' : 'unchanged',
+                    isNew: stockPrice.isNew || false,
                     isEdit: stockPrice.isEdit || false
                 };
             });
