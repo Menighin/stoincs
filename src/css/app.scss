@@ -29,6 +29,19 @@ body {
             }
         }
 
+        &.sticky-first-column {
+            th:first-child, td:first-child {
+                position: sticky;
+                left: 0;
+                z-index: 3;
+            }
+
+            td:first-child {
+                background-color: $accent-column;
+                z-index: 1;
+            }
+        }
+
         &.sticky-last-column {
             th:last-child, td:last-child {
                 position: sticky;

@@ -540,10 +540,4 @@ export default {
         text-align: right;
     }
 
-    .table-container {
-        .q-table__middle {
-            // max-height: 400px;
-        }
-    }
-
 </style>

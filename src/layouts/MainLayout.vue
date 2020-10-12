@@ -108,6 +108,7 @@
                         <q-item clickable @click="navigate('/stock-history', $event)">Extrato</q-item>
                         <q-item clickable @click="navigate('/dividends', $event)">Dividendos</q-item>
                         <q-item clickable @click="navigate('/wallet-charts', $event)">Gráficos</q-item>
+                        <q-item clickable @click="navigate('/income-tax', $event)">Imposto de Renda</q-item>
                     </q-list>
                 </q-expansion-item>
                 <q-expansion-item
