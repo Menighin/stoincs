@@ -15,7 +15,7 @@
         </div>
 
         <q-table
-            class="table-container q-mx-lg"
+            class="table-container q-mx-lg summary-table"
             table-class="data-table sticky-last-column sticky-first-column"
             title="Sumário mensal"
             :data="monthlySummary"
@@ -27,8 +27,67 @@
             :rows-per-page-options="[12]"
             rows-per-page-label="Items por página"
             :hide-pagination="true"
-            v-dynamic-height="{ heightOffset: 300, innerSelector: '.q-table__middle' }"
         />
+
+        <q-table
+            class="table-container q-mx-lg q-my-lg consolidated-table"
+            table-class="data-table"
+            title="Consolidado de Ativos"
+            :data="consolidatedDataFiltered"
+            :columns="consolidatedColumns"
+            row-key="code"
+            flat
+            bordered
+            :rows-per-page-options="[10000]"
+            hide-pagination
+            rows-per-page-label="Items por página"
+        >
+            <template v-slot:header="props">
+                <q-tr :props="props">
+                    <q-th auto-width />
+                    <q-th
+                        v-for="col in props.cols"
+                        :key="col.name"
+                        :props="props"
+                    >
+                        {{ col.label }}
+                    </q-th>
+                </q-tr>
+            </template>
+
+            <template v-slot:body="props">
+                <q-tr :props="props" class="consolidated-row">
+                    <q-td auto-width>
+                        <q-btn size="sm" color="accent" round dense @click="props.expand = !props.expand" :icon="props.expand ? 'remove' : 'add'" />
+                    </q-td>
+
+                    <template v-for="col in props.cols">
+                        <q-td
+                            :key="col.name"
+                            :props="props"
+                            v-if="col.name === 'profitLoss' || col.name === 'dividends'"
+                            :class="{ 'value-up': col.value > 0, 'value-down': col.value < 0 }">
+                            {{ NumberUtils.formatNumber(col.value, 'R$') }}
+                        </q-td>
+                        <q-td v-else :key="col.name" :props="props">
+                            {{ col.value }}
+                        </q-td>
+                    </template>
+
+                </q-tr>
+                <q-tr v-show="props.expand" :props="props" class="consolidated-row-details">
+                    <q-td colspan="100%">
+                        <q-table
+                            grid
+                            hide-header
+                            hide-pagination
+                            :columns="consolidatedDetailColumns"
+                            :data="props.row.details"
+                        />
+                    </q-td>
+                </q-tr>
+            </template>
+        </q-table>
     </q-page>
 </template>
 
@@ -42,12 +101,91 @@ export default {
     name: 'PageIncomeTax',
     data() {
         return {
+            NumberUtils: NumberUtils,
+            DateUtils: DateUtils,
             historyData: [],
             consolidatedData: [],
             dividends: [],
             selectedYear: null,
             yearOptions: [],
-            months: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+            months: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+            consolidatedColumns: [
+                {
+                    name: 'code',
+                    align: 'center',
+                    label: 'Ativo',
+                    field: 'code',
+                    sortable: true
+                },
+                {
+                    name: 'quantityBalanceEver',
+                    align: 'right',
+                    label: 'Qt. em Carteira',
+                    field: 'quantityBalanceEver',
+                    sortable: true
+                },
+                {
+                    name: 'valueBalanceEver',
+                    align: 'right',
+                    label: 'Valor em carteira',
+                    field: 'valueBalanceEver',
+                    sortable: true,
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
+                },
+                {
+                    name: 'averageBuyPrice',
+                    align: 'right',
+                    label: 'Pç. Médio Compra',
+                    field: 'averageBuyPrice',
+                    sortable: true,
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
+                },
+                {
+                    name: 'averageSellPrice',
+                    align: 'right',
+                    label: 'Pç. Médio Venda',
+                    field: 'averageSellPrice',
+                    sortable: true,
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
+                },
+                {
+                    name: 'profitLoss',
+                    align: 'right',
+                    label: 'Lucro/Prejuízo na venda',
+                    field: 'profitLoss',
+                    sortable: true
+                },
+                {
+                    name: 'dividends',
+                    align: 'right',
+                    label: 'Dividendos pagos',
+                    field: 'dividends',
+                    sortable: true
+                }
+            ],
+            consolidatedDetailColumns: [
+                {
+                    name: 'institution',
+                    align: 'center',
+                    label: 'Corretora',
+                    field: 'institution',
+                    sortable: true
+                },
+                {
+                    name: 'buyOperations',
+                    align: 'right',
+                    label: 'Operações de Compra',
+                    field: 'buyOperations',
+                    sortable: true
+                },
+                {
+                    name: 'sellOperations',
+                    align: 'right',
+                    label: 'Operações de Venda',
+                    field: 'sellOperations',
+                    sortable: true
+                }
+            ]
         };
     },
     methods: {
@@ -108,6 +246,23 @@ export default {
                 }, { operation: 'Venda', ...baseData });
 
             return [buy, sell];
+        },
+        consolidatedDataFiltered() {
+            return this.consolidatedData
+                .filter(o => o.quantityBought > 0 || o.quantitySold > 0 || o.quantityBalanceEver > 0)
+                .map(o => {
+                    const details = Object.keys(o.operationsByInstitution)
+                        .map(i => ({
+                            institution: i,
+                            buyOperations: o.operationsByInstitution[i].buy,
+                            sellOperations: o.operationsByInstitution[i].sell
+                        }));
+                    return {
+                        ...o,
+                        valueBalanceEver: o.quantityBalanceEver * o.averageBuyPrice,
+                        details: details
+                    };
+                });
         }
     },
     mounted() {
@@ -156,6 +311,18 @@ export default {
         .filter {
             text-align: right;
             width: 100%;
+        }
+
+        .consolidated-table {
+            height: 500px;
+
+            .consolidated-row:nth-child(4n + 1) {
+                background: #fff;
+            }
+
+            tr.consolidated-row:hover {
+                background-color: #f0f0f0;
+            }
         }
     }
 </style>

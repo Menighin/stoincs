@@ -148,7 +148,7 @@ class StockHistoryService {
         const averagePrices = await this.getAveragePrices(endDate);
         const profitLoss = await this.getProfitLoss(startDate, endDate);
         const stockHistoryFiltered = (await this.getStockHistoryOperations())
-            .filter(o => (startDate === null || startDate <= o.date) && (endDate === null || o.date <= endDate));
+            .filter(o => (endDate === null || o.date <= endDate));
 
         const dividendsByStock = (await DividendsService.getDividendsEvents())
             .filter(d => (startDate === null || startDate <= d.date) && (endDate === null || d.date <= endDate))
@@ -166,18 +166,42 @@ class StockHistoryService {
                     quantityBought: 0,
                     quantitySold: 0,
                     valueBought: 0,
-                    valueSold: 0
+                    valueSold: 0,
+                    quantityBalanceEver: 0,
+                    buyOperations: 0,
+                    sellOperations: 0,
+                    operationsByInstitution: {}
                 };
             }
 
-            if (c.operation === 'C') {
-                p[key].quantityBought += c.quantity;
-                p[key].valueBought += c.price * c.quantity;
-            } else if (c.operation === 'V') {
-                p[key].quantitySold += c.quantity;
-                p[key].valueSold += c.price * c.quantity;
+            if (startDate === null || startDate <= c.date) {
+
+                if (!(c.institution in p[key].operationsByInstitution))
+                p[key].operationsByInstitution[c.institution] = {
+                    buy: 0,
+                    sell: 0
+                };
+
+                if (c.operation === 'C') {
+                    p[key].quantityBought += c.quantity;
+                    p[key].valueBought += c.price * c.quantity;
+                    p[key].buyOperations++;
+                    p[key].operationsByInstitution[c.institution].buy++;
+                } else if (c.operation === 'V') {
+                    p[key].quantitySold += c.quantity;
+                    p[key].valueSold += c.price * c.quantity;
+                    p[key].sellOperations++;
+                    p[key].operationsByInstitution[c.institution].sell++;
+                }
+                p[key].quantityBalance = Math.max(p[key].quantityBought - p[key].quantitySold, 0);
             }
-            p[key].quantityBalance = Math.max(p[key].quantityBought - p[key].quantitySold, 0);
+
+            if (c.operation === 'C')
+                p[key].quantityBalanceEver += c.quantity;
+            else if (c.operation === 'V')
+                p[key].quantityBalanceEver -= c.quantity;
+
+            // p[key].quantityBalanceEver = Math.max(p[key].quantityBalanceEver, 0);
             return p;
         }, {});
 

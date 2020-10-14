@@ -21,9 +21,9 @@
 
         <q-table
             class="table-container q-mx-lg"
-            table-class="data-table"
+            table-class="data-table sticky-first-column"
             title="Histórico"
-            :data="dataTable"
+            :data="dataTableFiltered"
             :columns="columns"
             row-key="row => `${row.code}-${row.id}`"
             flat
@@ -220,6 +220,9 @@ export default {
         }
     },
     computed: {
+        dataTableFiltered() {
+            return this.dataTable.filter(o => o.quantityBought > 0 || o.quantitySold > 0);
+        }
     },
     mounted() {
         ipcRenderer.on('stockHistory/consolidated', (event, arg) => {
