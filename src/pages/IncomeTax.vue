@@ -56,7 +56,7 @@
             </template>
 
             <template v-slot:body="props">
-                <q-tr :props="props" class="consolidated-row">
+                <q-tr :props="props" class="consolidated-row" :class="{ 'total': props.row.isTotal }">
                     <q-td auto-width>
                         <q-btn size="sm" color="accent" round dense @click="props.expand = !props.expand" :icon="props.expand ? 'remove' : 'add'" />
                     </q-td>
@@ -130,7 +130,7 @@ export default {
                     label: 'Valor em carteira',
                     field: 'valueBalanceEver',
                     sortable: true,
-                    format: val => NumberUtils.formatNumber(val, 'R$ ')
+                    format: val => val || val === 0 ? NumberUtils.formatNumber(val, 'R$ ') : ''
                 },
                 {
                     name: 'averageBuyPrice',
@@ -138,7 +138,7 @@ export default {
                     label: 'Pç. Médio Compra',
                     field: 'averageBuyPrice',
                     sortable: true,
-                    format: val => NumberUtils.formatNumber(val, 'R$ ')
+                    format: val => val || val === 0 ? NumberUtils.formatNumber(val, 'R$ ') : ''
                 },
                 {
                     name: 'averageSellPrice',
@@ -146,7 +146,7 @@ export default {
                     label: 'Pç. Médio Venda',
                     field: 'averageSellPrice',
                     sortable: true,
-                    format: val => NumberUtils.formatNumber(val, 'R$ ')
+                    format: val => val || val === 0 ? NumberUtils.formatNumber(val, 'R$ ') : ''
                 },
                 {
                     name: 'profitLoss',
@@ -248,7 +248,7 @@ export default {
             return [buy, sell];
         },
         consolidatedDataFiltered() {
-            return this.consolidatedData
+            const data = this.consolidatedData
                 .filter(o => o.quantityBought > 0 || o.quantitySold > 0 || o.quantityBalanceEver > 0)
                 .map(o => {
                     const details = Object.keys(o.operationsByInstitution)
@@ -263,6 +263,38 @@ export default {
                         details: details
                     };
                 });
+
+            const total = data.reduce((p, c) => {
+                p.valueBalanceEver += c.valueBalanceEver;
+                p.dividends += c.dividends;
+                p.profitLoss += c.profitLoss;
+                c.details.forEach(d => {
+                    const detail = p.details.first(o => o.institution === d.institution);
+                    if (detail) {
+                        detail.buyOperations += d.buyOperations;
+                        detail.sellOperations += d.sellOperations;
+                    } else {
+                        p.details.push({
+                            institution: d.institution,
+                            buyOperations: d.buyOperations,
+                            sellOperations: d.sellOperations
+                        });
+                    }
+                });
+                return p;
+            }, {
+                code: 'Total',
+                quantityBalanceEver: '',
+                valueBalanceEver: 0,
+                averageBuyPrice: '',
+                averageSellPrice: '',
+                dividends: 0,
+                profitLoss: 0,
+                isTotal: true,
+                details: []
+            });
+
+            return [...data, total];
         }
     },
     mounted() {
@@ -316,13 +348,25 @@ export default {
         .consolidated-table {
             height: 500px;
 
-            .consolidated-row:nth-child(4n + 1) {
-                background: #fff;
+            tbody {
+                position: relative;
+                tr.total {
+                    font-weight: bold;
+                    background: #eee !important;
+                    position: fixed;
+                    z-index: 2;
+                    bottom: 0;
+                }
+
+                .consolidated-row:nth-child(4n + 1) {
+                    background: #fff;
+                }
+
+                tr.consolidated-row:hover {
+                    background-color: #f0f0f0;
+                }
             }
 
-            tr.consolidated-row:hover {
-                background-color: #f0f0f0;
-            }
         }
     }
 </style>
