@@ -26,8 +26,18 @@
             bordered
             :rows-per-page-options="[12]"
             rows-per-page-label="Items por página"
-            :hide-pagination="true"
-        />
+            :hide-pagination="true">
+
+            <template v-slot:body-cell="props">
+                <q-td :props="props" v-if="props.row[props.col.field] < 19999.99 || props.col.field === 'operation' || props.col.field === 'total' || props.rowIndex === 0">
+                    {{ props.value }}
+                </q-td>
+                <q-td :props="props" v-else>
+                    <q-badge color="negative" :label="props.value" />
+                </q-td>
+            </template>
+
+        </q-table>
 
         <q-table
             class="table-container q-mx-lg q-my-lg consolidated-table"
@@ -56,9 +66,9 @@
             </template>
 
             <template v-slot:body="props">
-                <q-tr :props="props" class="consolidated-row" :class="{ 'total': props.row.isTotal }">
+                <q-tr :props="props" class="consolidated-row" :class="{ 'total': props.row.isTotal }" @click="props.expand = !props.expand">
                     <q-td auto-width>
-                        <q-btn size="sm" color="accent" round dense @click="props.expand = !props.expand" :icon="props.expand ? 'remove' : 'add'" />
+                        <q-btn size="sm" color="primary" round flat dense @click.stop="props.expand = !props.expand" :icon="props.expand ? 'remove' : 'add'" />
                     </q-td>
 
                     <template v-for="col in props.cols">
@@ -349,13 +359,9 @@ export default {
             height: 500px;
 
             tbody {
-                position: relative;
                 tr.total {
                     font-weight: bold;
                     background: #eee !important;
-                    position: fixed;
-                    z-index: 2;
-                    bottom: 0;
                 }
 
                 .consolidated-row:nth-child(4n + 1) {
