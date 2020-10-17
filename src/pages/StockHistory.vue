@@ -1,9 +1,5 @@
 <template>
-    <q-page class="q-px-lg">
-        <div class="actions">
-            <q-btn outline color="primary" label="Refresh" class="q-mx-sm q-my-lg" icon="eva-refresh" @click="refreshHistory"/>
-        </div>
-
+    <q-page class="stock-page q-px-lg">
         <q-table
             class="table-container q-mx-lg"
             table-class="data-table sticky-last-column"
@@ -72,6 +68,20 @@
                         <q-item clickable v-close-popup @click="uploadCsv">
                             <q-item-section>
                                 <q-item-label>Upload</q-item-label>
+                            </q-item-section>
+                        </q-item>
+                    </q-list>
+                </q-btn-dropdown>
+                <q-btn-dropdown flat icon="eva-sync-outline" color="primary" label="CEI">
+                    <q-list>
+                        <q-item clickable v-close-popup @click="refreshHistory">
+                            <q-item-section>
+                                <q-item-label>Reimportar</q-item-label>
+                            </q-item-section>
+                        </q-item>
+                        <q-item clickable v-close-popup @click="syncCei">
+                            <q-item-section>
+                                <q-item-label>Sincronizar</q-item-label>
                             </q-item-section>
                         </q-item>
                     </q-list>
@@ -324,6 +334,9 @@ export default {
         },
         uploadCsv() {
             ipcRenderer.send('stockHistory/upload-csv');
+        },
+        syncCei() {
+            ipcRenderer.send('stockHistory/sync-cei');
         }
     },
     computed: {
@@ -527,6 +540,21 @@ export default {
                 this.$q.notify({ type: 'negative', message: args.message, actions: [{ icon: 'close', color: 'white' }], timeout: 10000 });
                 console.error(args.error);
             }
+        });
+
+        ipcRenderer.on('stockHistory/sync-cei', (event, response) => {
+            this.tableLoading = false;
+            if (response.status === 'success') {
+                this.init();
+                this.$q.notify({ type: 'positive', message: 'Buscando dados do CEI...' });
+            } else {
+                this.$q.notify({ type: 'negative', message: 'Erro ao buscar no CEI' });
+                console.error(response);
+            }
+        });
+
+        ipcRenderer.on('stockHistory/finish-cei', (event, response) => {
+            this.init();
         });
 
         this.init();

@@ -1,5 +1,7 @@
 import { ipcMain } from 'electron';
 import StockHistoryService from '../services/StockHistoryService';
+import UpdateStockHistoryJob from '../jobs/UpdateStockHistoryJob';
+
 
 const METHODS = {
     GET: 'stockHistory/get',
@@ -13,8 +15,8 @@ const METHODS = {
     PROFIT_LOSS: 'stockHistory/profit-loss',
     KPIS: 'stockHistory/kpis',
     DOWNLOAD_CSV: 'stockHistory/download-csv',
-    UPLOAD_CSV: 'stockHistory/upload-csv'
-
+    UPLOAD_CSV: 'stockHistory/upload-csv',
+    SYNC_CEI: 'stockHistory/sync-cei'
 };
 
 ipcMain.on(METHODS.GET, async (event, arg) => {
@@ -132,6 +134,15 @@ ipcMain.on(METHODS.UPLOAD_CSV, async (event, arg) => {
         event.reply(METHODS.UPLOAD_CSV, { status: 'success', lines: lines });
     } catch (e) {
         event.reply(METHODS.UPLOAD_CSV, { status: 'error', message: e.message });
+    }
+});
+
+ipcMain.on(METHODS.SYNC_CEI, async (event, arg) => {
+    try {
+        UpdateStockHistoryJob.run();
+        event.reply(METHODS.SYNC_CEI, { status: 'success' });
+    } catch (e) {
+        event.reply(METHODS.SYNC_CEI, { status: 'error', message: e.message });
     }
 });
 

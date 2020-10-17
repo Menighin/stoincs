@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron';
 import TreasuryDirectService from '../services/TreasuryDirectService';
+import UpdateTreasuryDirectJob from '../jobs/UpdateTreasuryDirectJob';
 
 const METHODS = {
     GET_TREASURY_DIRECT: 'treasury-direct/get',
@@ -7,7 +8,8 @@ const METHODS = {
     DELETE: 'treasury-direct/delete',
     UPDATE: 'treasury-direct/update',
     DOWNLOAD_CSV: 'treasury-direct/download-csv',
-    UPLOAD_CSV: 'treasury-direct/upload-csv'
+    UPLOAD_CSV: 'treasury-direct/upload-csv',
+    SYNC_CEI: 'treasury-direct/sync-cei'
 };
 
 ipcMain.on(METHODS.GET_TREASURY_DIRECT, async (event, arg) => {
@@ -65,6 +67,15 @@ ipcMain.on(METHODS.UPLOAD_CSV, async (event, arg) => {
         event.reply(METHODS.UPLOAD_CSV, { status: 'success', lines: lines });
     } catch (e) {
         event.reply(METHODS.UPLOAD_CSV, { status: 'error', message: e.message });
+    }
+});
+
+ipcMain.on(METHODS.SYNC_CEI, async (event, arg) => {
+    try {
+        UpdateTreasuryDirectJob.run();
+        event.reply(METHODS.SYNC_CEI, { status: 'success' });
+    } catch (e) {
+        event.reply(METHODS.SYNC_CEI, { status: 'error', message: e.message });
     }
 });
 

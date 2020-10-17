@@ -94,6 +94,7 @@ class UpdateStockHistoryJob {
             NotificationService.notifyMessage(NOTIFICATION.TITLE, `Erro ao buscar no CEI: ${e.message}`, NOTIFICATION.ICON);
         }
         NotificationService.notifyLoadingFinish(evtCode);
+        NotificationService.notifyPage('stockHistory/finish-cei');
     }
 
 }

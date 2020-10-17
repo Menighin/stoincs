@@ -71,6 +71,7 @@ class UpdateTreasuryDirectJob {
             NotificationService.notifyMessage(NOTIFICATION.TITLE, `Erro ao buscar tesouro direto no CEI: ${e.message}`, NOTIFICATION.ICON);
         }
         NotificationService.notifyLoadingFinish(evtCode);
+        NotificationService.notifyPage('treasury-direct/finish-cei');
     }
 
 }

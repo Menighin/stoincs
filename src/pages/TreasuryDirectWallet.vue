@@ -84,6 +84,7 @@
                         </q-item>
                     </q-list>
                 </q-btn-dropdown>
+                <q-btn flat icon="eva-sync-outline" @click="syncCei" color="primary" title="Buscar dados do CEI" label="CEI" />
                 <q-btn flat icon="eva-plus-circle-outline" @click="isEdit = false; showCreateForm = true;" color="primary" title="Adicionar ativo" />
             </template>
 
@@ -316,6 +317,9 @@ export default {
         },
         uploadCsv() {
             ipcRenderer.send('treasury-direct/upload-csv');
+        },
+        syncCei() {
+            ipcRenderer.send('treasury-direct/sync-cei');
         }
     },
     computed: {
@@ -471,6 +475,21 @@ export default {
                 this.$q.notify({ type: 'negative', message: args.message, actions: [{ icon: 'close', color: 'white' }], timeout: 10000 });
                 console.error(args.error);
             }
+        });
+
+        ipcRenderer.on('treasury-direct/sync-cei', (event, response) => {
+            this.tableLoading = false;
+            if (response.status === 'success') {
+                this.init();
+                this.$q.notify({ type: 'positive', message: 'Buscando dados do CEI...' });
+            } else {
+                this.$q.notify({ type: 'negative', message: 'Erro ao buscar no CEI' });
+                console.error(response);
+            }
+        });
+
+        ipcRenderer.on('treasury-direct/finish-cei', (event, response) => {
+            this.init();
         });
 
         this.init();
