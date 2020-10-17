@@ -1,12 +1,14 @@
 import { ipcMain } from 'electron';
 import DividendsService from '../services/DividendsService';
+import UpdateDividendsJob from '../jobs/UpdateDividendsJob';
 
 const METHODS = {
     GET_DIVIDENDS: 'dividends/get',
     SAVE: 'dividends/save',
     DELETE: 'dividends/delete',
     DOWNLOAD_CSV: 'dividends/download-csv',
-    UPLOAD_CSV: 'dividends/upload-csv'
+    UPLOAD_CSV: 'dividends/upload-csv',
+    SYNC_CEI: 'dividends/sync-cei'
 };
 
 ipcMain.on(METHODS.GET_DIVIDENDS, async (event, arg) => {
@@ -55,6 +57,15 @@ ipcMain.on(METHODS.UPLOAD_CSV, async (event, arg) => {
         event.reply(METHODS.UPLOAD_CSV, { status: 'success', lines: lines });
     } catch (e) {
         event.reply(METHODS.UPLOAD_CSV, { status: 'error', message: e.message });
+    }
+});
+
+ipcMain.on(METHODS.SYNC_CEI, async (event, arg) => {
+    try {
+        UpdateDividendsJob.run();
+        event.reply(METHODS.SYNC_CEI, { status: 'success' });
+    } catch (e) {
+        event.reply(METHODS.SYNC_CEI, { status: 'error', message: e.message });
     }
 });
 

@@ -39,6 +39,10 @@ class NotificationService {
         } });
     }
 
+    notifyPage(code, data) {
+        this._browserWindow.webContents.send(code, { data: data });
+    }
+
 }
 
 export default new NotificationService();

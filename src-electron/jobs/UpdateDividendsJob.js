@@ -47,6 +47,7 @@ class UpdateDividendsJob {
             NotificationService.notifyMessage(NOTIFICATION.TITLE, `Erro ao buscar dividendos no CEI: ${e.message}`, NOTIFICATION.ICON);
         }
         NotificationService.notifyLoadingFinish(evtCode);
+        NotificationService.notifyPage('dividends/finish-cei');
         console.log('[DIVIDENDS JOB] Finished');
     }
 

@@ -319,7 +319,7 @@ export default {
                 .distinct()
                 .sort((a, b) => b - a);
 
-            this.selectedYear = this.yearOptions.first();
+            this.selectedYear = this.yearOptions[1] || this.yearOptions.first();
             this.getConsolidatedData();
         });
 

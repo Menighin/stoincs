@@ -83,6 +83,7 @@
                         </q-item>
                     </q-list>
                 </q-btn-dropdown>
+                <q-btn flat icon="eva-sync-outline" @click="syncCei" color="primary" title="Buscar dados do CEI" label="CEI" />
                 <q-btn flat icon="eva-plus-circle-outline" @click="showCreateForm = true;" color="primary" title="Adicionar dividendo" />
             </template>
 
@@ -271,6 +272,9 @@ export default {
         },
         uploadCsv() {
             ipcRenderer.send('dividends/upload-csv');
+        },
+        syncCei() {
+            ipcRenderer.send('dividends/sync-cei');
         }
     },
     computed: {
@@ -398,6 +402,21 @@ export default {
                 this.$q.notify({ type: 'negative', message: 'Erro ao deletar evento' });
                 console.error(response);
             }
+        });
+
+        ipcRenderer.on('dividends/sync-cei', (event, response) => {
+            this.tableLoading = false;
+            if (response.status === 'success') {
+                this.init();
+                this.$q.notify({ type: 'positive', message: 'Buscando dados do CEI...' });
+            } else {
+                this.$q.notify({ type: 'negative', message: 'Erro ao buscar no CEI' });
+                console.error(response);
+            }
+        });
+
+        ipcRenderer.on('dividends/finish-cei', (event, response) => {
+            this.init();
         });
 
         ipcRenderer.on('dividends/upload-csv', (event, args) => {
