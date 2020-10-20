@@ -1,6 +1,5 @@
 import CeiCrawler from 'cei-crawler';
 import ConfigurationService from '../services/ConfigurationService';
-import puppeteer from 'puppeteer';
 import AsyncUtils from '../utils/AsyncUtils';
 
 class CeiCrawlerService {
@@ -44,13 +43,7 @@ class CeiCrawlerService {
 
         this._isFree = false;
 
-        const chromiumPath = puppeteer.executablePath().replace('app.asar', 'app.asar.unpacked/node_modules/puppeteer');
-        const puppeterLaunchOptions = {
-            headless: true,
-            executablePath: chromiumPath,
-            args: ['--disable-dev-shm-usage', '--shm-size=3gb']
-        };
-        this._ceiCrawler = new CeiCrawler(user, password, { puppeteerLaunch: puppeterLaunchOptions, capDates: true });
+        this._ceiCrawler = new CeiCrawler(user, password, { capDates: true });
 
         return this._ceiCrawler;
     }
@@ -72,8 +65,6 @@ class CeiCrawlerService {
         if (this._closeTimeout === null && !instantly)
             this._closeTimeout = setTimeout(async () => {
                 console.log('[CEI CRAWLER SERVICE] Closing instance after some time idle...');
-                if (this._ceiCrawler != null)
-                    await this._ceiCrawler.close();
                 this._ceiCrawler = null;
                 this._closeTimeout = null;
             }, 60 * 1000);
