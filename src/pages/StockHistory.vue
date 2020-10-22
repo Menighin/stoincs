@@ -1,5 +1,5 @@
 <template>
-    <q-page class="stock-page q-px-lg">
+    <q-page class="stock-page q-px-lg q-py-lg">
         <q-table
             class="table-container q-mx-lg"
             table-class="data-table sticky-last-column"
@@ -15,7 +15,7 @@
             :pagination.sync="pagination"
             :visible-columns="visibleColumns"
             :loading="tableLoading"
-            v-dynamic-height="{ heightOffset: 300, innerSelector: '.q-table__middle' }"
+            v-dynamic-height="{ heightOffset: 250, innerSelector: '.q-table__middle' }"
         >
             <template v-slot:top>
                 <h5 style="margin: 0">Extrato</h5>

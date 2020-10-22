@@ -1,9 +1,5 @@
 <template>
-    <q-page class="wallet-page q-px-lg">
-        <div class="filter">
-            <q-btn outline color="primary" label="Sincronizar com Histórico" class="q-mx-sm q-my-lg" icon="eva-sync-outline" @click="downloadFromHistory"/>
-            <q-btn outline color="primary" class="q-mx-sm q-my-lg" icon="eva-settings-2-outline" @click="configDialog = true"/>
-        </div>
+    <q-page class="wallet-page q-px-lg q-py-lg">
 
         <q-table
             class="table-container q-mx-lg"
@@ -20,7 +16,7 @@
             :visible-columns="visibleColumns"
             :loading="tableLoading"
             ref="table"
-            v-dynamic-height="{ heightOffset: 300, innerSelector: '.q-table__middle' }"
+            v-dynamic-height="{ heightOffset: 250, innerSelector: '.q-table__middle' }"
         >
             <template v-slot:top>
                 <h5 style="margin: 0 5px 0 0">Carteira de Ações</h5>
@@ -42,6 +38,8 @@
 
                 <q-space />
 
+                <q-btn flat color="primary" label="Reprocessar" icon="eva-sync-outline" @click="downloadFromHistory"/>
+
                 <q-select
                     v-model="visibleColumns"
                     multiple
@@ -58,6 +56,9 @@
                     style="min-width: 150px"
                     class="q-ma-sm"
                 />
+
+                <q-btn flat color="primary" icon="eva-settings-2-outline" @click="configDialog = true"/>
+
             </template>
 
             <q-td auto-width slot="body-cell-price" slot-scope="props" :props="props">
@@ -289,7 +290,7 @@ export default {
         downloadFromHistory() {
             this.$q.dialog({
                 title: 'Confirmação',
-                message: 'Tem certeza que deseja continuar?',
+                message: 'Essa ação irá reprocessar os dados da sua carteira de acordo com seu histórico de negociações. Tem certeza que deseja continuar?',
                 cancel: {
                     label: 'Não',
                     flat: true
