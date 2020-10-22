@@ -120,8 +120,7 @@ module.exports = function(ctx) {
                 publish: {
                     provider: 'github'
                 },
-                asar: true,
-                asarUnpack: 'node_modules/puppeteer/.local-chromium/**/*'
+                asar: true
             },
             nodeIntegration: true,
             extendWebpack(cfg) {
