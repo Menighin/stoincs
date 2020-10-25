@@ -1,6 +1,6 @@
 {
   "name": "stoincs",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Acompanhe seus investimentos",
   "productName": "Stoincs",
   "author": "Joao Menighin <joao.menighin@gmail.com>",
@@ -11,10 +11,11 @@
     "test": "echo \"No test specified\" && exit 0"
   },
   "dependencies": {
+    "@quasar/cli": "^1.1.2",
     "@quasar/extras": "^1.8.2",
     "adm-zip": "^0.4.16",
     "axios": "^0.19.2",
-    "cei-crawler": "^2.0.0",
+    "cei-crawler": "^2.0.2",
     "core-js": "^3.0.0",
     "electron-updater": "^4.3.1",
     "express": "^4.17.1",

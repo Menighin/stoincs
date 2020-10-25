@@ -175,12 +175,11 @@ class StockHistoryService {
             }
 
             if (startDate === null || startDate <= c.date) {
-
                 if (!(c.institution in p[key].operationsByInstitution))
-                p[key].operationsByInstitution[c.institution] = {
-                    buy: 0,
-                    sell: 0
-                };
+                    p[key].operationsByInstitution[c.institution] = {
+                        buy: 0,
+                        sell: 0
+                    };
 
                 if (c.operation === 'C') {
                     p[key].quantityBought += c.quantity;
@@ -396,16 +395,15 @@ class StockHistoryService {
             operationCopy['id'] = id;
             delete operationCopy['institution'];
             delete operationCopy['account'];
-    
+
             const account = data.first(o => o.institution === operation.institution && o.account === operation.account);
             if (account) {
                 const alreadyExists = account.stockHistory.first(o => o.id === id);
                 if (alreadyExists) {
                     alreadyExists.quantity = operation.quantity;
                     alreadyExists.source = 'Manual';
-                }
-                else
-                    account.stockHistory.push(operationCopy)
+                } else
+                    account.stockHistory.push(operationCopy);
             } else {
                 data.push({
                     institution: operation.institution,
@@ -428,7 +426,7 @@ class StockHistoryService {
         });
         await this.saveStockHistory(stockHistory, true);
 
-        new UpdateStockHistoryJob().run();
+        UpdateStockHistoryJob.run();
     }
 
     async splitOperations(splitConfig) {
@@ -463,13 +461,13 @@ class StockHistoryService {
     }
 
     async uploadCsv() {
-        const openPaths = await dialog.showOpenDialog({ filters: [{ name: 'csv', extensions: ['csv'] }]});
+        const openPaths = await dialog.showOpenDialog({ filters: [{ name: 'csv', extensions: ['csv'] }] });
         if (!openPaths.canceled) {
             let lines = 0;
             for (const path of openPaths.filePaths) {
                 const data = await CsvUtils.readCsv(path, CSV_HEADERS);
                 await this.saveFromCsv(data);
-                lines += data.length
+                lines += data.length;
             }
             return lines;
         } else {
