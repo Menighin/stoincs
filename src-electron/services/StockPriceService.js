@@ -2,6 +2,7 @@ import fs from 'fs';
 import FileSystemUtils from '../utils/FileSystemUtils';
 import AlphaVantageService from './AlphaVantageService';
 import HgBrasilService from './HgBrasilService';
+import UolService from './UolService';
 import ConfigurationService from './ConfigurationService';
 
 const FILES = {
@@ -36,15 +37,19 @@ class StockPriceService {
 
     async autoUpdateStockPrices(stocks) {
         const configuration = await ConfigurationService.getConfiguration();
-        let updateApi = 'alpha-vantage';
+        let updateApi = 'crawler';
         if (configuration && configuration.priceUpdate && configuration.priceUpdate.updatePriceApi)
             updateApi = configuration.priceUpdate.updatePriceApi;
 
         console.log(`[STOCK PRICE SERVICE] Updating stocks using ${updateApi}: ${stocks.join(', ')}...`);
-
-        const promises = updateApi === 'alpha-vantage'
-            ? stocks.map(s => AlphaVantageService.getLastValue(s))
-            : stocks.map(s => HgBrasilService.getLastValue(s));
+        
+        let promises;
+        if (updateApi === 'crawler')
+            promises = stocks.map(s => UolService.getLastValue(s));
+        else if (updateApi === 'alpha-vantage')
+            promises = stocks.map(s => AlphaVantageService.getLastValue(s));
+        else
+            promises = stocks.map(s => HgBrasilService.getLastValue(s));
 
         const results = (await Promise.all(promises)).filter(o => o !== null);
 

@@ -75,6 +75,7 @@ class DateUtils {
      * @param {Date} d2 Second date, the higher
      */
     static getDiffDateFormated(d1, d2) {
+        if (d2 > d1) return '00h00m';
         let diff = Math.abs(d2.getTime() - d1.getTime());
         const millisDay = 1000 * 60 * 60 * 24;
         const millisThreeDay = millisDay * 3;

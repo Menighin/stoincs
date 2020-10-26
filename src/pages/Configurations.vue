@@ -61,7 +61,8 @@
                         <q-item-label header class="q-my-none q-py-none">Atualizar automaticamente? <q-checkbox v-model="autoUpdate" /></q-item-label>
 
                         <div>
-                            <q-item-label header class="q-my-none q-py-none">Qual API utilizar?</q-item-label>
+                            <q-item-label header class="q-my-none q-py-none">Qual método de atualização?</q-item-label>
+                            <q-radio label="Web Crawler" val="crawler" v-model="updatePriceApi" />
                             <q-radio label="Alpha Vantage" val="alpha-vantage" v-model="updatePriceApi" />
                             <q-radio label="HG Brasil" val="hg-brasil" v-model="updatePriceApi" />
                         </div>
@@ -255,7 +256,6 @@ export default {
         });
 
         ipcRenderer.on('configuration/get', (event, response) => {
-            console.log(JSON.stringify(response));
             if (response.status === 'success') {
                 this.username = response.data.username || '';
                 this.password = response.data.password || '';
@@ -263,7 +263,7 @@ export default {
                 this.hgBrasilKey = response.data.hgBrasilKey || '';
                 this.priceUpdate = response.data.priceUpdate || {};
 
-                if (!this.priceUpdate.updatePriceApi) this.priceUpdate.updatePriceApi = 'alpha-vantage';
+                if (!this.priceUpdate.updatePriceApi) this.priceUpdate.updatePriceApi = 'crawler';
                 if (typeof this.priceUpdate.auto === 'undefined') this.priceUpdate.auto = true;
                 if (!this.priceUpdate.many) this.priceUpdate.many = 1;
                 if (!this.priceUpdate.when) this.priceUpdate.when = 1;

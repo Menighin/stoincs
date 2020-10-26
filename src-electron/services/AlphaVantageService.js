@@ -1,4 +1,3 @@
-import { BrowserWindow } from 'electron';
 import ConfigurationService from '../services/ConfigurationService';
 import axios from 'axios';
 

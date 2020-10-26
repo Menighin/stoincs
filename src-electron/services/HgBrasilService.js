@@ -1,11 +1,5 @@
-import { BrowserWindow } from 'electron';
 import ConfigurationService from '../services/ConfigurationService';
 import axios from 'axios';
-
-const ALPHA_VANTAGE_FUNCTIONS = {
-    SYMBOL_SEARCH: 'SYMBOL_SEARCH',
-    GLOBAL_QUOTE: 'GLOBAL_QUOTE'
-};
 
 class HgBrasilService {
 
