@@ -292,7 +292,7 @@ export default {
             const payload = {
                 ...this.newOperation,
                 operation: this.newOperation.operation.value,
-                date: this.isEdit ? new Date(this.newOperation.date) : DateUtils.fromDateStr(this.newOperation.date),
+                date: DateUtils.fromDateStr(this.newOperation.date),
                 price: NumberUtils.getNumberFromString(this.newOperation.price),
                 quantity: parseInt(this.newOperation.quantity)
             };

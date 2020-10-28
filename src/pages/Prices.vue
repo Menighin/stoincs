@@ -120,9 +120,9 @@
                 <q-separator />
 
                 <q-card-actions align="right">
-                    <q-btn round flat color="primary" size="12px" icon="eva-bell-outline" @click="setupAlarm(sp.code)" />
-                    <q-btn round flat color="primary" size="12px" icon="eva-sync-outline" @click="syncStock(sp.code)" />
-                    <q-btn round flat color="primary" size="12px" icon="eva-trash-2-outline" @click="deleteStock(sp.code)" />
+                    <q-btn round flat color="primary" size="12px" :disable=" sp.isNew || sp.isEdit" icon="eva-bell-outline" @click="setupAlarm(sp.code)" />
+                    <q-btn round flat color="primary" size="12px" :disable=" sp.isNew || sp.isEdit" icon="eva-sync-outline" @click="syncStock(sp.code)" />
+                    <q-btn round flat color="primary" size="12px" :disable=" sp.isNew || sp.isEdit" icon="eva-trash-2-outline" @click="deleteStock(sp.code)" />
                 </q-card-actions>
 
                 <q-inner-loading :showing="loadingStocks[sp.code] === 1">
@@ -209,6 +209,7 @@ export default {
                 changePercent: 0,
                 changePrice: 0,
                 lastUpdated: new Date(),
+                apiUpdate: new Date(),
                 isNew: true
             });
             await this.$nextTick();
@@ -453,6 +454,7 @@ export default {
 
                 &.new {
                     color: #aaa;
+                    box-shadow: 0 1px 5px $primary, 0 2px 2px $primary, 0 3px 1px -2px $primary;
                 }
 
                 .stock-title {

@@ -250,7 +250,7 @@ class StockHistoryService {
     }
 
     async getProfitLoss(startDate = null, endDate = null) {
-        const stockHistoryByAccount = await this.getStockHistory();
+        const stockHistory = await this.getStockHistoryOperations();
 
         const sortStockOperations = (a, b) => {
             if (a.date.getTime() === b.date.getTime())
@@ -259,26 +259,30 @@ class StockHistoryService {
         };
 
         const profitLoss = {};
-        for (const account of stockHistoryByAccount) {
-            const boughtQuantity = {};
-            const boughtValue = {};
+        const boughtValue = {};
+        const soldValue = {};
+        const tempBoughtValue = {};
 
-            for (const stockOperation of account.stockHistory.sort(sortStockOperations)) {
-                if (endDate !== null && stockOperation.date > endDate) break;
+        for (const stockOperation of stockHistory.sort(sortStockOperations)) {
+            if (endDate !== null && stockOperation.date > endDate) break;
 
-                const code = StockUtils.getStockCode(stockOperation.code);
-                if (!boughtQuantity[code]) boughtQuantity[code] = 0;
-                if (!boughtValue[code]) boughtValue[code] = 0;
-                if (!profitLoss[code]) profitLoss[code] = 0;
+            const code = StockUtils.getStockCode(stockOperation.code);
+            if (!boughtValue[code]) boughtValue[code] = 0;
+            if (!tempBoughtValue[code]) tempBoughtValue[code] = 0;
+            if (!soldValue[code]) soldValue[code] = 0;
+            if (!profitLoss[code]) profitLoss[code] = 0;
 
-                if (stockOperation.operation === 'C') {
-                    boughtQuantity[code] += stockOperation.quantity;
-                    boughtValue[code] += stockOperation.quantity * stockOperation.price;
-                } else if (stockOperation.operation === 'V' && (startDate === null || stockOperation.date >= startDate)) {
-                    const averageBuyPriceSoFar = boughtQuantity[code] === 0 ? 0 : boughtValue[code] / boughtQuantity[code];
-                    profitLoss[code] += stockOperation.quantity * stockOperation.price - stockOperation.quantity * averageBuyPriceSoFar;
-                }
+            if (stockOperation.operation === 'C') {
+                tempBoughtValue[code] += stockOperation.quantity * stockOperation.price;
+            } else if (stockOperation.operation === 'V' && (startDate === null || stockOperation.date >= startDate)) {
+                soldValue[code] += stockOperation.quantity * stockOperation.price;
+                boughtValue[code] += tempBoughtValue[code];
+                tempBoughtValue[code] = 0;
             }
+        }
+
+        for (const code of Object.keys(soldValue)) {
+            profitLoss[code] += (soldValue[code]) - (boughtValue[code] || 0);
         }
 
         return profitLoss;

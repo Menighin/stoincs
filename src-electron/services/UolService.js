@@ -25,7 +25,6 @@ class UolService {
             };
         
         } catch (e) {
-            console.log(e);
             return {
                 status: 'error',
                 code: code,
