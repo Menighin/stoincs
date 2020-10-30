@@ -2,15 +2,14 @@ import axios from 'axios';
 
 class UolService {
 
+    constructor() {
+        this._cacheCodeId = {};
+    }
+    
     async getLastValue(code) {
 
         try {
-            const response = await axios.get(`https://economia.uol.com.br/cotacoes/bolsas/acoes/bvsp-bovespa/${code.toLowerCase()}-sa/`);
-        
-            const html = response.data;
-            const re = /(data-id="\d*")/g;
-            const dataIdAttr = html.match(re)[0];
-            const id = parseInt(dataIdAttr.replace(/\D/g,''));
+            const id = await this._getIdByCode(code);
             
             const responsePrice = await axios.get(`https://api.cotacoes.uol.com/asset/intraday/list/?format=JSON&fields=price,change,pctChange,date&item=${id}`);
             const priceData = responsePrice.data.docs[0];
@@ -31,6 +30,22 @@ class UolService {
                 errorMessage: `Preço não encontrado`
             };
         }
+    }
+    
+    async _getIdByCode(code) {
+        if (this._cacheCodeId[code])
+            return this._cacheCodeId[code];
+        
+        const response = await axios.get(`https://economia.uol.com.br/cotacoes/bolsas/acoes/bvsp-bovespa/${code.toLowerCase()}-sa/`);
+        
+        const html = response.data;
+        const re = /(data-id="\d*")/g;
+        const dataIdAttr = html.match(re)[0];
+        const id = parseInt(dataIdAttr.replace(/\D/g,''));
+        
+        this._cacheCodeId[code] = id;
+        
+        return id;
     }
 
     _getDateFromStr(dateStr) {
