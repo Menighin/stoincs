@@ -142,8 +142,24 @@
                 <q-card-section style="max-height: 80vh" class="scroll">
                     <q-card-section class="column">
                         <q-toggle v-model="ceiConfig.stockHistory" label="Negociações" />
+                        <div class="q-px-sm q-pb-lg toggle-info">
+                            Se ativo, as negociações do CEI serão integradas automaticamente. As negociações são utilizadas para diversos relatórios e telas no Stoincs.
+                        </div>
+
                         <q-toggle v-model="ceiConfig.dividends" label="Dividendos" />
+                        <div class="q-px-sm q-pb-lg toggle-info">
+                            Se ativo, os dividendos recebidos serão integrados automaticamente com o CEI. Essas informações são exibidas na tela de dividendos e em relatórios de posições.
+                        </div>
+
                         <q-toggle v-model="ceiConfig.treasuryDirect" label="Tesouro Direto" />
+                        <div class="q-px-sm q-pb-lg toggle-info">
+                            Se ativo, seus investimentos em tesouro direto serão integrados automaticamente com o CEI. Essas informações são exibidas nas telas e relatórios de Tesouro Direto.
+                        </div>
+
+                        <q-toggle v-model="ceiConfig.walletHistory" label="Histórico da Carteira" />
+                        <div class="q-px-sm toggle-info">
+                            Se ativo, será integrado com o CEI automaticamente suas posições no final de cada dia para que seja montado o gráfico de Performance da Carteira.
+                        </div>
                     </q-card-section>
                 </q-card-section>
 
@@ -329,6 +345,11 @@ export default {
         display: inline-block;
         width: 50px;
     }
+}
+
+.toggle-info {
+    color: #aaa;
+    font-size: 12px;
 }
 
 </style>

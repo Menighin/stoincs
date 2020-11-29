@@ -2,6 +2,7 @@ import TreasuryDirectService from '../services/TreasuryDirectService';
 import DateUtils from '../../src-shared/utils/DateUtils';
 import NotificationService from '../services/NotificationService';
 import CeiCrawlerService from '../services/CeiCrawlerService';
+import ConfigurationService from '../services/ConfigurationService';
 
 const NOTIFICATION = {
     TITLE: 'Tesouro Direto',
@@ -23,6 +24,15 @@ class UpdateTreasuryDirectJob {
         const evtCode = 'TREASURY_DIRECT_JOB';
         NotificationService.notifyLoadingStart(evtCode, 'Crawling tesouro direto do CEI');
 
+                // Check whether job is enabled
+        const configuration = await ConfigurationService.getConfiguration();
+        if (!configuration.ceiConfig.treasuryDirect) {
+            NotificationService.notifyLoadingFinish(evtCode);
+            NotificationService.notifyPage('treasury-direct/finish-cei');
+            NotificationService.notifyMessage(NOTIFICATION.TITLE, `Busca de tesouro direto do CEI está desligada`, NOTIFICATION.ICON);
+            return;
+        }
+
         try {
             const jobMetadata = await TreasuryDirectService.getTreasuryDirectJobMetadata();
             const now = new Date();
@@ -43,15 +53,15 @@ class UpdateTreasuryDirectJob {
                             account: account.account,
                             data: []
                         };
-                    
+
                     account.nationalTreasuryWallet.forEach(treasure => {
                         data[key].data.push({
                             code: treasure.code,
                             expirationDate: treasure.expirationDate,
                             investedValue: treasure.investedValue,
-                            grossValue:treasure.grossValue,
+                            grossValue: treasure.grossValue,
                             netValue: treasure.netValue,
-                            quantity:  treasure.quantity,
+                            quantity: treasure.quantity,
                             lastUpdated: now,
                             source: 'CEI'
                         });

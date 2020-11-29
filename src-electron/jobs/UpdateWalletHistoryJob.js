@@ -2,6 +2,7 @@ import WalletHistoryService from '../services/WalletHistoryService';
 import DateUtils from '../../src-shared/utils/DateUtils';
 import NotificationService from '../services/NotificationService';
 import CeiCrawlerService from '../services/CeiCrawlerService';
+import ConfigurationService from '../services/ConfigurationService';
 
 const NOTIFICATION = {
     TITLE: 'Performance da Carteira',
@@ -22,6 +23,14 @@ class UpdateWalletHistoryJob {
         console.log('[WALLET HISTORY JOB] Running wallet history job...');
         const evtCode = 'WALLET_HISTORY_JOB';
         NotificationService.notifyLoadingStart(evtCode, 'Crawling histórico de carteira do CEI');
+
+        // Check whether job is enabled
+        const configuration = await ConfigurationService.getConfiguration();
+        if (!configuration.ceiConfig.walletHistory) {
+            NotificationService.notifyLoadingFinish(evtCode);
+            NotificationService.notifyMessage(NOTIFICATION.TITLE, `Busca de histórico da carteira do CEI está desligada`, NOTIFICATION.ICON);
+            return;
+        }
 
         try {
             const jobMetadata = await WalletHistoryService.getWalletHistoryJobMetadata();

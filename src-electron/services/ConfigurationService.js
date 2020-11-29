@@ -9,6 +9,7 @@ import UpdateTreasuryDirectJob from '../jobs/UpdateTreasuryDirectJob';
 import UpdateDividendsJob from '../jobs/UpdateDividendsJob';
 import UpdateWalletHistoryJob from '../jobs/UpdateWalletHistoryJob';
 import CeiCrawlerService from '../services/CeiCrawlerService';
+import ObjectUtils from '../../src-shared/utils/ObjectUtils';
 
 const FILES = {
     CONFIGURATION: 'configuration'
@@ -40,15 +41,20 @@ class ConfigurationService {
         if (typeof configurations.ceiConfig.stockHistory === 'undefined') configurations.ceiConfig.stockHistory = true;
         if (typeof configurations.ceiConfig.dividends === 'undefined') configurations.ceiConfig.dividends = true;
         if (typeof configurations.ceiConfig.treasuryDirect === 'undefined') configurations.ceiConfig.treasuryDirect = true;
+        if (typeof configurations.ceiConfig.walletHistory === 'undefined') configurations.ceiConfig.walletHistory = true;
 
         return configurations;
     }
 
     async saveConfiguration(configuration, restartJobs = true) {
+        // Get old configurations
+        const oldConfiguration = await this.getConfiguration();
+        const newConfiguration = ObjectUtils.mergeUpdating(oldConfiguration, configuration);
+
         // Save file
         const rootPath = await FileSystemUtils.getDataPath();
         const path = `${rootPath}/${FILES.CONFIGURATION}`;
-        await fs.promises.writeFile(path, JSON.stringify(configuration));
+        await fs.promises.writeFile(path, JSON.stringify(newConfiguration));
 
         // Restart jobs and configurations
         if (restartJobs) {

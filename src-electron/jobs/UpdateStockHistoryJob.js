@@ -4,6 +4,7 @@ import StockUtils from '../utils/StockUtils';
 import NotificationService from '../services/NotificationService';
 import WalletService from '../services/WalletService';
 import CeiCrawlerService from '../services/CeiCrawlerService';
+import ConfigurationService from '../services/ConfigurationService';
 
 const NOTIFICATION = {
     TITLE: 'Negociações',
@@ -21,6 +22,15 @@ class UpdateStockHistoryJob {
         console.log('Running stock history job...');
         const evtCode = 'STOCK_HISTORY_JOB';
         NotificationService.notifyLoadingStart(evtCode, 'Crawling negociações do CEI');
+
+        // Check whether job is enabled
+        const configuration = await ConfigurationService.getConfiguration();
+        if (!configuration.ceiConfig.stockHistory) {
+            NotificationService.notifyLoadingFinish(evtCode);
+            NotificationService.notifyPage('stockHistory/finish-cei');
+            NotificationService.notifyMessage(NOTIFICATION.TITLE, `Busca de negociações do CEI está desligada`, NOTIFICATION.ICON);
+            return;
+        }
 
         try {
             const jobMetadata = await StockHistoryService.getStockHistoryJobMetadata();

@@ -2,6 +2,7 @@ import DividendsService from '../services/DividendsService';
 import DateUtils from '../../src-shared/utils/DateUtils';
 import NotificationService from '../services/NotificationService';
 import CeiCrawlerService from '../services/CeiCrawlerService';
+import ConfigurationService from '../services/ConfigurationService';
 
 const NOTIFICATION = {
     TITLE: 'Dividendos',
@@ -22,6 +23,15 @@ class UpdateDividendsJob {
         console.log('[DIVIDENDS JOB] Running job dividends...');
         const evtCode = 'DIVIDENDS_JOB';
         NotificationService.notifyLoadingStart(evtCode, 'Crawling dividendos no CEI');
+
+        // Check whether job is enabled
+        const configuration = await ConfigurationService.getConfiguration();
+        if (!configuration.ceiConfig.dividends) {
+            NotificationService.notifyLoadingFinish(evtCode);
+            NotificationService.notifyPage('dividends/finish-cei');
+            NotificationService.notifyMessage(NOTIFICATION.TITLE, `Busca de dividendos do CEI está desligada`, NOTIFICATION.ICON);
+            return;
+        }
 
         try {
             const jobMetadata = await DividendsService.getDividendsJobMetadata();
