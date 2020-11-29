@@ -20,7 +20,7 @@ ipcMain.on(METHODS.GET_CONFIGURATION, async (event, arg) => {
 
 ipcMain.on(METHODS.UPDATE_CONFIGURATION, async (event, arg) => {
     try {
-        await ConfigurationService.saveConfiguration(arg);
+        await ConfigurationService.saveConfiguration(arg, false);
         event.reply(METHODS.UPDATE_CONFIGURATION, { status: 'success' });
     } catch (e) {
         event.reply(METHODS.UPDATE_CONFIGURATION, { status: 'error', message: e.message });

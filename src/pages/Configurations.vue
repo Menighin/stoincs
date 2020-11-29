@@ -4,11 +4,14 @@
             <div class="col-lg-6 col-md-12 col-sm-12 q-pa-md">
                 <div class="row q-ma-sm justify-between items-center">
                     <h5 class="q-ma-none">CEI</h5>
-                    <q-icon name="help" class="cursor-pointer" size="24px" color="info">
-                        <q-menu anchor="top right" self="bottom right" content-class="q-pa-sm">
-                            Usuário e senha do CEI utilizados para processar suas informações.
-                        </q-menu>
-                    </q-icon>
+                    <div>
+                        <q-btn color="primary" round flat icon="eva-settings-2-outline" @click="configCeiDialog = true"/>
+                        <q-icon name="help" class="cursor-pointer" size="24px" color="info">
+                            <q-menu anchor="top right" self="bottom right" content-class="q-pa-sm">
+                                Usuário e senha do CEI utilizados para processar suas informações.
+                            </q-menu>
+                        </q-icon>
+                    </div>
                 </div>
                 <q-input class="q-mx-sm" filled v-model="username" label="CPF" mask="###.###.###-##" />
                 <q-input class="q-ma-sm" filled v-model="password" label="Senha" :type="isPwd ? 'password' : 'text'">
@@ -127,6 +130,26 @@
                 </q-card>
             </div>
         </div>
+
+        <q-dialog v-model="configCeiDialog">
+            <q-card class="q-pb-lg" style="min-width: 550px">
+                <q-card-section class="row q-ma-none justify-between items-center">
+                    <div class="text-h5">Sincronização com CEI</div>
+                </q-card-section>
+
+                <q-separator />
+
+                <q-card-section style="max-height: 80vh" class="scroll">
+                    <q-card-section class="column">
+                        <q-toggle v-model="ceiConfig.stockHistory" label="Negociações" />
+                        <q-toggle v-model="ceiConfig.dividends" label="Dividendos" />
+                        <q-toggle v-model="ceiConfig.treasuryDirect" label="Tesouro Direto" />
+                    </q-card-section>
+                </q-card-section>
+
+            </q-card>
+        </q-dialog>
+
         <div class="row q-px-sm justify-end" style="width: 85%;">
             <q-btn color="primary" @click="save">Salvar</q-btn>
         </div>
@@ -157,7 +180,9 @@ export default {
             Math: Math,
             wallet: [],
             autoUpdate: false,
-            shell: shell
+            shell: shell,
+            configCeiDialog: false,
+            ceiConfig: {}
         };
     },
     methods: {
@@ -171,7 +196,8 @@ export default {
                     ...this.priceUpdate,
                     auto: this.autoUpdate,
                     updatePriceApi: this.updatePriceApi
-                }
+                },
+                ceiConfig: this.ceiConfig
             };
 
             ipcRenderer.send('configuration/update', configuration);
@@ -257,19 +283,12 @@ export default {
 
         ipcRenderer.on('configuration/get', (event, response) => {
             if (response.status === 'success') {
-                this.username = response.data.username || '';
-                this.password = response.data.password || '';
-                this.alphaVantageKey = response.data.alphaVantageKey || '';
-                this.hgBrasilKey = response.data.hgBrasilKey || '';
-                this.priceUpdate = response.data.priceUpdate || {};
-
-                if (!this.priceUpdate.updatePriceApi) this.priceUpdate.updatePriceApi = 'crawler';
-                if (typeof this.priceUpdate.auto === 'undefined') this.priceUpdate.auto = true;
-                if (!this.priceUpdate.many) this.priceUpdate.many = 1;
-                if (!this.priceUpdate.when) this.priceUpdate.when = 1;
-                if (!this.priceUpdate.startTime) this.priceUpdate.startTime = '00:00';
-                if (!this.priceUpdate.endTime) this.priceUpdate.endTime = '00:00';
-
+                this.username = response.data.username;
+                this.password = response.data.password;
+                this.alphaVantageKey = response.data.alphaVantageKey;
+                this.hgBrasilKey = response.data.hgBrasilKey;
+                this.priceUpdate = response.data.priceUpdate;
+                this.ceiConfig = response.data.ceiConfig;
                 this.autoUpdate = this.priceUpdate.auto;
                 this.updatePriceApi = this.priceUpdate.updatePriceApi;
             } else {

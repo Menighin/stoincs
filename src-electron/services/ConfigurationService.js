@@ -21,6 +21,26 @@ class ConfigurationService {
         const path = `${rootPath}/${FILES.CONFIGURATION}`;
 
         const configurations = JSON.parse((await fs.promises.readFile(path, { flag: 'a+', encoding: 'utf-8' })).toString() || '{}');
+
+        // Setting default values
+        if (!configurations.username) configurations.username = '';
+        if (!configurations.password) configurations.password = '';
+        if (!configurations.alphaVantageKey) configurations.alphaVantageKey = '';
+        if (!configurations.hgBrasilKey) configurations.hgBrasilKey = '';
+        if (!configurations.priceUpdate) configurations.priceUpdate = {};
+        if (!configurations.ceiConfig) configurations.ceiConfig = {};
+
+        if (!configurations.priceUpdate.updatePriceApi) configurations.priceUpdate.updatePriceApi = 'crawler';
+        if (typeof configurations.priceUpdate.auto === 'undefined') configurations.priceUpdate.auto = true;
+        if (!configurations.priceUpdate.many) configurations.priceUpdate.many = 1;
+        if (!configurations.priceUpdate.when) configurations.priceUpdate.when = 1;
+        if (!configurations.priceUpdate.startTime) configurations.priceUpdate.startTime = '00:00';
+        if (!configurations.priceUpdate.endTime) configurations.priceUpdate.endTime = '00:00';
+
+        if (typeof configurations.ceiConfig.stockHistory === 'undefined') configurations.ceiConfig.stockHistory = true;
+        if (typeof configurations.ceiConfig.dividends === 'undefined') configurations.ceiConfig.dividends = true;
+        if (typeof configurations.ceiConfig.treasuryDirect === 'undefined') configurations.ceiConfig.treasuryDirect = true;
+
         return configurations;
     }
 
