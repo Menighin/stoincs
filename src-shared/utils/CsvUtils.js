@@ -42,6 +42,10 @@ class CsvUtils {
             if (i === 0) {
                 this.checkHeader(line, columns);
             } else {
+                // Ignore empty lines
+                if (line.replace(/,/g, '').replace(/ /g, '').length === 0)
+                    return;
+
                 const data = this.getObjectFromLine(line, columns, i);
                 objects.push(data);
             }
