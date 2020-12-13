@@ -227,7 +227,7 @@ export default {
                 {
                     name: 'averageBuyPrice',
                     align: 'right',
-                    label: 'Preço Médio de Compra',
+                    label: 'Pç Médio Compra (Histórico)',
                     field: 'averageBuyPrice',
                     sortable: true,
                     format: val => NumberUtils.formatNumber(val, 'R$ ')
@@ -396,7 +396,7 @@ export default {
                 const price = this.stockPrices[w.code] ? this.stockPrices[w.code].price : 0;
                 const historicPosition = consolidatedStock ? consolidatedStock.valueSold + w.quantity * price - consolidatedStock.valueBought : 0;
                 const historicVariation = consolidatedStock && consolidatedStock.valueBought ? historicPosition / consolidatedStock.valueBought : 0;
-                const averageBuyPrice = consolidatedStock && consolidatedStock.averageBuyPrice ? consolidatedStock.averageBuyPrice : 0;
+                const averageBuyPrice = consolidatedStock && consolidatedStock.historicInfo.averageBuyPrice ? consolidatedStock.historicInfo.averageBuyPrice : 0;
                 return {
                     ...w,
                     value: price * w.quantity,
@@ -438,6 +438,7 @@ export default {
         ipcRenderer.on('stockHistory/consolidated', (event, response) => {
             if (response.status === 'success') {
                 this.consolidated = response.data.reduce((p, c) => { p[c.code] = c; return p }, {});
+                console.log(this.consolidated);
             } else {
                 this.$q.notify({ type: 'negative', message: `Erro ao carregar dados consolidados` });
                 console.error(response);

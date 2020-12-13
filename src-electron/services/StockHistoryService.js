@@ -141,7 +141,8 @@ class StockHistoryService {
                     account: c.account
                 }))];
                 return p;
-            }, []);
+            }, [])
+            .sort((s1, s2) => s2.date - s1.date);
     }
 
     async getConsolidatedStockHistory(startDate = null, endDate = null) {
@@ -205,10 +206,16 @@ class StockHistoryService {
         }, {});
 
         Object.keys(consolidatedByStock).forEach(code => {
-            consolidatedByStock[code].averageBuyPrice = averagePrices[code] ? averagePrices[code].averageBuyPrice : 0;
-            consolidatedByStock[code].averageSellPrice = averagePrices[code] ? averagePrices[code].averageSellPrice : 0;
-            consolidatedByStock[code].profitLoss = profitLoss[code] || 0;
-            consolidatedByStock[code].valueBalance = consolidatedByStock[code].quantityBalance * consolidatedByStock[code].averageBuyPrice;
+            consolidatedByStock[code].historicInfo = {}
+            consolidatedByStock[code].openOperation = {}
+            consolidatedByStock[code].historicInfo.averageBuyPrice = averagePrices[code] ? averagePrices[code].historicInfo.averageBuyPrice : 0;
+            consolidatedByStock[code].historicInfo.averageSellPrice = averagePrices[code] ? averagePrices[code].historicInfo.averageSellPrice : 0;
+            consolidatedByStock[code].historicInfo.profitLoss = profitLoss[code] || 0;
+            consolidatedByStock[code].historicInfo.valueBalance = consolidatedByStock[code].quantityBalance * consolidatedByStock[code].historicInfo.averageBuyPrice;
+
+            consolidatedByStock[code].openOperation.averageBuyPrice = averagePrices[code] ? averagePrices[code].openOperation.averageBuyPrice : 0;
+            consolidatedByStock[code].openOperation.averageSellPrice = averagePrices[code] ? averagePrices[code].openOperation.averageSellPrice : 0;
+
             consolidatedByStock[code].dividends = dividendsByStock[code] || 0;
         });
 
@@ -217,34 +224,66 @@ class StockHistoryService {
 
     async getAveragePrices(endDate = null) {
         const stockOperations = (await this.getStockHistoryOperations())
-            .filter(o => endDate === null || o.date <= endDate);
+            .filter(o => endDate === null || o.date <= endDate)
+            .reverse();
+
+        const endOperation = totals => {
+            totals.openOperation  = {
+                quantityBought: 0,
+                valueBought: 0,
+                quantitySold: 0,
+                valueSold: 0
+            }
+        };
 
         const totalsByStock = stockOperations
             .reduce((p, c) => {
                 const key = StockUtils.getStockCode(c.code);
-                if (!p[key])
+                if (!p[key]) {
                     p[key] = {
-                        quantityBought: 0,
-                        valueBought: 0,
-                        quantitySold: 0,
-                        valueSold: 0
+                        historicInfo: {
+                            quantityBought: 0,
+                            valueBought: 0,
+                            quantitySold: 0,
+                            valueSold: 0
+                        },
+                        balance: 0
                     };
+                    endOperation(p[key]);
+                }
 
                 if (c.operation === 'C') {
-                    p[key].quantityBought += c.quantity;
-                    p[key].valueBought += c.price * c.quantity;
+                    p[key].historicInfo.quantityBought += c.quantity;
+                    p[key].historicInfo.valueBought += c.price * c.quantity;
+                    p[key].openOperation.quantityBought += c.quantity;
+                    p[key].openOperation.valueBought += c.price * c.quantity;
+                    p[key].balance += c.quantity;
                 } else if (c.operation === 'V') {
-                    p[key].quantitySold += c.quantity;
-                    p[key].valueSold += c.price * c.quantity;
+                    p[key].historicInfo.quantitySold += c.quantity;
+                    p[key].historicInfo.valueSold += c.price * c.quantity;
+                    p[key].openOperation.quantitySold += c.quantity;
+                    p[key].openOperation.valueSold += c.price * c.quantity;
+                    p[key].balance -= c.quantity;
                 }
+
+                if (p[key].balance === 0) endOperation(p[key]);
                 return p;
             }, {});
 
         return Object.keys(totalsByStock).reduce((p, c) => {
             const totals = totalsByStock[c];
-            p[c] = {};
-            p[c].averageBuyPrice = totals.quantityBought > 0 ? totals.valueBought / totals.quantityBought : 0;
-            p[c].averageSellPrice = totals.quantitySold > 0 ? totals.valueSold / totals.quantitySold : 0;
+            const historicInfo = totals.historicInfo;
+            const openOperation = totals.openOperation;
+            p[c] = {
+                historicInfo: {
+                    averageBuyPrice: historicInfo.quantityBought > 0 ? historicInfo.valueBought / historicInfo.quantityBought : 0,
+                    averageSellPrice: historicInfo.quantitySold > 0 ? historicInfo.valueSold / historicInfo.quantitySold : 0
+                },
+                openOperation: {
+                    averageBuyPrice: openOperation.quantityBought > 0 ? openOperation.valueBought / openOperation.quantityBought : 0,
+                    averageSellPrice: openOperation.quantitySold > 0 ? openOperation.valueSold / openOperation.quantitySold : 0    
+                }
+            };
             return p;
         }, {});
     }
