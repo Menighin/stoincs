@@ -142,7 +142,11 @@ class StockHistoryService {
                 }))];
                 return p;
             }, [])
-            .sort((s1, s2) => s2.date - s1.date);
+            .sort((a, b) => {
+                if (a.date.getTime() === b.date.getTime())
+                    return a.operation === 'C' ? -1 : b.operation === 'C' ? 1 : 0;
+                return a.date.getTime() - b.date.getTime();
+            });
     }
 
     async getConsolidatedStockHistory(startDate = null, endDate = null) {
@@ -201,7 +205,6 @@ class StockHistoryService {
             else if (c.operation === 'V')
                 p[key].quantityBalanceEver -= c.quantity;
 
-            // p[key].quantityBalanceEver = Math.max(p[key].quantityBalanceEver, 0);
             return p;
         }, {});
 
@@ -224,8 +227,7 @@ class StockHistoryService {
 
     async getAveragePrices(endDate = null) {
         const stockOperations = (await this.getStockHistoryOperations())
-            .filter(o => endDate === null || o.date <= endDate)
-            .reverse();
+            .filter(o => endDate === null || o.date <= endDate);
 
         const endOperation = totals => {
             totals.openOperation  = {
@@ -289,20 +291,14 @@ class StockHistoryService {
     }
 
     async getProfitLoss(startDate = null, endDate = null) {
-        const stockHistory = await this.getStockHistoryOperations();
-
-        const sortStockOperations = (a, b) => {
-            if (a.date.getTime() === b.date.getTime())
-                return a.operation === 'C' ? -1 : b.operation === 'C' ? 1 : 0;
-            return a.date.getTime() - b.date.getTime();
-        };
+        const stockOperations = await this.getStockHistoryOperations();
 
         const profitLoss = {};
         const boughtValue = {};
         const soldValue = {};
         const tempBoughtValue = {};
 
-        for (const stockOperation of stockHistory.sort(sortStockOperations)) {
+        for (const stockOperation of stockOperations) {
             if (endDate !== null && stockOperation.date > endDate) break;
 
             const code = StockUtils.getStockCode(stockOperation.code);
@@ -498,7 +494,7 @@ class StockHistoryService {
     async downloadCsv() {
         const savePath = await dialog.showSaveDialog({ defaultPath: 'stoincs-negociacoes.csv' });
         if (!savePath.canceled) {
-            const data = await this.getStockHistoryOperations();
+            const data = await this.getStockHistoryOperations().reverse();
             await CsvUtils.saveCsv(savePath.filePath, data, CSV_HEADERS);
         }
     }

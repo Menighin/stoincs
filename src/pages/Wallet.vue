@@ -1,7 +1,7 @@
 <template>
     <q-page class="wallet-page q-px-lg q-py-lg">
 
-        <q-table
+        <group-header-table
             class="table-container q-mx-lg"
             table-class="data-table sticky-last-column"
             title="Carteira de ações"
@@ -112,7 +112,7 @@
                     </span>
                 </div>
             </template>
-        </q-table>
+        </group-header-table>
 
         <q-dialog v-model="editLabelDialog">
             <q-card style="min-width: 550px">
@@ -175,9 +175,13 @@
 import { ipcRenderer } from 'electron';
 import NumberUtils from '../../src-shared/utils/NumberUtils';
 import DateUtils from '../../src-shared/utils/DateUtils';
+import GroupHeaderTable from '../components/GroupHeaderTable';
 
 export default {
     name: 'PageWallet',
+    components: {
+        GroupHeaderTable
+    },
     data() {
         return {
             now: new Date(),
@@ -214,6 +218,7 @@ export default {
                     align: 'right',
                     label: 'Quantidade',
                     field: 'quantity',
+                    groupHeader: 'Teste 2',
                     sortable: true
                 },
                 {
@@ -221,6 +226,7 @@ export default {
                     align: 'right',
                     label: 'Valor',
                     field: 'value',
+                    groupHeader: 'Teste 2',
                     sortable: true,
                     format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
@@ -229,6 +235,7 @@ export default {
                     align: 'right',
                     label: 'Pç Médio Compra (Histórico)',
                     field: 'averageBuyPrice',
+                    groupHeader: 'Teste 2',
                     sortable: true,
                     format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
@@ -243,6 +250,7 @@ export default {
                 },
                 {
                     name: 'lastUpdated',
+                    groupHeader: 'Atualizacao',
                     align: 'center',
                     label: 'Atualizado a',
                     field: 'lastUpdated',
@@ -251,6 +259,7 @@ export default {
                 {
                     name: 'apiUpdate',
                     align: 'center',
+                    groupHeader: 'Atualizacao',
                     label: 'Ultima atualização API',
                     field: 'apiUpdate',
                     format: val => val ? DateUtils.toString(new Date(val)) : null
@@ -258,6 +267,7 @@ export default {
                 {
                     name: 'historicPosition',
                     align: 'right',
+                    groupHeader: 'Teste 3',
                     label: 'Posição Histórica',
                     field: 'historicPosition',
                     sortable: true
@@ -265,6 +275,7 @@ export default {
                 {
                     name: 'label',
                     align: 'center',
+                    groupHeader: 'Teste 3',
                     label: 'Label',
                     field: 'label',
                     sortable: true
@@ -274,7 +285,8 @@ export default {
                     align: 'center',
                     label: 'Ações',
                     field: 'action',
-                    required: true
+                    required: true,
+                    alwaysShow: true
                 }
             ],
             newOperation: {
