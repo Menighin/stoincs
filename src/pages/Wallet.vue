@@ -94,6 +94,11 @@
                 {{ props.row.apiUpdate ? `${DateUtils.getFormatedHoursFromSeconds(parseInt((new Date() - new Date(props.row.apiUpdate)) / 1000), true, true, false) }` : null }}
             </q-td>
 
+            <q-td auto-width slot="body-cell-openPosition" slot-scope="props" :props="props" :class="{ 'value-up': props.row.openPosition > 0, 'value-down': props.row.openPosition < 0 }">
+                {{ NumberUtils.formatNumber(props.row.openPosition, 'R$ ') }}
+                <div class="variation">{{ NumberUtils.formatNumber(props.row.openVariation, '', '%', true) }}</div>
+            </q-td>
+
             <q-td auto-width slot="body-cell-historicPosition" slot-scope="props" :props="props" :class="{ 'value-up': props.row.historicPosition > 0, 'value-down': props.row.historicPosition < 0 }">
                 {{ NumberUtils.formatNumber(props.row.historicPosition, 'R$ ') }}
                 <div class="variation">{{ NumberUtils.formatNumber(props.row.historicVariation, '', '%', true) }}</div>
@@ -204,7 +209,7 @@ export default {
             pagination: {
                 rowsPerPage: 50
             },
-            visibleColumns: [ 'code', 'quantity', 'value', 'averageBuyPrice', 'price', 'lastUpdated', 'historicPosition', 'label' ],
+            visibleColumns: [ 'code', 'quantity', 'value', 'historicAverageBuyPrice', 'price', 'lastUpdated', 'historicPosition', 'label' ],
             columns: [
                 {
                     name: 'code',
@@ -218,26 +223,7 @@ export default {
                     align: 'right',
                     label: 'Quantidade',
                     field: 'quantity',
-                    groupHeader: 'Teste 2',
                     sortable: true
-                },
-                {
-                    name: 'value',
-                    align: 'right',
-                    label: 'Valor',
-                    field: 'value',
-                    groupHeader: 'Teste 2',
-                    sortable: true,
-                    format: val => NumberUtils.formatNumber(val, 'R$ ')
-                },
-                {
-                    name: 'averageBuyPrice',
-                    align: 'right',
-                    label: 'Pç Médio Compra (Histórico)',
-                    field: 'averageBuyPrice',
-                    groupHeader: 'Teste 2',
-                    sortable: true,
-                    format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
                     name: 'price',
@@ -249,8 +235,53 @@ export default {
                     format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
                 {
+                    name: 'value',
+                    align: 'right',
+                    label: 'Valor',
+                    field: 'value',
+                    sortable: true,
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
+                },
+                {
+                    name: 'openAverageBuyPrice',
+                    align: 'right',
+                    label: 'Pç Médio Compra',
+                    field: 'openAverageBuyPrice',
+                    sortable: true,
+                    width: 50,
+                    groupHeader: 'Operação Corrente',
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
+                },
+                {
+                    name: 'openPosition',
+                    align: 'right',
+                    label: 'Posição',
+                    field: 'openPosition',
+                    width: 50,
+                    groupHeader: 'Operação Corrente',
+                    sortable: true
+                },
+                {
+                    name: 'historicAverageBuyPrice',
+                    align: 'right',
+                    label: 'Pç Médio Compra',
+                    field: 'historicAverageBuyPrice',
+                    sortable: true,
+                    width: 50,
+                    groupHeader: 'Histórico',
+                    format: val => NumberUtils.formatNumber(val, 'R$ ')
+                },
+                {
+                    name: 'historicPosition',
+                    align: 'right',
+                    label: 'Posição',
+                    field: 'historicPosition',
+                    width: 50,
+                    groupHeader: 'Histórico',
+                    sortable: true
+                },
+                {
                     name: 'lastUpdated',
-                    groupHeader: 'Atualizacao',
                     align: 'center',
                     label: 'Atualizado a',
                     field: 'lastUpdated',
@@ -259,23 +290,13 @@ export default {
                 {
                     name: 'apiUpdate',
                     align: 'center',
-                    groupHeader: 'Atualizacao',
                     label: 'Ultima atualização API',
                     field: 'apiUpdate',
                     format: val => val ? DateUtils.toString(new Date(val)) : null
                 },
                 {
-                    name: 'historicPosition',
-                    align: 'right',
-                    groupHeader: 'Teste 3',
-                    label: 'Posição Histórica',
-                    field: 'historicPosition',
-                    sortable: true
-                },
-                {
                     name: 'label',
                     align: 'center',
-                    groupHeader: 'Teste 3',
                     label: 'Label',
                     field: 'label',
                     sortable: true
@@ -406,20 +427,30 @@ export default {
             return this.wallet.map(w => {
                 const consolidatedStock = this.consolidated[w.code];
                 const price = this.stockPrices[w.code] ? this.stockPrices[w.code].price : 0;
-                const historicPosition = consolidatedStock ? consolidatedStock.valueSold + w.quantity * price - consolidatedStock.valueBought : 0;
+                const currentValue = w.quantity * price;
+
+                const historicPosition = consolidatedStock ? consolidatedStock.valueSold + currentValue - consolidatedStock.valueBought : 0;
                 const historicVariation = consolidatedStock && consolidatedStock.valueBought ? historicPosition / consolidatedStock.valueBought : 0;
-                const averageBuyPrice = consolidatedStock && consolidatedStock.historicInfo.averageBuyPrice ? consolidatedStock.historicInfo.averageBuyPrice : 0;
+                const historicAverageBuyPrice = consolidatedStock && consolidatedStock.historicInfo.averageBuyPrice ? consolidatedStock.historicInfo.averageBuyPrice : 0;
+
+                const openAverageBuyPrice = consolidatedStock && consolidatedStock.openOperation ? consolidatedStock.openOperation.averageBuyPrice : 0;
+                const openValueBought = consolidatedStock && consolidatedStock.openOperation ? w.quantity * consolidatedStock.openOperation.averageBuyPrice : 0;
+                const openPosition = consolidatedStock && consolidatedStock.openOperation ? currentValue - openValueBought : 0;
+                const openVariation = openValueBought !== 0 ? openPosition / openValueBought * 100 : 0;
                 return {
                     ...w,
-                    value: price * w.quantity,
+                    value: currentValue,
                     price: price,
                     changePrice: this.stockPrices[w.code] ? this.stockPrices[w.code].changePrice : 0,
                     changePercent: this.stockPrices[w.code] ? this.stockPrices[w.code].changePercent : 0,
                     lastUpdated: this.stockPrices[w.code] ? this.stockPrices[w.code].lastUpdated : null,
                     apiUpdate: this.stockPrices[w.code] ? this.stockPrices[w.code].apiUpdate : null,
-                    averageBuyPrice: averageBuyPrice,
+                    historicAverageBuyPrice: historicAverageBuyPrice,
                     historicPosition: historicPosition,
-                    historicVariation: historicVariation * 100
+                    historicVariation: historicVariation * 100,
+                    openAverageBuyPrice: openAverageBuyPrice,
+                    openPosition: openPosition,
+                    openVariation: openVariation
                 };
             });
         },
