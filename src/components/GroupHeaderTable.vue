@@ -20,7 +20,7 @@
             <q-tr>
                 <template v-for="col in groupHeaderColumns">
                     <q-th v-if="col.name" :props="props" :key="col.name" :colspan="col.colspan" :rowspan="col.rowspan" class="group-cell">{{ col.label }}</q-th>
-                    <q-th v-else :key="col.label" :colspan="col.colspan" :rowspan="col.rowspan" class="group-cell">{{ col.label }}</q-th>
+                    <q-th v-else :key="col.label" :style="col.style" :colspan="col.colspan" :rowspan="col.rowspan" class="group-cell">{{ col.label }}</q-th>
                 </template>
             </q-tr>
             <q-tr>
@@ -57,7 +57,8 @@ export default {
                         name: c.groupHeader ? undefined : c.name,
                         label: c.groupHeader || c.label,
                         rowspan: c.groupHeader ? 1 : 2,
-                        colspan: 1
+                        colspan: 1,
+                        style: c.headerStyle
                     });
                 }
                 return p;

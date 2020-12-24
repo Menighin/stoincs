@@ -49,9 +49,8 @@
                     :display-value="`Colunas (${visibleColumns.length}/${columns.length - 1})`"
                     emit-value
                     map-options
-                    :options="columns.filter(o => o.name != 'action')"
+                    :options="columns.filter(o => o.name != 'action').map(o => ({ label: `${o.groupHeader ? o.groupHeader + ' - ' + o.label : o.label}`, value: o.field }))"
                     @input="changeVisibleColumns"
-                    option-value="name"
                     options-cover
                     style="min-width: 150px"
                     class="q-ma-sm"
@@ -268,6 +267,7 @@ export default {
                     field: 'historicAverageBuyPrice',
                     sortable: true,
                     width: 50,
+                    headerStyle: 'background: #f9f9f9',
                     groupHeader: 'Histórico',
                     format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
@@ -277,6 +277,7 @@ export default {
                     label: 'Posição',
                     field: 'historicPosition',
                     width: 50,
+                    headerStyle: 'background: #f9f9f9',
                     groupHeader: 'Histórico',
                     sortable: true
                 },
@@ -434,8 +435,9 @@ export default {
                 const historicAverageBuyPrice = consolidatedStock && consolidatedStock.historicInfo.averageBuyPrice ? consolidatedStock.historicInfo.averageBuyPrice : 0;
 
                 const openAverageBuyPrice = consolidatedStock && consolidatedStock.openOperation ? consolidatedStock.openOperation.averageBuyPrice : 0;
-                const openValueBought = consolidatedStock && consolidatedStock.openOperation ? w.quantity * consolidatedStock.openOperation.averageBuyPrice : 0;
-                const openPosition = consolidatedStock && consolidatedStock.openOperation ? currentValue - openValueBought : 0;
+                const openValueBought = consolidatedStock && consolidatedStock.openOperation ? consolidatedStock.openOperation.valueBought : 0;
+                const openValueSold = consolidatedStock && consolidatedStock.openOperation ? consolidatedStock.openOperation.valueSold : 0;
+                const openPosition = consolidatedStock && consolidatedStock.openOperation ? currentValue - openValueBought + openValueSold : 0;
                 const openVariation = openValueBought !== 0 ? openPosition / openValueBought * 100 : 0;
                 return {
                     ...w,
@@ -481,7 +483,6 @@ export default {
         ipcRenderer.on('stockHistory/consolidated', (event, response) => {
             if (response.status === 'success') {
                 this.consolidated = response.data.reduce((p, c) => { p[c.code] = c; return p }, {});
-                console.log(this.consolidated);
             } else {
                 this.$q.notify({ type: 'negative', message: `Erro ao carregar dados consolidados` });
                 console.error(response);

@@ -218,6 +218,8 @@ class StockHistoryService {
 
             consolidatedByStock[code].openOperation.averageBuyPrice = averagePrices[code] ? averagePrices[code].openOperation.averageBuyPrice : 0;
             consolidatedByStock[code].openOperation.averageSellPrice = averagePrices[code] ? averagePrices[code].openOperation.averageSellPrice : 0;
+            consolidatedByStock[code].openOperation.valueBought = averagePrices[code] ? averagePrices[code].openOperation.valueBought : 0;
+            consolidatedByStock[code].openOperation.valueSold = averagePrices[code] ? averagePrices[code].openOperation.valueSold : 0;
 
             consolidatedByStock[code].dividends = dividendsByStock[code] || 0;
         });
@@ -283,7 +285,9 @@ class StockHistoryService {
                 },
                 openOperation: {
                     averageBuyPrice: openOperation.quantityBought > 0 ? openOperation.valueBought / openOperation.quantityBought : 0,
-                    averageSellPrice: openOperation.quantitySold > 0 ? openOperation.valueSold / openOperation.quantitySold : 0    
+                    averageSellPrice: openOperation.quantitySold > 0 ? openOperation.valueSold / openOperation.quantitySold : 0,
+                    valueBought: openOperation.valueBought,
+                    valueSold: openOperation.valueSold
                 }
             };
             return p;

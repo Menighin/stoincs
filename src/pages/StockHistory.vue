@@ -28,6 +28,7 @@
                     outlined
                     label="Ativo"
                     class="q-ma-sm"
+                    mask="AAAA##"
                     style="width: 100px"
                 />
 
