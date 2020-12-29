@@ -26,11 +26,14 @@
                         <ul>
                             <li><strong>Ativo</strong>: Código do ativo no carteira</li>
                             <li><strong>Quantidade</strong>: Quantidade do ativo na carteira</li>
-                            <li><strong>Valor</strong>: Valor em R$ do ativo na sua carteira calculado por <i>Quantidade x Preço</i></li>
-                            <li><strong>Preço Médio de Compra</strong>: Preço médio da compra de um ativo, dado o seu extrato de negociações</li>
                             <li><strong>Preço Atual</strong>: Preço atual do ativo. Para que ele seja atualizado você deve incluir o ativo na tela de preços ou nas configurações</li>
-                            <li><strong>Atualizado a</strong>: Tempo desde a ultima atualização do preço do ativo</li>
-                            <li><strong>Posição histórica</strong>: Dado seu histórico de negociações e o preço atual do ativo, calcula sua posição atual se vendesse o ativo nesse momento</li>
+                            <li><strong>Valor</strong>: Valor em R$ do ativo na sua carteira calculado por <i>Quantidade x Preço</i></li>
+                            <li><strong>Operação Aberta - Preço Médio de Compra</strong>: Preço médio da compra de um ativo na operação em aberto, dado o seu extrato de negociações</li>
+                            <li><strong>Operação Aberta - Posição</strong>: Posição na operação corrente, em aberto.</li>
+                            <li><strong>Histórico - Preço Médio de Compra</strong>: Preço médio da compra de um ativo dado todo seu histórico de negociação, dado o seu extrato de negociações</li>
+                            <li><strong>Histórico - Posição</strong>: Posição no ativo desde quando ele foi negociado pela primeira vez.</li>
+                            <li><strong>Atualizado a</strong>: Tempo desde que o Stoincs foi buscar a atualização do preço do Ativo</li>
+                            <li><strong>Última Atualização API</strong>: Tempo desde a ultima atualização do preço segundo o serviço de atualização (Alpha Vantage, Web Crawler, etc).</li>
                             <li><strong>Label</strong>: Label utilizado para categorizar o ativo nos gráficos</li>
                         </ul>
                     </q-menu>

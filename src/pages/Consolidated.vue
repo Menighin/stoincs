@@ -78,8 +78,8 @@
                 />
             </template>
 
-            <q-td auto-width slot="body-cell-profitLoss" slot-scope="props" :props="props" :class="{ 'value-up': props.row.profitLoss > 0, 'value-down': props.row.profitLoss < 0 }">
-                {{ NumberUtils.formatNumber(props.row.profitLoss, 'R$ ') }}
+            <q-td auto-width slot="body-cell-profitLoss" slot-scope="props" :props="props" :class="{ 'value-up': props.row.historicInfo.profitLoss > 0, 'value-down': props.row.historicInfo.profitLoss < 0 }">
+                {{ NumberUtils.formatNumber(props.row.historicInfo.profitLoss, 'R$ ') }}
             </q-td>
 
             <q-td auto-width slot="body-cell-dividends" slot-scope="props" :props="props" :class="{ 'value-up': props.row.dividends > 0, 'value-down': props.row.dividends < 0 }">
@@ -160,7 +160,7 @@ export default {
                     name: 'averageBuyPrice',
                     align: 'right',
                     label: 'Pç. Médio Compra',
-                    field: 'averageBuyPrice',
+                    field: val => val.historicInfo.averageBuyPrice,
                     sortable: true,
                     format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
@@ -176,7 +176,7 @@ export default {
                     name: 'averageSellPrice',
                     align: 'right',
                     label: 'Pç. Médio Venda',
-                    field: 'averageSellPrice',
+                    field: val => val.historicInfo.averageSellPrice,
                     sortable: true,
                     format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
@@ -184,7 +184,7 @@ export default {
                     name: 'valueBalance',
                     align: 'right',
                     label: 'Saldo',
-                    field: 'valueBalance',
+                    field: val => val.historicInfo.valueBalance,
                     sortable: true,
                     format: val => NumberUtils.formatNumber(val, 'R$ ')
                 },
@@ -192,7 +192,7 @@ export default {
                     name: 'profitLoss',
                     align: 'right',
                     label: 'Lucro/Prejuízo na venda',
-                    field: 'profitLoss',
+                    field: val => val.historicInfo.profitLoss,
                     sortable: true
                 },
                 {
@@ -227,9 +227,10 @@ export default {
     mounted() {
         ipcRenderer.on('stockHistory/consolidated', (event, arg) => {
             this.tableLoading = false;
-            if (arg.status === 'success')
+            if (arg.status === 'success') {
                 this.dataTable = arg.data;
-            else {
+                console.log(arg);
+            } else {
                 this.$q.notify({ type: 'negative', message: `Erro ao computar dados consolidados: ${arg.message}` });
                 console.error(arg);
             }
