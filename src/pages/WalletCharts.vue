@@ -141,7 +141,7 @@ export default {
             return this.consolidated.map(c => {
                 const price = this.stockPrices[c.code] ? (this.stockPrices[c.code].price || 0) : 0;
                 const actualValue = (c.quantityBought - c.quantitySold) * price;
-                const averageValueBought = (c.quantityBought - c.quantitySold) * c.averageBuyPrice;
+                const averageValueBought = (c.quantityBought - c.quantitySold) * c.historicInfo.averageBuyPrice;
                 const historicPosition = c.valueSold + actualValue - c.valueBought;
                 return {
                     ...c,

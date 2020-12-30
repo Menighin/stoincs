@@ -229,7 +229,6 @@ export default {
             this.tableLoading = false;
             if (arg.status === 'success') {
                 this.dataTable = arg.data;
-                console.log(arg);
             } else {
                 this.$q.notify({ type: 'negative', message: `Erro ao computar dados consolidados: ${arg.message}` });
                 console.error(arg);
