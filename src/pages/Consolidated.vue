@@ -212,8 +212,11 @@ export default {
             ipcRenderer.send('stockHistory/consolidated', { startDate: startDate, endDate: endDate });
             ipcRenderer.send('stockHistory/kpis', { startDate: startDate, endDate: endDate });
 
-            if (localStorage.getItem('consolidated/columns'))
-                this.visibleColumns = JSON.parse(localStorage.getItem('consolidated/columns'));
+            if (localStorage.getItem('consolidated/columns')) {
+                const columnCodes = new Set(this.columns.map(o => o.name));
+                this.visibleColumns = JSON.parse(localStorage.getItem('consolidated/columns'))
+                    .filter(o => columnCodes.has(o));
+            }
         },
         changeVisibleColumns() {
             localStorage.setItem('consolidated/columns', JSON.stringify(this.visibleColumns));

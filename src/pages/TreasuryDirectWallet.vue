@@ -261,8 +261,11 @@ export default {
     methods: {
         init() {
             ipcRenderer.send('treasury-direct/get');
-            if (localStorage.getItem('treasury-direct/columns'))
-                this.visibleColumns = JSON.parse(localStorage.getItem('treasury-direct/columns'));
+            if (localStorage.getItem('treasury-direct/columns')) {
+                const columnCodes = new Set(this.columns.map(o => o.name));
+                this.visibleColumns = JSON.parse(localStorage.getItem('treasury-direct/columns'))
+                    .filter(o => columnCodes.has(o));
+            }
         },
         changeVisibleColumns() {
             localStorage.setItem('treasury-direct/columns', JSON.stringify(this.visibleColumns));

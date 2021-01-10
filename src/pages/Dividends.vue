@@ -233,8 +233,11 @@ export default {
     methods: {
         init() {
             ipcRenderer.send('dividends/get');
-            if (localStorage.getItem('dividends/columns'))
-                this.visibleColumns = JSON.parse(localStorage.getItem('dividends/columns'));
+            if (localStorage.getItem('dividends/columns')) {
+                const columnCodes = new Set(this.columns.map(o => o.name));
+                this.visibleColumns = JSON.parse(localStorage.getItem('dividends/columns'))
+                    .filter(o => columnCodes.has(o));
+            }
         },
         changeVisibleColumns() {
             localStorage.setItem('dividends/columns', JSON.stringify(this.visibleColumns));

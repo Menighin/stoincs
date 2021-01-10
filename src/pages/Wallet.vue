@@ -566,8 +566,11 @@ export default {
             }
         });
 
-        if (localStorage.getItem('wallet/columns'))
-            this.visibleColumns = JSON.parse(localStorage.getItem('wallet/columns'));
+        if (localStorage.getItem('wallet/columns')) {
+            const columnCodes = new Set(this.columns.map(o => o.name));
+            this.visibleColumns = JSON.parse(localStorage.getItem('wallet/columns'))
+                .filter(o => columnCodes.has(o));
+        }
 
         this.init();
     },
