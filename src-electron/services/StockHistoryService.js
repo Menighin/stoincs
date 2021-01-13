@@ -209,8 +209,8 @@ class StockHistoryService {
         }, {});
 
         Object.keys(consolidatedByStock).forEach(code => {
-            consolidatedByStock[code].historicInfo = {}
-            consolidatedByStock[code].openOperation = {}
+            consolidatedByStock[code].historicInfo = {};
+            consolidatedByStock[code].openOperation = {};
             consolidatedByStock[code].historicInfo.averageBuyPrice = averagePrices[code] ? averagePrices[code].historicInfo.averageBuyPrice : 0;
             consolidatedByStock[code].historicInfo.averageSellPrice = averagePrices[code] ? averagePrices[code].historicInfo.averageSellPrice : 0;
             consolidatedByStock[code].historicInfo.profitLoss = profitLoss[code] || 0;
@@ -232,12 +232,12 @@ class StockHistoryService {
             .filter(o => endDate === null || o.date <= endDate);
 
         const endOperation = totals => {
-            totals.openOperation  = {
+            totals.openOperation = {
                 quantityBought: 0,
                 valueBought: 0,
                 quantitySold: 0,
                 valueSold: 0
-            }
+            };
         };
 
         const totalsByStock = stockOperations
@@ -255,6 +255,9 @@ class StockHistoryService {
                     };
                     endOperation(p[key]);
                 }
+
+                if (key === 'BIDI4')
+                    console.log(JSON.stringify(c));
 
                 if (c.operation === 'C') {
                     p[key].historicInfo.quantityBought += c.quantity;
@@ -498,7 +501,7 @@ class StockHistoryService {
     async downloadCsv() {
         const savePath = await dialog.showSaveDialog({ defaultPath: 'stoincs-negociacoes.csv' });
         if (!savePath.canceled) {
-            const data = await this.getStockHistoryOperations().reverse();
+            const data = (await this.getStockHistoryOperations()).reverse();
             await CsvUtils.saveCsv(savePath.filePath, data, CSV_HEADERS);
         }
     }

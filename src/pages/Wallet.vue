@@ -433,15 +433,16 @@ export default {
                 const price = this.stockPrices[w.code] ? this.stockPrices[w.code].price : 0;
                 const currentValue = w.quantity * price;
 
-                const historicPosition = consolidatedStock ? consolidatedStock.valueSold + currentValue - consolidatedStock.valueBought : 0;
-                const historicVariation = consolidatedStock && consolidatedStock.valueBought ? historicPosition / consolidatedStock.valueBought : 0;
-                const historicAverageBuyPrice = consolidatedStock && consolidatedStock.historicInfo.averageBuyPrice ? consolidatedStock.historicInfo.averageBuyPrice : 0;
-
                 const openAverageBuyPrice = consolidatedStock && consolidatedStock.openOperation ? consolidatedStock.openOperation.averageBuyPrice : 0;
                 const openValueBought = consolidatedStock && consolidatedStock.openOperation ? consolidatedStock.openOperation.valueBought : 0;
                 const openValueSold = consolidatedStock && consolidatedStock.openOperation ? consolidatedStock.openOperation.valueSold : 0;
                 const openPosition = consolidatedStock && consolidatedStock.openOperation ? currentValue - openValueBought + openValueSold : 0;
                 const openVariation = openValueBought !== 0 ? openPosition / openValueBought * 100 : 0;
+
+                const historicPosition = consolidatedStock && consolidatedStock.openOperation ? consolidatedStock.valueSold + currentValue - consolidatedStock.valueBought : 0;
+                const historicVariation = consolidatedStock && consolidatedStock.valueBought ? historicPosition / consolidatedStock.valueBought : 0;
+                const historicAverageBuyPrice = consolidatedStock && consolidatedStock.historicInfo.averageBuyPrice ? consolidatedStock.historicInfo.averageBuyPrice : 0;
+
                 return {
                     ...w,
                     value: currentValue,
@@ -486,6 +487,7 @@ export default {
         ipcRenderer.on('stockHistory/consolidated', (event, response) => {
             if (response.status === 'success') {
                 this.consolidated = response.data.reduce((p, c) => { p[c.code] = c; return p }, {});
+                console.log(this.consolidated);
             } else {
                 this.$q.notify({ type: 'negative', message: `Erro ao carregar dados consolidados` });
                 console.error(response);
