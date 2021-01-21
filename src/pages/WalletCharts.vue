@@ -130,7 +130,7 @@ export default {
     },
     methods: {
         changedWalletPerformanceTime() {
-            const days = this.walletPerformanceDate.value;
+            const days = this.walletPerformanceDate.value + 3;
             const now = new Date();
             const since = new Date(now.getTime() - 1000 * 60 * 60 * 24 * days);
             ipcRenderer.send('wallet-performance/get', { d1: since, d2: now });
@@ -168,11 +168,13 @@ export default {
                 ? this.walletPerformance.map(o => o.variation)
                 : this.walletPerformance.map(o => o.variationPercentage);
 
-            const color = data.last() > 0 ? Highcharts.getOptions().colors[2] : Highcharts.getOptions().colors[5];
+            const positiveColor = Highcharts.getOptions().colors[2];
+            const negativeColor = Highcharts.getOptions().colors[5];
 
             return {
                 chart: {
-                    zoomType: 'x'
+                    zoomType: 'x',
+                    type: 'area'
                 },
                 title: {
                     text: 'Performance da Carteira de Ações'
@@ -190,18 +192,6 @@ export default {
                 },
                 plotOptions: {
                     area: {
-                        fillColor: {
-                            linearGradient: {
-                                x1: 0,
-                                y1: 0,
-                                x2: 0,
-                                y2: 1
-                            },
-                            stops: [
-                                [0, color],
-                                [1, Highcharts.color(color).setOpacity(0).get('rgba')]
-                            ]
-                        },
                         marker: {
                             radius: 2
                         },
@@ -210,15 +200,36 @@ export default {
                             hover: {
                                 lineWidth: 1
                             }
-                        },
-                        threshold: null
+                        }
                     }
                 },
                 series: [{
-                    type: 'area',
                     name: 'Variação',
                     data: data,
-                    color: color
+                    color: {
+                        linearGradient: {
+                            x1: 0,
+                            y1: 0,
+                            x2: 0,
+                            y2: 1
+                        },
+                        stops: [
+                            [0, positiveColor],
+                            [1, Highcharts.color(positiveColor).setOpacity(0.25).get('rgba')]
+                        ]
+                    },
+                    negativeColor: {
+                        linearGradient: {
+                            x1: 0,
+                            y1: 0,
+                            x2: 0,
+                            y2: 1
+                        },
+                        stops: [
+                            [0, negativeColor],
+                            [1, Highcharts.color(negativeColor).setOpacity(0.25).get('rgba')]
+                        ]
+                    }
                 }],
                 tooltip: {
                     valueDecimals: 2,

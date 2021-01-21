@@ -83,12 +83,19 @@ class WalletHistoryService {
                 let totalCurrent = 0;
                 let totalDayBefore = 0;
                 for (const code of Object.keys(dayBeforeData)) {
-                    const currentStock = currentData[code];
-                    const dayBeforeStock = dayBeforeData[code];
-                    if (currentStock) {
-                        const quantity = Math.min(dayBeforeStock.quantity, currentStock.quantity);
-                        totalCurrent += quantity * currentStock.price;
-                        totalDayBefore += quantity * dayBeforeStock.price;
+                    const currentPosition = currentData[code];
+                    const dayBeforePosition = dayBeforeData[code];
+                    if (currentPosition) {
+                        if (!this.hasSplitHappened(dayBeforePosition, currentPosition)) {
+                            const quantity = Math.min(dayBeforePosition.quantity, currentPosition.quantity);
+                            totalCurrent += quantity * currentPosition.price;
+                            totalDayBefore += quantity * dayBeforePosition.price;
+                        } else {
+                            const dayBeforeAsItWasSplitted = this.getDayBeforePositionAsSplit(dayBeforePosition, currentPosition);
+                            const quantity = Math.min(dayBeforeAsItWasSplitted.quantity, currentPosition.quantity);
+                            totalCurrent += quantity * currentPosition.price;
+                            totalDayBefore += quantity * dayBeforeAsItWasSplitted.price;
+                        }
                     }
                 }
                 if (totalDayBefore > 0) {
@@ -113,6 +120,28 @@ class WalletHistoryService {
                 variationPercentage: sumPercentage + o.variationPercentage
             };
         });
+    }
+
+    hasSplitHappened(dayBeforePosition, currentPosition) {
+        const ratio = dayBeforePosition.price / currentPosition.price;
+        return ratio <= 0.5 || ratio >= 2;
+    }
+
+    getDayBeforePositionAsSplit(dayBeforePosition, currentPosition) {
+        const wasSplit = dayBeforePosition.price > currentPosition.price;
+        if (wasSplit) {
+            const splitFactor = parseInt(dayBeforePosition.price / currentPosition.price);
+            return {
+                price: dayBeforePosition.price / splitFactor,
+                quantity: dayBeforePosition.quantity * splitFactor
+            };
+        } else {
+            const groupingFactor = parseInt(currentPosition.price / dayBeforePosition.price);
+            return {
+                price: dayBeforePosition.price * groupingFactor,
+                quantity: dayBeforePosition.quantity / groupingFactor
+            };
+        }
     }
 
 };
