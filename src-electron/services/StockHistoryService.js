@@ -256,9 +256,6 @@ class StockHistoryService {
                     endOperation(p[key]);
                 }
 
-                if (key === 'BIDI4')
-                    console.log(JSON.stringify(c));
-
                 if (c.operation === 'C') {
                     p[key].historicInfo.quantityBought += c.quantity;
                     p[key].historicInfo.valueBought += c.price * c.quantity;
@@ -304,6 +301,13 @@ class StockHistoryService {
         const boughtValue = {};
         const soldValue = {};
         const tempBoughtValue = {};
+        const balanceQuantity = {};
+
+        const finishOperation = (code) => {
+            boughtValue[code] = 0;
+            soldValue[code] = 0;
+            tempBoughtValue[code] = 0;
+        };
 
         for (const stockOperation of stockOperations) {
             if (endDate !== null && stockOperation.date > endDate) break;
@@ -313,13 +317,21 @@ class StockHistoryService {
             if (!tempBoughtValue[code]) tempBoughtValue[code] = 0;
             if (!soldValue[code]) soldValue[code] = 0;
             if (!profitLoss[code]) profitLoss[code] = 0;
+            if (!balanceQuantity[code]) balanceQuantity[code] = 0;
 
             if (stockOperation.operation === 'C') {
                 tempBoughtValue[code] += stockOperation.quantity * stockOperation.price;
-            } else if (stockOperation.operation === 'V' && (startDate === null || stockOperation.date >= startDate)) {
-                soldValue[code] += stockOperation.quantity * stockOperation.price;
-                boughtValue[code] += tempBoughtValue[code];
-                tempBoughtValue[code] = 0;
+                balanceQuantity[code] += stockOperation.quantity;
+            } else if (stockOperation.operation === 'V') {
+                balanceQuantity[code] -= stockOperation.quantity;
+
+                if (startDate === null || stockOperation.date >= startDate) {
+                    soldValue[code] += stockOperation.quantity * stockOperation.price;
+                    boughtValue[code] += tempBoughtValue[code];
+                    tempBoughtValue[code] = 0;
+                } else if ((startDate !== null || stockOperation.date < startDate) && balanceQuantity[code] === 0) {
+                    finishOperation(code);
+                }
             }
         }
 

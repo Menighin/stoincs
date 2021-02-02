@@ -81,8 +81,6 @@ class CeiCrawlerService {
         const ceiCrawler = await this._getFreeInstance();
         console.log('[CEI CRAWLER SERVICE] Getting stock history...');
         try {
-            console.log(startDate);
-            console.log(endDate);
             const result = await ceiCrawler.getStockHistory(startDate, endDate);
             await this.freeUpInstance();
             return result;
