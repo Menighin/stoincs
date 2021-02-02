@@ -269,7 +269,10 @@ export default {
                         }));
                     return {
                         ...o,
-                        valueBalanceEver: o.quantityBalanceEver * o.averageBuyPrice,
+                        averageBuyPrice: o.historicInfo.averageBuyPrice,
+                        averageSellPrice: o.historicInfo.averageSellPrice,
+                        profitLoss: o.historicInfo.profitLoss,
+                        valueBalanceEver: o.quantityBalanceEver * o.historicInfo.averageBuyPrice,
                         details: details
                     };
                 });
@@ -278,6 +281,7 @@ export default {
                 p.valueBalanceEver += c.valueBalanceEver;
                 p.dividends += c.dividends;
                 p.profitLoss += c.profitLoss;
+                p.averageBuyPrice = c.historicInfo.averageBuyPrice;
                 c.details.forEach(d => {
                     const detail = p.details.first(o => o.institution === d.institution);
                     if (detail) {

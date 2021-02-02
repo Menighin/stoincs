@@ -487,7 +487,6 @@ export default {
         ipcRenderer.on('stockHistory/consolidated', (event, response) => {
             if (response.status === 'success') {
                 this.consolidated = response.data.reduce((p, c) => { p[c.code] = c; return p }, {});
-                console.log(this.consolidated);
             } else {
                 this.$q.notify({ type: 'negative', message: `Erro ao carregar dados consolidados` });
                 console.error(response);
