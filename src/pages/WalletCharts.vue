@@ -268,7 +268,7 @@ export default {
                 value: investedOnly ? o.averageValueBought : o.actualValue,
                 quantity: o.quantityBought - o.quantitySold,
                 price: o.price,
-                averageBuyPrice: o.averageBuyPrice,
+                averageBuyPrice: o.historicInfo.averageBuyPrice,
                 parent: o.label && o.label.length > 0 ? o.label : 'Sem label',
                 leaf: true,
                 percentage: (investedOnly ? o.averageValueBought : o.actualValue) / totalValue
