@@ -76,8 +76,9 @@ ipcMain.on(METHODS.CONSOLIDATED, async (event, arg) => {
     try {
         const startDate = arg && arg.startDate ? new Date(arg.startDate) : null;
         const endDate = arg && arg.endDate ? new Date(arg.endDate) : null;
+        const year = arg && arg.year ? arg.year : null;
         const consolidated = await StockHistoryService.getConsolidatedStockHistory(startDate, endDate);
-        event.reply(METHODS.CONSOLIDATED, { status: 'success', data: consolidated });
+        event.reply(METHODS.CONSOLIDATED, { status: 'success', data: consolidated, year: year });
     } catch (e) {
         event.reply(METHODS.CONSOLIDATED, { status: 'error', error: e, message: e.message });
         throw e;

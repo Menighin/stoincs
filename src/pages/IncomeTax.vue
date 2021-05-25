@@ -45,6 +45,7 @@
             title="Consolidado de Ativos"
             :data="consolidatedDataFiltered"
             :columns="consolidatedColumns"
+            :visible-columns="visibleColumns"
             row-key="code"
             flat
             bordered
@@ -52,6 +53,41 @@
             hide-pagination
             rows-per-page-label="Items por página"
         >
+            <template v-slot:top>
+                <h5 style="margin: 0 5px 0 0">Consolidado de Ativos</h5>
+                <q-icon name="help" class="cursor-pointer" size="24px" color="info">
+                    <q-menu anchor="bottom right" self="top right" content-class="q-pa-sm">
+                        As informações dessa tabela são calculadas de acordo com o seu <strong>Extrato de Operações</strong> e de <strong>Dividendos</strong>.<br />
+                        As colunas discriminam informações que devem ser lançadas na declaração anual de imposto de renda de pessoa física.<br />
+                        O <strong>Stoincs</strong> deve ser usado apenas como um auxiliar na sua declaração. Confira as informações cuidadosamente.
+                        <ul>
+                            <li><strong>Saldo em 31/12/ANO</strong>: Lançado em "Bens e Direitos"</li>
+                            <li><strong>Lucro/Prejuízo na venda</strong>: Para investidores que negociaram menos de 20 mil mensais, deve ser lançado em "Rendimentos Isentos e Não Tributavéis"</li>
+                            <li><strong>Dividendos</strong>: Valor composto por Dividendos e demais Rendimentos. Deve ser lançado em "Rendimentos Isentos e Não Tributavéis"</li>
+                            <li><strong>Juros sobre capital próprio</strong>: Deve ser lançado em "Rendimentos sujeitos à tributação excluisiva/definitiva"</li>
+                        </ul>
+                    </q-menu>
+                </q-icon>
+
+                <q-space />
+
+                <q-select
+                    v-model="visibleColumns"
+                    multiple
+                    outlined
+                    dense
+                    options-dense
+                    :display-value="`Colunas (${visibleColumns.length}/${consolidatedColumns.length})`"
+                    emit-value
+                    map-options
+                    :options="consolidatedColumns.map(o => ({ label: o.label, value: o.field }))"
+                    @input="changeVisibleColumns"
+                    options-cover
+                    style="min-width: 150px"
+                    class="q-ma-sm"
+                />
+            </template>
+
             <template v-slot:header="props">
                 <q-tr :props="props">
                     <q-th auto-width />
@@ -75,7 +111,7 @@
                         <q-td
                             :key="col.name"
                             :props="props"
-                            v-if="col.name === 'profitLoss' || col.name === 'dividends'"
+                            v-if="col.name === 'profitLoss' || col.name === 'dividends' || col.name === 'jcp'"
                             :class="{ 'value-up': col.value > 0, 'value-down': col.value < 0 }">
                             {{ NumberUtils.formatNumber(col.value, 'R$') }}
                         </q-td>
@@ -115,11 +151,56 @@ export default {
             DateUtils: DateUtils,
             historyData: [],
             consolidatedData: [],
+            lastYearConsolidatedData: [],
             dividends: [],
             selectedYear: null,
             yearOptions: [],
             months: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
-            consolidatedColumns: [
+            consolidatedDetailColumns: [
+                {
+                    name: 'institution',
+                    align: 'center',
+                    label: 'Corretora',
+                    field: 'institution',
+                    sortable: true
+                },
+                {
+                    name: 'buyOperations',
+                    align: 'right',
+                    label: 'Operações de Compra',
+                    field: 'buyOperations',
+                    sortable: true
+                },
+                {
+                    name: 'sellOperations',
+                    align: 'right',
+                    label: 'Operações de Venda',
+                    field: 'sellOperations',
+                    sortable: true
+                }
+            ],
+            visibleColumns: [ 'code', 'quantityBalanceEver', 'lastYearPosition', 'valueBalanceEver', 'averageBuyPrice', 'averageSellPrice', 'profitLoss', 'dividends', 'jcp' ]
+        };
+    },
+    methods: {
+        init() {
+            ipcRenderer.send('stockHistory/get');
+            ipcRenderer.send('dividends/get');
+        },
+        getConsolidatedData() {
+            const previousYearDate = new Date(`${this.selectedYear - 1}-01-01`);
+            const currentYearDate = new Date(`${this.selectedYear}-01-01`);
+            const endDate = new Date(`${this.selectedYear + 1}-01-01`);
+            ipcRenderer.send('stockHistory/consolidated', { startDate: currentYearDate, endDate: endDate, year: this.selectedYear });
+            ipcRenderer.send('stockHistory/consolidated', { startDate: previousYearDate, endDate: currentYearDate, year: this.selectedYear - 1 });
+        },
+        changeVisibleColumns() {
+            localStorage.setItem('income-tax/columns', JSON.stringify(this.visibleColumns));
+        }
+    },
+    computed: {
+        consolidatedColumns() {
+            return [
                 {
                     name: 'code',
                     align: 'center',
@@ -135,9 +216,17 @@ export default {
                     sortable: true
                 },
                 {
+                    name: 'lastYearPosition',
+                    align: 'right',
+                    label: `Saldo em 31/12/${this.selectedYear - 1}`,
+                    field: 'lastYearPosition',
+                    sortable: true,
+                    format: val => val || val === 0 ? NumberUtils.formatNumber(val, 'R$ ') : ''
+                },
+                {
                     name: 'valueBalanceEver',
                     align: 'right',
-                    label: 'Valor em carteira',
+                    label: `Saldo em 31/12/${this.selectedYear}`,
                     field: 'valueBalanceEver',
                     sortable: true,
                     format: val => val || val === 0 ? NumberUtils.formatNumber(val, 'R$ ') : ''
@@ -168,48 +257,19 @@ export default {
                 {
                     name: 'dividends',
                     align: 'right',
-                    label: 'Dividendos pagos',
+                    label: 'Dividendos',
                     field: 'dividends',
                     sortable: true
-                }
-            ],
-            consolidatedDetailColumns: [
-                {
-                    name: 'institution',
-                    align: 'center',
-                    label: 'Corretora',
-                    field: 'institution',
-                    sortable: true
                 },
                 {
-                    name: 'buyOperations',
+                    name: 'jcp',
                     align: 'right',
-                    label: 'Operações de Compra',
-                    field: 'buyOperations',
-                    sortable: true
-                },
-                {
-                    name: 'sellOperations',
-                    align: 'right',
-                    label: 'Operações de Venda',
-                    field: 'sellOperations',
+                    label: 'Juros sobre capital próprio',
+                    field: 'jcp',
                     sortable: true
                 }
-            ]
-        };
-    },
-    methods: {
-        init() {
-            ipcRenderer.send('stockHistory/get');
-            ipcRenderer.send('dividends/get');
+            ];
         },
-        getConsolidatedData() {
-            const startDate = new Date(`${this.selectedYear}-01-01`);
-            const endDate = new Date(`${this.selectedYear + 1}-01-01`);
-            ipcRenderer.send('stockHistory/consolidated', { startDate: startDate, endDate: endDate });
-        }
-    },
-    computed: {
         monthlySummaryColumns() {
             return [{
                 name: 'operation',
@@ -258,6 +318,12 @@ export default {
             return [buy, sell];
         },
         consolidatedDataFiltered() {
+            const lastYearPosition = this.lastYearConsolidatedData
+                .reduce((p, c) => {
+                    p[c.code] = c.quantityBalanceEver * c.historicInfo.averageBuyPrice;
+                    return p;
+                }, {});
+
             const data = this.consolidatedData
                 .filter(o => o.quantityBought > 0 || o.quantitySold > 0 || o.quantityBalanceEver > 0)
                 .map(o => {
@@ -272,6 +338,7 @@ export default {
                         averageBuyPrice: o.historicInfo.averageBuyPrice,
                         averageSellPrice: o.historicInfo.averageSellPrice,
                         profitLoss: o.historicInfo.profitLoss,
+                        lastYearPosition: lastYearPosition[o.code] || 0,
                         valueBalanceEver: o.quantityBalanceEver * o.historicInfo.averageBuyPrice,
                         details: details
                     };
@@ -280,6 +347,7 @@ export default {
             const total = data.reduce((p, c) => {
                 p.valueBalanceEver += c.valueBalanceEver;
                 p.dividends += c.dividends;
+                p.jcp += c.jcp;
                 p.profitLoss += c.profitLoss;
                 p.averageBuyPrice = c.historicInfo.averageBuyPrice;
                 c.details.forEach(d => {
@@ -303,6 +371,7 @@ export default {
                 averageBuyPrice: '',
                 averageSellPrice: '',
                 dividends: 0,
+                jcp: 0,
                 profitLoss: 0,
                 isTotal: true,
                 details: []
@@ -330,7 +399,10 @@ export default {
         ipcRenderer.on('stockHistory/consolidated', (event, arg) => {
             this.tableLoading = false;
             if (arg.status === 'success')
-                this.consolidatedData = arg.data;
+                if (arg.year === this.selectedYear)
+                    this.consolidatedData = arg.data;
+                else
+                    this.lastYearConsolidatedData = arg.data;
             else {
                 this.$q.notify({ type: 'negative', message: `Erro ao computar dados consolidados: ${arg.message}` });
                 console.error(arg);
@@ -345,6 +417,12 @@ export default {
                 console.error(response);
             }
         });
+
+        if (localStorage.getItem('income-tax/columns')) {
+            const columnCodes = new Set(this.consolidatedColumns.map(o => o.name));
+            this.visibleColumns = JSON.parse(localStorage.getItem('income-tax/columns'))
+                .filter(o => columnCodes.has(o));
+        }
 
         this.init();
     }

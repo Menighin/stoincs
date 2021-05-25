@@ -155,8 +155,18 @@ class StockHistoryService {
         const stockHistoryFiltered = (await this.getStockHistoryOperations())
             .filter(o => (endDate === null || o.date <= endDate));
 
-        const dividendsByStock = (await DividendsService.getDividendsEvents())
-            .filter(d => (startDate === null || startDate <= d.date) && (endDate === null || d.date <= endDate))
+        const dividends = await DividendsService.getDividendsEvents();
+        const isJcp = (st) => st.toLowerCase().indexOf('juros') !== -1 || st.toLowerCase().indexOf('jcp') !== -1;
+        const dividendsByStock = dividends
+            .filter(d => (startDate === null || startDate <= d.date) && (endDate === null || d.date <= endDate) && !isJcp(d.type))
+            .reduce((p, c) => {
+                if (!p[c.code]) p[c.code] = 0;
+                p[c.code] += c.netValue;
+                return p;
+            }, {});
+
+        const jcpByStock = dividends
+            .filter(d => (startDate === null || startDate <= d.date) && (endDate === null || d.date <= endDate) && isJcp(d.type))
             .reduce((p, c) => {
                 if (!p[c.code]) p[c.code] = 0;
                 p[c.code] += c.netValue;
@@ -222,6 +232,7 @@ class StockHistoryService {
             consolidatedByStock[code].openOperation.valueSold = averagePrices[code] ? averagePrices[code].openOperation.valueSold : 0;
 
             consolidatedByStock[code].dividends = dividendsByStock[code] || 0;
+            consolidatedByStock[code].jcp = jcpByStock[code] || 0;
         });
 
         return Object.values(consolidatedByStock).sort((a, b) => (a.code > b.code) ? 1 : ((b.code > a.code) ? -1 : 0));
