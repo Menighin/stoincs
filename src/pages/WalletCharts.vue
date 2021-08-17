@@ -361,7 +361,7 @@ export default {
                 categories.push(d.code);
                 seriesBoughtValue.push(d.valueBought);
                 seriesActualValue.push(d.valueSold + Math.max(d.quantityBought - d.quantitySold, 0) * d.price);
-                seriesDividends.push(d.dividends);
+                seriesDividends.push(d.dividends + d.jcp);
             }
 
             if (this.barChartShowTotal) {
@@ -491,7 +491,7 @@ export default {
                         y: (data.quantityBought - data.quantitySold) * data.price
                     }, {
                         name: 'Dividendos',
-                        y: data.dividends
+                        y: data.dividends + data.jcp
                     }, {
                         name: 'Balanço',
                         isSum: true,
